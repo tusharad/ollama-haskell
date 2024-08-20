@@ -1,0 +1,59 @@
+cabal-version:      3.4
+name:               ollama-haskell
+version:            0.1.0.0
+synopsis:           Ollama Haskell library
+-- description:
+license:            MIT
+license-file:       LICENSE
+author:             Tushar Adhatrao
+maintainer:         tusharadhatrao@gmail.com
+-- copyright:
+category:           Data
+build-type:         Simple
+extra-doc-files:    CHANGELOG.md
+-- extra-source-files:
+
+common warnings
+    ghc-options: -Wall
+
+library
+    import:           warnings
+    exposed-modules:  Ollama
+                    , Data.Ollama.List
+                    , Data.Ollama.Common.Types
+                    , Data.Ollama.Ps
+                    , Data.Ollama.Embeddings
+                    , Data.Ollama.Pull
+                    , Data.Ollama.Push
+                    , Data.Ollama.Chat
+                    , Data.Ollama.Generate
+                    , Data.Ollama.Create
+                    , Data.Ollama.Copy
+                    , Data.Ollama.Delete
+                    , Data.Ollama.Show
+                    , Lib
+    -- other-modules:
+    -- other-extensions:
+    build-depends:    base ^>=4.17.2.1
+                    , http-client
+                    , text
+                    , bytestring
+                    , aeson
+                    , time
+                    , http-types
+    hs-source-dirs:   src
+    default-language: GHC2021
+
+test-suite ollama-haskell-test
+    import:           warnings
+    default-language: GHC2021
+    -- other-modules:
+    -- other-extensions:
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.17.2.1,
+        tasty,
+        tasty-hunit,
+        ollama-haskell
