@@ -1,7 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Ollama.List
-  ( list,
+  ( 
+    -- * List Models API
+    list,
     Models (..),
     ModelInfo (..),
   )
@@ -42,6 +44,7 @@ instance FromJSON ModelInfo where
       <*> v .: "digest"
       <*> v .: "details"
 
+-- | List all models from local 
 list :: IO (Maybe Models)
 list = do
   let url = CU.host defaultOllama

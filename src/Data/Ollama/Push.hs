@@ -3,6 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Ollama.Push (
+  -- * Push API
   push,pushOps
 ) where
 
@@ -31,7 +32,12 @@ data PushResp = PushResp
   }
   deriving (Show, Eq, Generic, FromJSON)
 
-pushOps :: Text -> Maybe Bool -> Maybe Bool -> IO ()
+-- | Push a model with options
+pushOps :: 
+  Text -> -- ^ Model name
+  Maybe Bool -> -- ^ Insecure
+  Maybe Bool -> -- ^ Stream
+  IO ()
 pushOps modelName mInsecure mStream = do
   let url = CU.host defaultOllama
   manager <- newManager defaultManagerSettings
@@ -65,5 +71,8 @@ pushOps modelName mInsecure mStream = do
 
 -- Higher level API for Pull
 -- This API is untested. Will test soon!
-push :: Text -> IO ()
+-- | Push a model
+push :: 
+  Text -> -- ^ Model name 
+  IO ()
 push modelName = pushOps modelName Nothing Nothing

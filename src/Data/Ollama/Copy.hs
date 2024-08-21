@@ -2,7 +2,10 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.Ollama.Copy ( copyModel ) where
+module Data.Ollama.Copy ( 
+  -- * Copy Model API
+  copyModel 
+  ) where
 
 import Control.Monad (when)
 import Data.Aeson
@@ -21,9 +24,10 @@ data CopyModelOps = CopyModelOps
   }
   deriving (Show, Eq, Generic, ToJSON)
 
+-- | Copy model from source to destination
 copyModel ::
-  Text ->
-  Text ->
+  Text -> -- ^ Source model
+  Text -> -- ^ Destination model
   IO ()
 copyModel
   source

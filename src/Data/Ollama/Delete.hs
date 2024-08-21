@@ -2,7 +2,10 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.Ollama.Delete (deleteModel) where
+module Data.Ollama.Delete (
+  -- * Delete downloaded Models
+  deleteModel
+) where
 
 import Control.Monad (when)
 import Data.Aeson
@@ -17,8 +20,9 @@ import Network.HTTP.Types.Status (status404)
 newtype DeleteModelReq = DeleteModelReq { name :: Text }
   deriving newtype (Show, Eq, ToJSON)
 
+-- | Delete a model
 deleteModel ::
-  Text ->
+  Text -> -- ^ Model name
   IO ()
 deleteModel modelName =
   do

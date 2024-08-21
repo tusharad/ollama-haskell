@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Lib where
 
-import Ollama
+import qualified Ollama
 
 main :: IO ()
 main = do
-    generate "llama3.1" "Is haskell a good language?"
+  Ollama.generate "llama3.1" "Is haskell a good language?"

@@ -2,10 +2,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Ollama.Generate (
+  -- * Generate Texts 
   generate,
   generateOps,
   GenerateOps (..),
   GenerateResponse (..),
+  -- * Generate Texts returning response
   generateOpsReturningResponse,
   generateReturningResponse
 ) where
@@ -129,17 +131,18 @@ generateOps_ modelName prompt suffix images format system template stream raw ke
             }
     pure (request,manager)
 
+-- | Generate text from a given model with options
 generateOps ::
-  Text ->
-  Text ->
-  Maybe Text ->
-  Maybe [Text] ->
-  Maybe Text ->
-  Maybe Text ->
-  Maybe Text ->
-  Maybe Bool ->
-  Maybe Bool ->
-  Maybe Text ->
+  Text -> -- ^ Model Name
+  Text -> -- ^ Prompt
+  Maybe Text -> -- ^ Suffix
+  Maybe [Text] ->  -- ^ Images
+  Maybe Text -> -- ^ Format
+  Maybe Text -> -- ^ System
+  Maybe Text -> -- ^ Template
+  Maybe Bool -> -- ^ Stream
+  Maybe Bool -> -- ^ Raw
+  Maybe Text -> -- ^ Keep Alive
   IO ()
 generateOps
   modelName
@@ -170,9 +173,11 @@ generateOps
       putStrLn "" -- newline after answer ends
       go
 
--- Higher level API for Pull
--- This API is untested. Will test soon!
-generate :: Text -> Text -> IO ()
+-- | Generate text from a given model
+generate :: 
+  Text -> -- ^ Model Name 
+  Text ->  -- ^ Prompt
+  IO ()
 generate modelName prompt =
   generateOps
     modelName
@@ -187,18 +192,19 @@ generate modelName prompt =
     Nothing
 
 -- It is expected that while calling generateOpsReturningResponse, that stream is set to `false`.
+-- | Generate text from a given model with extran options but returning the response.
 generateOpsReturningResponse :: 
-  Text -> 
-  Text -> 
-  Maybe Text -> 
-  Maybe [Text] -> 
-  Maybe Text -> 
-    Maybe Text ->
-       Maybe Text -> 
-        Maybe Bool -> 
-          Maybe Bool -> 
-            Maybe Text -> 
-              IO (Maybe GenerateResponse)
+  Text -> -- ^ Model Name
+  Text ->  -- ^ Prompt
+  Maybe Text -> -- ^ Suffix
+  Maybe [Text] ->  -- ^ Images
+  Maybe Text ->  -- ^ Format
+  Maybe Text ->  -- ^ System
+  Maybe Text ->  -- ^ Template
+  Maybe Bool ->  -- ^ Stream
+  Maybe Bool ->  -- ^ Raw
+  Maybe Text ->  -- ^ Keep Alive
+  IO (Maybe GenerateResponse)
 generateOpsReturningResponse modelName prompt suffix images format system template stream raw keepAlive = do
     (request,manager) <- generateOps_ modelName prompt suffix images format system template stream raw keepAlive
     resp <- httpLbs request manager
@@ -210,7 +216,11 @@ generateOpsReturningResponse modelName prompt suffix images format system templa
       Right res -> do
         pure $ Just res
 
-generateReturningResponse :: Text -> Text -> IO (Maybe GenerateResponse)
+-- | Generate text from a given model but returning the response.
+generateReturningResponse :: 
+  Text -> -- ^ Model Name 
+  Text ->  -- ^ Prompt
+  IO (Maybe GenerateResponse)
 generateReturningResponse modelName prompt = do
   generateOpsReturningResponse
     modelName

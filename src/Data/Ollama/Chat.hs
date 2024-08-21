@@ -3,10 +3,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Ollama.Chat (
+  -- * Chat APIs
    chat
  , chatOps
  , Message(..)
  , ChatResponse(..)
+ -- ** Chat but returning
  , chatOpsReturning
  , chatReturning
  ) where
@@ -81,8 +83,9 @@ instance FromJSON ChatResponse where
       <*> v .:? "eval_count"
       <*> v .:? "eval_duration"
 
+-- | Helper function to construct request and manager for chat
 chatOps_ :: 
-  Text ->
+  Text -> 
   [Message] ->
   Maybe Text ->
   Maybe Text ->
@@ -109,13 +112,14 @@ chatOps_ modelName messages mTools mFormat mStream mKeepAlive = do
           }
   pure (request,manager)
 
+-- | Chat with a given model. It's a lower level API with more options.
 chatOps ::
-  Text ->
-  [Message] ->
-  Maybe Text ->
-  Maybe Text ->
-  Maybe Bool ->
-  Maybe Text ->
+  Text -> -- ^ Model name
+  [Message] -> -- ^ Messages
+  Maybe Text -> -- ^ Tools
+  Maybe Text -> -- ^ Format
+  Maybe Bool -> -- ^ Stream
+  Maybe Text -> -- ^ Keep Alive
   IO ()
 chatOps modelName messages mTools mFormat mStream mKeepAlive = do
   (request,manager) <- chatOps_ modelName messages mTools mFormat mStream mKeepAlive
@@ -138,12 +142,12 @@ chatOps modelName messages mTools mFormat mStream mKeepAlive = do
     go
 
 chatOpsReturning :: 
-  Text ->
-  [Message] ->
-  Maybe Text ->
-  Maybe Text ->
-  Maybe Bool ->
-  Maybe Text ->
+  Text -> -- ^ Model name
+  [Message] -> -- ^ Messages
+  Maybe Text -> -- ^ Tools
+  Maybe Text -> -- ^ Format
+  Maybe Bool -> -- ^ Stream
+  Maybe Text -> -- ^ Keep Alive
   IO (Maybe ChatResponse)
 chatOpsReturning modelName messages mTools mFormat mStream mKeepAlive = do
   (request,manager) <- chatOps_ modelName messages mTools mFormat mStream mKeepAlive
@@ -156,12 +160,18 @@ chatOpsReturning modelName messages mTools mFormat mStream mKeepAlive = do
       Right res -> do
         pure $ Just res
 
--- Higher level API for Pull
--- This API is untested. Will test soon!
-chat :: Text -> [Message] -> IO ()
+-- | Chat with a given model
+chat :: 
+  Text  -- ^ Model name 
+  -> [Message] -- ^ Messages
+  -> IO ()
 chat modelName messages =
   chatOps modelName messages Nothing Nothing Nothing Nothing
 
-chatReturning :: Text -> [Message] -> IO (Maybe ChatResponse)
+-- | Chat with a given model but returning the response
+chatReturning :: 
+  Text    -- ^ Model name 
+  -> [Message] -- ^ Messages
+  -> IO (Maybe ChatResponse)
 chatReturning modelName messages = do
   chatOpsReturning modelName messages Nothing Nothing Nothing Nothing

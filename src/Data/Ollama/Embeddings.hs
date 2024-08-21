@@ -2,7 +2,11 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.Ollama.Embeddings (embedding,embeddingOps) where
+module Data.Ollama.Embeddings (
+  -- * Embedding API
+  embedding
+  ,embeddingOps
+) where
 
 import Data.Aeson
 import Data.Ollama.Common.Utils as CU
@@ -35,11 +39,13 @@ instance ToJSON EmbeddingOps where
         "keep_alive" .= keepAlive
       ]
 
+-- TODO: Add Options parameter
+-- | Embedding API
 embeddingOps ::
-  Text ->
-  Text ->
-  Maybe Bool ->
-  Maybe Text ->
+  Text -> -- ^ Model
+  Text -> -- ^ Input
+  Maybe Bool -> -- ^ Truncate
+  Maybe Text -> -- ^ Keep Alive
   IO (Maybe EmbeddingResp)
 embeddingOps modelName input mTruncate mKeepAlive = do
   let url = CU.host defaultOllama
@@ -64,9 +70,10 @@ embeddingOps modelName input mTruncate mKeepAlive = do
     Just r -> pure $ Just r
 
 -- Higher level binding that only takes important params
+-- | Embedding API
 embedding ::
-  Text ->
-  Text ->
+  Text -> -- ^ Model
+  Text -> -- ^ Input
   IO (Maybe EmbeddingResp)
 embedding modelName input =
   embeddingOps modelName input Nothing Nothing

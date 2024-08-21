@@ -45,7 +45,7 @@ instance FromJSON RunningModel where
       <*> v .: "expires_at"
       <*> v .: "size_vram"
 
--- List Running Models
+-- | List running models
 ps :: IO (Maybe RunningModels)
 ps = do
   let url = CU.host defaultOllama

@@ -3,6 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Ollama.Show (
+  -- * Show Model Info API
   showModel,showModelOps,ShowModelResponse(..)
 ) where
 
@@ -122,13 +123,13 @@ instance FromJSON ModelInfo where
       <*> v .:? "tokenizer.ggml.token_type"
       <*> v .:? "tokenizer.ggml.tokens"
 
-{- | Show given model's information.
+{- | Show given model's information with options.
 
 @since 1.0.0.0
 -}
 showModelOps ::
-  Text ->
-  Maybe Bool ->
+  Text -> -- ^ model name
+  Maybe Bool -> -- ^ verbose
   IO (Maybe ShowModelResponse)
 showModelOps
   modelName
@@ -162,7 +163,7 @@ Higher level API for show.
 @since 1.0.0.0
 -}
 showModel :: 
-  Text -> 
+  Text -> -- ^ model name
   IO (Maybe ShowModelResponse)
 showModel modelName =
   showModelOps modelName Nothing

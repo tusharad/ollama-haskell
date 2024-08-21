@@ -3,6 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Ollama.Pull (
+  -- * Downloaded Models
   pull, pullOps
 ) where
 
@@ -32,7 +33,12 @@ data PullResp = PullResp
   }
   deriving (Show, Eq, Generic, FromJSON)
 
-pullOps :: Text -> Maybe Bool -> Maybe Bool -> IO ()
+-- | Pull Model with extra options
+pullOps :: 
+  Text ->  -- ^ Model Name
+  Maybe Bool -> -- ^ Insecure
+  Maybe Bool ->  -- ^ Stream
+  IO ()
 pullOps modelName mInsecure mStream = do
   let url = CU.host defaultOllama
   manager <- newManager defaultManagerSettings
@@ -66,5 +72,8 @@ pullOps modelName mInsecure mStream = do
     go
 
 -- Higher level API for Pull
-pull :: Text -> IO ()
+-- | Pull Model
+pull :: 
+  Text -> -- ^ Model Name 
+  IO ()
 pull modelName = pullOps modelName Nothing Nothing

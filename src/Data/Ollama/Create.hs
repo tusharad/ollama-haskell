@@ -1,7 +1,11 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.Ollama.Create (createModel,createModelOps) where
+module Data.Ollama.Create (
+  -- * Create Model API
+  createModel
+  , createModelOps
+  ) where
 
 import Control.Monad (unless)
 import Data.Aeson
@@ -46,11 +50,14 @@ instance FromJSON CreateModelResp where
     CreateModelResp
       <$> v .: "status"
 
+{- | Create a new model either from ModelFile or Path
+Please note, if you specify both ModelFile and Path, ModelFile will be used.
+-}
 createModelOps ::
-  Text ->
-  Maybe Text ->
-  Maybe Bool ->
-  Maybe FilePath ->
+  Text -> -- ^ Model Name
+  Maybe Text -> -- ^ Model File
+  Maybe Bool -> -- ^ Stream
+  Maybe FilePath -> -- ^ Path
   IO ()
 createModelOps
   modelName
@@ -91,9 +98,13 @@ createModelOps
                     )
         go
 
--- Higher level API for Pull
--- This API is untested. Will test soon!
-createModel :: Text -> Maybe Text -> Maybe FilePath -> IO ()
+-- | Create a new model
+-- | Please note, if you specify both ModelFile and Path, ModelFile will be used.
+createModel :: 
+  Text -> -- ^ Model Name 
+  Maybe Text ->  -- ^ Model File
+  Maybe FilePath ->  -- ^ Path 
+  IO ()
 createModel modelName modelFile = createModelOps
     modelName
     modelFile

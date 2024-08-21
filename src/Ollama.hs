@@ -1,40 +1,59 @@
 {-# LANGUAGE DuplicateRecordFields #-}
+{- | 
+  #Ollama-Haskell#
+  This library lets you run LlMs from within Haskell projects. Inspired by `ollama-python`.
+-}
 module Ollama
-  ( list,
-    Models(..),
-    ModelInfo(..),
+  ( -- * Main APIs
+    -- ** Generate Texts
+    generate,
+    generateOps,
+    -- ** Chat with LLMs
     chat,
     chatOps,
-    Message (..),
-    generate,
-    showModel,
-    createModel,
-    createModelOps,
-    copyModel,
-    pull,
-    pullOps,
-    push,
-    embedding,
-    embeddingOps,
-    ps,
-    RunningModels(..),
-    RunningModel(..),
-    deleteModel,
     chatReturning,
     chatOpsReturning,
-    ChatResponse(..),
+    -- ** Embeddings
+    embedding,
+    embeddingOps,
+    -- * Ollama operations
+    -- ** Copy Models
+    copyModel,
+    -- ** Create Models
+    createModel,
+    createModelOps,
+    -- ** Delete Models
+    deleteModel,
+    -- ** List Models
+    list,
+    -- ** List currently running models
+    ps,
+    -- ** Push and Pull
+    push,
     pushOps,
+    pull,
+    pullOps,
+    -- ** Show Model Info
+    showModel,
     showModelOps,
-    ShowModelResponse(..)
+    -- * Types
+    ShowModelResponse(..),
+    Models(..),
+    ModelInfo(..),
+    RunningModels(..),
+    RunningModel(..),
+    ChatResponse(..),
+    Message(..)
   )
 where
 
+
+import Data.Ollama.Generate (generate, generateOps)
 import Data.Ollama.Chat (Message (..), chat,chatOps,ChatResponse(..),chatReturning,chatOpsReturning)
 import Data.Ollama.Copy (copyModel)
 import Data.Ollama.Create (createModel,createModelOps)
 import Data.Ollama.Delete (deleteModel)
 import Data.Ollama.Embeddings (embedding,embeddingOps)
-import Data.Ollama.Generate (generate)
 import Data.Ollama.List (list,Models(..),ModelInfo (..))
 import Data.Ollama.Ps (ps,RunningModels(..),RunningModel(..))
 import Data.Ollama.Pull (pull,pullOps)

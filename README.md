@@ -2,7 +2,7 @@
 
 **ollama-haskell** is an unofficial Haskell binding for [Ollama](https://ollama.com), similar to [`ollama-python`](https://github.com/ollama/ollama-python). 
 
-This library allows you to interact with Ollama, a tool that lets you run large language models (LLMs) locally, from within your Haskell projects.
+This library allows you to interact with Ollama, a tool that lets you run large language models (LLMs) locally, from within your Haskell projects. 
 
 ## Examples
 
@@ -57,7 +57,6 @@ Make sure you have [Ollama](https://ollama.com) installed and running on your lo
 
 - Adding test cases and setting up CI piplines.
 - `options` parameter in `generate`.
-- Haddock documentation.
 
 Stay tuned for future updates and improvements!
 
