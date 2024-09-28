@@ -8,6 +8,8 @@ module Ollama
     -- ** Generate Texts
     generate,
     generateOps,
+    generateReturningResponse,
+    generateOpsReturningResponse,
     -- ** Chat with LLMs
     chat,
     chatOps,
@@ -48,7 +50,7 @@ module Ollama
 where
 
 
-import Data.Ollama.Generate (generate, generateOps)
+import Data.Ollama.Generate (generate, generateOps,generateReturningResponse,generateOpsReturningResponse)
 import Data.Ollama.Chat (Message (..), chat,chatOps,ChatResponse(..),chatReturning,chatOpsReturning)
 import Data.Ollama.Copy (copyModel)
 import Data.Ollama.Create (createModel,createModelOps)

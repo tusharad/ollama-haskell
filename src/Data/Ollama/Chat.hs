@@ -14,6 +14,7 @@ module Data.Ollama.Chat (
  ) where
 
 import Control.Monad (unless)
+import Control.Monad.IO.Class
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import Data.Ollama.Common.Utils as CU
@@ -24,6 +25,9 @@ import Data.Time (UTCTime)
 import GHC.Generics
 import GHC.Int (Int64)
 import Network.HTTP.Client
+import qualified Data.ByteString.Char8 as BS
+import Data.ByteString.Builder (byteString, Builder)
+import Data.Maybe
 
 -- TODO: Add Options parameter
 data ChatOps = ChatOps
@@ -148,9 +152,34 @@ chatOpsReturning ::
   Maybe Text -> -- ^ Format
   Maybe Bool -> -- ^ Stream
   Maybe Text -> -- ^ Keep Alive
-  IO (Maybe ChatResponse)
-chatOpsReturning modelName messages mTools mFormat mStream mKeepAlive = do
+  (Builder -> IO ()) -> IO () -> IO ()
+chatOpsReturning modelName messages mTools mFormat mStream mKeepAlive sendChunk flush = do
   (request,manager) <- chatOps_ modelName messages mTools mFormat mStream mKeepAlive
+  withResponse request manager $ \response -> do
+      let go = do
+            bs <- brRead $ responseBody response
+            if BS.null bs
+              then return ()  -- End of stream
+              else do
+                let eRes = eitherDecode (BSL.fromStrict bs) :: Either String ChatResponse
+                case eRes of
+                  Left err -> do
+                    -- Handle the error case and log it
+                    liftIO $ putStrLn $ "Error: " <> err
+                    flush
+                  Right res -> do
+                    -- Send the chunk of response
+                    sendChunk $ byteString $ BSL.toStrict $ BSL.fromStrict $ BS.pack $ show (fromMaybe "" $ content <$> message res)
+                    flush  -- Ensure data is flushed to the client
+                    -- Check if we're done; if not, continue
+                    if done res
+                      then return ()  -- End if processing is done
+                      else go         -- Continue the loop
+
+      -- Start streaming
+      go
+
+{-
   resp <- httpLbs request manager
   let eRes = eitherDecode (responseBody resp) :: Either String ChatResponse
   case eRes of
@@ -159,6 +188,7 @@ chatOpsReturning modelName messages mTools mFormat mStream mKeepAlive = do
         pure Nothing
       Right res -> do
         pure $ Just res
+-}
 
 -- | Chat with a given model
 chat :: 
@@ -172,6 +202,6 @@ chat modelName messages =
 chatReturning :: 
   Text    -- ^ Model name 
   -> [Message] -- ^ Messages
-  -> IO (Maybe ChatResponse)
-chatReturning modelName messages = do
-  chatOpsReturning modelName messages Nothing Nothing Nothing Nothing
+  -> (Builder -> IO ()) -> IO () -> IO ()
+chatReturning modelName messages sendChunk flush = do
+  chatOpsReturning modelName messages Nothing Nothing (Just True) Nothing sendChunk flush
