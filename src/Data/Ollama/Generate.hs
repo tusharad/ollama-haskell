@@ -271,7 +271,6 @@ generateOpsReturningResponse'
                     liftIO $ putStrLn $ "Error: " <> err
                     pure ""
                   Right res -> do
-                    -- Send the chunk of response
                     if done res
                       then return output  -- End if processing is done
                     else go (output <> response_ res)       -- Continue the loop

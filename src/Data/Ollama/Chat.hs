@@ -29,7 +29,6 @@ import GHC.Int (Int64)
 import Network.HTTP.Client
 import qualified Data.ByteString.Char8 as BS
 import Data.ByteString.Builder (byteString, Builder)
-import Data.Maybe
 
 -- TODO: Add Options parameter
 data ChatOps = ChatOps

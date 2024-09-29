@@ -10,11 +10,15 @@ module Ollama
     generateOps,
     generateReturningResponse,
     generateOpsReturningResponse,
+    generateReturningResponse',
+    generateOpsReturningResponse',
     -- ** Chat with LLMs
     chat,
     chatOps,
     chatReturning,
     chatOpsReturning,
+    chatReturning',
+    chatOpsReturning',
     -- ** Embeddings
     embedding,
     embeddingOps,
@@ -50,8 +54,8 @@ module Ollama
 where
 
 
-import Data.Ollama.Generate (generate, generateOps,generateReturningResponse,generateOpsReturningResponse)
-import Data.Ollama.Chat (Message (..), chat,chatOps,ChatResponse(..),chatReturning,chatOpsReturning)
+import Data.Ollama.Generate (generate, generateOps,generateReturningResponse,generateOpsReturningResponse,generateReturningResponse', generateOpsReturningResponse')
+import Data.Ollama.Chat (Message (..), chat,chatOps,ChatResponse(..),chatReturning,chatOpsReturning,chatReturning',chatOpsReturning')
 import Data.Ollama.Copy (copyModel)
 import Data.Ollama.Create (createModel,createModelOps)
 import Data.Ollama.Delete (deleteModel)
