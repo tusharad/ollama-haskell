@@ -11,6 +11,8 @@ module Data.Ollama.Chat (
  -- ** Chat but returning
  , chatOpsReturning
  , chatReturning
+ , chatReturning'
+ , chatOpsReturning'
  ) where
 
 import Control.Monad (unless)
@@ -176,8 +178,36 @@ chatOpsReturning modelName messages mTools mFormat mStream mKeepAlive sendChunk 
                     if done res
                       then return output  -- End if processing is done
                     else go (output <> maybe "" content (message res))         -- Continue the loop
+      go ""
 
-      -- Start streaming
+-- | Non streaming version fo ChatOpsReturning
+chatOpsReturning' ::
+  Text -> -- ^ Model name
+  [Message] -> -- ^ Messages
+  Maybe Text -> -- ^ Tools
+  Maybe Text -> -- ^ Format
+  Maybe Bool -> -- ^ Stream
+  Maybe Text -> -- ^ Keep Alive
+  IO Text
+chatOpsReturning' modelName messages mTools mFormat mStream mKeepAlive = do
+  (request,manager) <- chatOps_ modelName messages mTools mFormat mStream mKeepAlive
+  withResponse request manager $ \response -> do
+      let go output = do
+            bs <- brRead $ responseBody response
+            if BS.null bs
+              then return ""  -- End of stream
+              else do
+                let eRes = eitherDecode (BSL.fromStrict bs) :: Either String ChatResponse
+                case eRes of
+                  Left err -> do
+                    -- Handle the error case and log it
+                    liftIO $ putStrLn $ "Error: " <> err
+                    return ""
+                  Right res -> do
+                    -- Check if we're done; if not, continue
+                    if done res
+                      then return output  -- End if processing is done
+                    else go (output <> maybe "" content (message res))         -- Continue the loop
       go ""
 
 -- | Chat with a given model
@@ -195,3 +225,11 @@ chatReturning ::
   -> (Builder -> IO ()) -> IO () -> IO Text
 chatReturning modelName messages sendChunk flush = do
   chatOpsReturning modelName messages Nothing Nothing (Just True) Nothing sendChunk flush
+
+-- | Non streaming version of chatReturning
+chatReturning' ::
+  Text    -- ^ Model name 
+  -> [Message] -- ^ Messages
+  -> IO Text
+chatReturning' modelName messages = do
+  chatOpsReturning' modelName messages Nothing Nothing (Just True) Nothing

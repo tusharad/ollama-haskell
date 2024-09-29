@@ -9,7 +9,9 @@ module Data.Ollama.Generate (
   GenerateResponse (..),
   -- * Generate Texts returning response
   generateOpsReturningResponse,
-  generateReturningResponse
+  generateReturningResponse,
+  generateReturningResponse',
+  generateOpsReturningResponse'
 ) where
 
 import Control.Monad (unless)
@@ -236,8 +238,43 @@ generateOpsReturningResponse
                     if done res
                       then return output  -- End if processing is done
                     else go (output <> response_ res)       -- Continue the loop
+      go ""
 
-      -- Start streaming
+generateOpsReturningResponse' ::
+  Text -> -- ^ Model Name
+  Text -> -- ^ Prompt
+  Maybe Text -> -- ^ Suffix
+  Maybe [Text] -> -- ^ Images
+  Maybe Text -> -- ^ Format
+  Maybe Text -> -- ^ System
+  Maybe Text -> -- ^ Template
+  Maybe Bool -> -- ^ Stream
+  Maybe Bool -> -- ^ Raw
+  Maybe Text -> -- ^ Keep Alive
+  IO Text
+generateOpsReturningResponse'
+    modelName prompt suffix images format system template stream raw keepAlive = do
+    -- Get request and manager from 'generateOps_'
+    (request, manager) <- generateOps_ modelName prompt suffix images format system template stream raw keepAlive
+
+    -- Process the response stream
+    withResponse request manager $ \response -> do
+      let go output = do
+            bs <- brRead $ responseBody response
+            if BS.null bs
+              then return ""  -- End of stream
+              else do
+                let eRes = eitherDecode (BSL.fromStrict bs) :: Either String GenerateResponse
+                case eRes of
+                  Left err -> do
+                    -- Handle the error case and log it
+                    liftIO $ putStrLn $ "Error: " <> err
+                    pure ""
+                  Right res -> do
+                    -- Send the chunk of response
+                    if done res
+                      then return output  -- End if processing is done
+                    else go (output <> response_ res)       -- Continue the loop
       go ""
 
 -- | Generate text from a given model but returning the response.
@@ -257,5 +294,23 @@ generateReturningResponse modelName prompt = do
     Nothing
     Nothing
     (Just True)
+    Nothing
+    Nothing
+
+-- | Non stream version of generateReturningResponse
+generateReturningResponse' ::
+  Text -> -- ^ Model Name 
+  Text ->  -- ^ Prompt
+  IO Text
+generateReturningResponse' modelName prompt = do
+  generateOpsReturningResponse'
+    modelName
+    prompt
+    Nothing
+    Nothing
+    Nothing
+    Nothing
+    Nothing
+    Nothing
     Nothing
     Nothing
