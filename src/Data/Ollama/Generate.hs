@@ -98,7 +98,7 @@ instance FromJSON GenerateResponse where
       <*> v .:? "eval_count"
       <*> v .:? "eval_duration"
 
-generateOps_ :: 
+generateOps_ ::
   Text ->
   Text ->
   Maybe Text ->
@@ -108,7 +108,7 @@ generateOps_ ::
   Maybe Text ->
   Maybe Bool ->
   Maybe Bool ->
-  Maybe Text -> 
+  Maybe Text ->
   IO (Request,Manager)
 generateOps_ modelName prompt suffix images format system template stream raw keepAlive = do
     let url = CU.host defaultOllama
@@ -177,7 +177,7 @@ generateOps
       go
 
 -- | Generate text from a given model
-generate :: 
+generate ::
   Text -> -- ^ Model Name 
   Text ->  -- ^ Prompt
   IO ()
@@ -197,7 +197,7 @@ generate modelName prompt =
 -- It is expected that while calling generateOpsReturningResponse, that stream is set to `false`.
 -- | Generate text from a given model with extran options but returning the response.
 
-generateOpsReturningResponse :: 
+generateOpsReturningResponse ::
   Text -> -- ^ Model Name
   Text -> -- ^ Prompt
   Maybe Text -> -- ^ Suffix
@@ -208,18 +208,18 @@ generateOpsReturningResponse ::
   Maybe Bool -> -- ^ Stream
   Maybe Bool -> -- ^ Raw
   Maybe Text -> -- ^ Keep Alive
-  (Builder -> IO ()) -> IO () -> IO ()
-generateOpsReturningResponse 
+  (Builder -> IO ()) -> IO () -> IO Text
+generateOpsReturningResponse
     modelName prompt suffix images format system template stream raw keepAlive sendChunk flush = do
     -- Get request and manager from 'generateOps_'
     (request, manager) <- generateOps_ modelName prompt suffix images format system template stream raw keepAlive
 
     -- Process the response stream
     withResponse request manager $ \response -> do
-      let go = do
+      let go output = do
             bs <- brRead $ responseBody response
             if BS.null bs
-              then return ()  -- End of stream
+              then return ""  -- End of stream
               else do
                 let eRes = eitherDecode (BSL.fromStrict bs) :: Either String GenerateResponse
                 case eRes of
@@ -227,25 +227,26 @@ generateOpsReturningResponse
                     -- Handle the error case and log it
                     liftIO $ putStrLn $ "Error: " <> err
                     flush
+                    pure ""
                   Right res -> do
                     -- Send the chunk of response
-                    sendChunk $ byteString $ BSL.toStrict $ BSL.fromStrict $ BS.pack $ (T.unpack $ response_ res)
+                    sendChunk $ byteString $ BS.pack $ T.unpack (response_ res)
                     flush  -- Ensure data is flushed to the client
                     -- Check if we're done; if not, continue
                     if done res
-                      then return ()  -- End if processing is done
-                      else go         -- Continue the loop
+                      then return output  -- End if processing is done
+                    else go (output <> response_ res)       -- Continue the loop
 
       -- Start streaming
-      go
+      go ""
 
 -- | Generate text from a given model but returning the response.
-generateReturningResponse :: 
+generateReturningResponse ::
   Text -> -- ^ Model Name 
   Text ->  -- ^ Prompt
   (Builder -> IO ()) -> -- ^ Function to send each chunk to the client
   IO () -> -- ^ Function to flush the stream
-  IO ()
+  IO Text
 generateReturningResponse modelName prompt = do
   generateOpsReturningResponse
     modelName

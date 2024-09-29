@@ -88,8 +88,8 @@ instance FromJSON ChatResponse where
       <*> v .:? "eval_duration"
 
 -- | Helper function to construct request and manager for chat
-chatOps_ :: 
-  Text -> 
+chatOps_ ::
+  Text ->
   [Message] ->
   Maybe Text ->
   Maybe Text ->
@@ -145,21 +145,21 @@ chatOps modelName messages mTools mFormat mStream mKeepAlive = do
     putStrLn "" -- newline after answer ends
     go
 
-chatOpsReturning :: 
+chatOpsReturning ::
   Text -> -- ^ Model name
   [Message] -> -- ^ Messages
   Maybe Text -> -- ^ Tools
   Maybe Text -> -- ^ Format
   Maybe Bool -> -- ^ Stream
   Maybe Text -> -- ^ Keep Alive
-  (Builder -> IO ()) -> IO () -> IO ()
+  (Builder -> IO ()) -> IO () -> IO Text
 chatOpsReturning modelName messages mTools mFormat mStream mKeepAlive sendChunk flush = do
   (request,manager) <- chatOps_ modelName messages mTools mFormat mStream mKeepAlive
   withResponse request manager $ \response -> do
-      let go = do
+      let go output = do
             bs <- brRead $ responseBody response
             if BS.null bs
-              then return ()  -- End of stream
+              then return ""  -- End of stream
               else do
                 let eRes = eitherDecode (BSL.fromStrict bs) :: Either String ChatResponse
                 case eRes of
@@ -167,31 +167,21 @@ chatOpsReturning modelName messages mTools mFormat mStream mKeepAlive sendChunk 
                     -- Handle the error case and log it
                     liftIO $ putStrLn $ "Error: " <> err
                     flush
+                    return ""
                   Right res -> do
                     -- Send the chunk of response
-                    sendChunk $ byteString $ BSL.toStrict $ BSL.fromStrict $ BS.pack $ show (fromMaybe "" $ content <$> message res)
+                    sendChunk $ byteString $ BS.pack $ T.unpack (maybe "" content (message res))
                     flush  -- Ensure data is flushed to the client
                     -- Check if we're done; if not, continue
                     if done res
-                      then return ()  -- End if processing is done
-                      else go         -- Continue the loop
+                      then return output  -- End if processing is done
+                    else go (output <> maybe "" content (message res))         -- Continue the loop
 
       -- Start streaming
-      go
-
-{-
-  resp <- httpLbs request manager
-  let eRes = eitherDecode (responseBody resp) :: Either String ChatResponse
-  case eRes of
-      Left err -> do
-        putStrLn $ "Error: " <> err
-        pure Nothing
-      Right res -> do
-        pure $ Just res
--}
+      go ""
 
 -- | Chat with a given model
-chat :: 
+chat ::
   Text  -- ^ Model name 
   -> [Message] -- ^ Messages
   -> IO ()
@@ -199,9 +189,9 @@ chat modelName messages =
   chatOps modelName messages Nothing Nothing Nothing Nothing
 
 -- | Chat with a given model but returning the response
-chatReturning :: 
+chatReturning ::
   Text    -- ^ Model name 
   -> [Message] -- ^ Messages
-  -> (Builder -> IO ()) -> IO () -> IO ()
+  -> (Builder -> IO ()) -> IO () -> IO Text
 chatReturning modelName messages sendChunk flush = do
   chatOpsReturning modelName messages Nothing Nothing (Just True) Nothing sendChunk flush
