@@ -2,28 +2,31 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.Ollama.Show (
-  -- * Show Model Info API
-  showModel,showModelOps,ShowModelResponse(..)
-) where
+module Data.Ollama.Show
+  ( -- * Show Model Info API
+    showModel
+  , showModelOps
+  , ShowModelResponse (..)
+  ) where
 
 import Data.Aeson
-import qualified Data.Ollama.Common.Utils as CU
+import Data.Ollama.Common.Utils qualified as CU
 import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import GHC.Generics
 import GHC.Int (Int64)
 import Network.HTTP.Client
 
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
+
 {- |
  #ShowModelOps#
  Input parameters for show model information.
 -}
 data ShowModelOps = ShowModelOps
-  { name :: Text,
-    verbose :: Maybe Bool
+  { name :: Text
+  , verbose :: Maybe Bool
   }
   deriving (Show, Eq, Generic, ToJSON)
 
@@ -33,46 +36,46 @@ data ShowModelOps = ShowModelOps
  Ouput structure for show model information.
 -}
 data ShowModelResponse = ShowModelResponse
-  { modelFile :: Text,
-    parameters :: Text,
-    template :: Text,
-    details :: ModelDetails,
-    modelInfo :: ModelInfo
+  { modelFile :: Text
+  , parameters :: Text
+  , template :: Text
+  , details :: ModelDetails
+  , modelInfo :: ModelInfo
   }
   deriving (Show, Eq)
 
 data ModelDetails = ModelDetails
-  { parentModel :: Text,
-    format :: Text,
-    familiy :: Text,
-    families :: [Text],
-    parameterSize :: Text,
-    quantizationLevel :: Text
+  { parentModel :: Text
+  , format :: Text
+  , familiy :: Text
+  , families :: [Text]
+  , parameterSize :: Text
+  , quantizationLevel :: Text
   }
   deriving (Show, Eq)
 
 data ModelInfo = ModelInfo
-  { generalArchitecture :: Maybe Text,
-    generalFileType :: Maybe Int,
-    generalParameterCount :: Maybe Int64,
-    generalQuantizationVersion :: Maybe Int,
-    llamaAttentionHeadCount :: Maybe Int,
-    llamaAttentionHeadCountKV :: Maybe Int,
-    llamaAttentionLayerNormRMSEpsilon :: Maybe Float,
-    llamaBlockCount :: Maybe Int,
-    llamaContextLength :: Maybe Int,
-    llamaEmbeddingLength :: Maybe Int,
-    llamaFeedForwardLength :: Maybe Int,
-    llamaRopeDimensionCount :: Maybe Int,
-    llamaRopeFreqBase :: Maybe Int64,
-    llamaVocabSize :: Maybe Int64,
-    tokenizerGgmlBosToken_id :: Maybe Int,
-    tokenizerGgmlEosToken_id :: Maybe Int,
-    tokenizerGgmlMerges :: Maybe [Text],
-    tokenizerGgmlMode :: Maybe Text,
-    tokenizerGgmlPre :: Maybe Text,
-    tokenizerGgmlTokenType :: Maybe [Text],
-    tokenizerGgmlTokens :: Maybe [Text]
+  { generalArchitecture :: Maybe Text
+  , generalFileType :: Maybe Int
+  , generalParameterCount :: Maybe Int64
+  , generalQuantizationVersion :: Maybe Int
+  , llamaAttentionHeadCount :: Maybe Int
+  , llamaAttentionHeadCountKV :: Maybe Int
+  , llamaAttentionLayerNormRMSEpsilon :: Maybe Float
+  , llamaBlockCount :: Maybe Int
+  , llamaContextLength :: Maybe Int
+  , llamaEmbeddingLength :: Maybe Int
+  , llamaFeedForwardLength :: Maybe Int
+  , llamaRopeDimensionCount :: Maybe Int
+  , llamaRopeFreqBase :: Maybe Int64
+  , llamaVocabSize :: Maybe Int64
+  , tokenizerGgmlBosToken_id :: Maybe Int
+  , tokenizerGgmlEosToken_id :: Maybe Int
+  , tokenizerGgmlMerges :: Maybe [Text]
+  , tokenizerGgmlMode :: Maybe Text
+  , tokenizerGgmlPre :: Maybe Text
+  , tokenizerGgmlTokenType :: Maybe [Text]
+  , tokenizerGgmlTokens :: Maybe [Text]
   }
   deriving (Show, Eq)
 
@@ -128,8 +131,10 @@ instance FromJSON ModelInfo where
 @since 1.0.0.0
 -}
 showModelOps ::
-  Text -> -- ^ model name
-  Maybe Bool -> -- ^ verbose
+  -- | model name
+  Text ->
+  -- | verbose
+  Maybe Bool ->
   IO (Maybe ShowModelResponse)
 showModelOps
   modelName
@@ -140,13 +145,13 @@ showModelOps
       initialRequest <- parseRequest $ T.unpack (url <> "/api/show")
       let reqBody =
             ShowModelOps
-              { name = modelName,
-                verbose = verbose
+              { name = modelName
+              , verbose = verbose
               }
           request =
             initialRequest
-              { method = "POST",
-                requestBody = RequestBodyLBS $ encode reqBody
+              { method = "POST"
+              , requestBody = RequestBodyLBS $ encode reqBody
               }
       response <- httpLbs request manager
       let eRes =
@@ -156,14 +161,14 @@ showModelOps
         Left _ -> pure Nothing
         Right r -> pure $ Just r
 
-
 {- | Show given model's information.
 
 Higher level API for show.
 @since 1.0.0.0
 -}
-showModel :: 
-  Text -> -- ^ model name
+showModel ::
+  -- | model name
+  Text ->
   IO (Maybe ShowModelResponse)
 showModel modelName =
   showModelOps modelName Nothing

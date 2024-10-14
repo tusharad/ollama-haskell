@@ -1,33 +1,33 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.Ollama.Ps (
- ps,
- RunningModels(..),
- RunningModel(..),
-) where
+module Data.Ollama.Ps
+  ( ps
+  , RunningModels (..)
+  , RunningModel (..)
+  ) where
 
 import Data.Aeson
-import Data.Time
-import Data.Ollama.Common.Utils as CU
 import Data.Ollama.Common.Types as CT
-import qualified Data.Text as T
+import Data.Ollama.Common.Utils as CU
+import Data.Text (Text)
+import Data.Text qualified as T
+import Data.Time
+import GHC.Int (Int64)
 import Network.HTTP.Client
 import Network.HTTP.Types.Status (statusCode)
-import Data.Text (Text)
-import GHC.Int (Int64)
 
 -- Types for Ps API
 newtype RunningModels = RunningModels [RunningModel]
   deriving (Eq, Show)
 
 data RunningModel = RunningModel
-  { name_ :: Text,
-    modelName :: Text,
-    size_ :: Int64,
-    modelDigest :: Text,
-    modelDetails :: ModelDetails,
-    expiresAt :: UTCTime,
-    sizeVRam :: Int64
+  { name_ :: Text
+  , modelName :: Text
+  , size_ :: Int64
+  , modelDigest :: Text
+  , modelDetails :: ModelDetails
+  , expiresAt :: UTCTime
+  , sizeVRam :: Int64
   }
   deriving (Eq, Show)
 
@@ -52,7 +52,8 @@ ps = do
   manager <- newManager defaultManagerSettings
   request <- parseRequest $ T.unpack (url <> "/api/ps")
   response <- httpLbs request manager
-  if statusCode (responseStatus response) /= 200 then pure Nothing
+  if statusCode (responseStatus response) /= 200
+    then pure Nothing
     else do
       let res = decode (responseBody response) :: Maybe RunningModels
       case res of

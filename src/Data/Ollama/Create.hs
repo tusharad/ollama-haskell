@@ -1,28 +1,28 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.Ollama.Create (
-  -- * Create Model API
-  createModel
+module Data.Ollama.Create
+  ( -- * Create Model API
+    createModel
   , createModelOps
   ) where
 
 import Control.Monad (unless)
 import Data.Aeson
-import qualified Data.ByteString.Lazy.Char8 as BSL
+import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
-import qualified Data.Text as T
-import qualified Data.Text.IO as T
+import Data.Text qualified as T
+import Data.Text.IO qualified as T
 import Network.HTTP.Client
 
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
 data CreateModelOps = CreateModelOps
-  { name :: Text,
-    modelFile :: Maybe Text,
-    stream :: Maybe Bool,
-    path :: Maybe FilePath
+  { name :: Text
+  , modelFile :: Maybe Text
+  , stream :: Maybe Bool
+  , path :: Maybe FilePath
   }
   deriving (Show, Eq)
 
@@ -39,10 +39,10 @@ instance ToJSON CreateModelOps where
         path
       ) =
       object
-        [ "name" .= name,
-          "modelfile" .= modelFile,
-          "stream" .= stream,
-          "path" .= path
+        [ "name" .= name
+        , "modelfile" .= modelFile
+        , "stream" .= stream
+        , "path" .= path
         ]
 
 instance FromJSON CreateModelResp where
@@ -54,10 +54,14 @@ instance FromJSON CreateModelResp where
 Please note, if you specify both ModelFile and Path, ModelFile will be used.
 -}
 createModelOps ::
-  Text -> -- ^ Model Name
-  Maybe Text -> -- ^ Model File
-  Maybe Bool -> -- ^ Stream
-  Maybe FilePath -> -- ^ Path
+  -- | Model Name
+  Text ->
+  -- | Model File
+  Maybe Text ->
+  -- | Stream
+  Maybe Bool ->
+  -- | Path
+  Maybe FilePath ->
   IO ()
 createModelOps
   modelName
@@ -70,15 +74,15 @@ createModelOps
       initialRequest <- parseRequest $ T.unpack (url <> "/api/create")
       let reqBody =
             CreateModelOps
-              { name = modelName,
-                modelFile = modelFile,
-                stream = stream,
-                path = path
+              { name = modelName
+              , modelFile = modelFile
+              , stream = stream
+              , path = path
               }
           request =
             initialRequest
-              { method = "POST",
-                requestBody = RequestBodyLBS $ encode reqBody
+              { method = "POST"
+              , requestBody = RequestBodyLBS $ encode reqBody
               }
       withResponse request manager $ \response -> do
         let go = do
@@ -98,14 +102,19 @@ createModelOps
                     )
         go
 
--- | Create a new model
--- | Please note, if you specify both ModelFile and Path, ModelFile will be used.
-createModel :: 
-  Text -> -- ^ Model Name 
-  Maybe Text ->  -- ^ Model File
-  Maybe FilePath ->  -- ^ Path 
+{- | Create a new model
+| Please note, if you specify both ModelFile and Path, ModelFile will be used.
+-}
+createModel ::
+  -- | Model Name
+  Text ->
+  -- | Model File
+  Maybe Text ->
+  -- | Path
+  Maybe FilePath ->
   IO ()
-createModel modelName modelFile = createModelOps
+createModel modelName modelFile =
+  createModelOps
     modelName
     modelFile
     Nothing

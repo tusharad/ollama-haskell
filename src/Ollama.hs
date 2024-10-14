@@ -1,67 +1,68 @@
 {-# LANGUAGE DuplicateRecordFields #-}
-{- | 
+
+{- |
   #Ollama-Haskell#
   This library lets you run LlMs from within Haskell projects. Inspired by `ollama-python`.
 -}
 module Ollama
   ( -- * Main APIs
+
     -- ** Generate Texts
-    generate,
-    generateOps,
-    generateReturningResponse,
-    generateOpsReturningResponse,
-    generateReturningResponse',
-    generateOpsReturningResponse',
+    generate
+
     -- ** Chat with LLMs
-    chat,
-    chatOps,
-    chatReturning,
-    chatOpsReturning,
-    chatReturning',
-    chatOpsReturning',
+  , chat
+
     -- ** Embeddings
-    embedding,
-    embeddingOps,
+  , embedding
+  , embeddingOps
+
     -- * Ollama operations
+
     -- ** Copy Models
-    copyModel,
+  , copyModel
+
     -- ** Create Models
-    createModel,
-    createModelOps,
+  , createModel
+  , createModelOps
+
     -- ** Delete Models
-    deleteModel,
+  , deleteModel
+
     -- ** List Models
-    list,
+  , list
+
     -- ** List currently running models
-    ps,
+  , ps
+
     -- ** Push and Pull
-    push,
-    pushOps,
-    pull,
-    pullOps,
+  , push
+  , pushOps
+  , pull
+  , pullOps
+
     -- ** Show Model Info
-    showModel,
-    showModelOps,
+  , showModel
+  , showModelOps
+
     -- * Types
-    ShowModelResponse(..),
-    Models(..),
-    ModelInfo(..),
-    RunningModels(..),
-    RunningModel(..),
-    ChatResponse(..),
-    Message(..)
+  , ShowModelResponse (..)
+  , Models (..)
+  , ModelInfo (..)
+  , RunningModels (..)
+  , RunningModel (..)
+  , Message (..)
   )
 where
 
-
-import Data.Ollama.Generate (generate, generateOps,generateReturningResponse,generateOpsReturningResponse,generateReturningResponse', generateOpsReturningResponse')
-import Data.Ollama.Chat (Message (..), chat,chatOps,ChatResponse(..),chatReturning,chatOpsReturning,chatReturning',chatOpsReturning')
+import Data.Ollama.Chat (Message (..), chat)
 import Data.Ollama.Copy (copyModel)
-import Data.Ollama.Create (createModel,createModelOps)
+import Data.Ollama.Create (createModel, createModelOps)
 import Data.Ollama.Delete (deleteModel)
-import Data.Ollama.Embeddings (embedding,embeddingOps)
-import Data.Ollama.List (list,Models(..),ModelInfo (..))
-import Data.Ollama.Ps (ps,RunningModels(..),RunningModel(..))
-import Data.Ollama.Pull (pull,pullOps)
-import Data.Ollama.Push (push,pushOps)
-import Data.Ollama.Show (showModel,showModelOps,ShowModelResponse(..))
+import Data.Ollama.Embeddings (embedding, embeddingOps)
+import Data.Ollama.Generate (generate)
+import Data.Ollama.List (ModelInfo (..), Models (..), list)
+import Data.Ollama.Ps (RunningModel (..), RunningModels (..), ps)
+import Data.Ollama.Pull (pull, pullOps)
+import Data.Ollama.Push (push, pushOps)
+import Data.Ollama.Show (ShowModelResponse (..), showModel, showModelOps)

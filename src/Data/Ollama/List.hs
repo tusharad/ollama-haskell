@@ -1,33 +1,32 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Ollama.List
-  ( 
-    -- * List Models API
-    list,
-    Models (..),
-    ModelInfo (..),
+  ( -- * List Models API
+    list
+  , Models (..)
+  , ModelInfo (..)
   )
 where
 
 import Data.Aeson
-import Data.Ollama.Common.Utils as CU
 import Data.Ollama.Common.Types as CT
-import qualified Data.Text as T
-import Network.HTTP.Client
-import Network.HTTP.Types.Status (statusCode)
+import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
+import Data.Text qualified as T
 import Data.Time
 import GHC.Int (Int64)
+import Network.HTTP.Client
+import Network.HTTP.Types.Status (statusCode)
 
 newtype Models = Models [ModelInfo]
   deriving (Eq, Show)
 
 data ModelInfo = ModelInfo
-  { name :: Text,
-    modifiedAt :: UTCTime,
-    size :: Int64,
-    digest :: Text,
-    details :: ModelDetails
+  { name :: Text
+  , modifiedAt :: UTCTime
+  , size :: Int64
+  , digest :: Text
+  , details :: ModelDetails
   }
   deriving (Eq, Show)
 
@@ -44,14 +43,15 @@ instance FromJSON ModelInfo where
       <*> v .: "digest"
       <*> v .: "details"
 
--- | List all models from local 
+-- | List all models from local
 list :: IO (Maybe Models)
 list = do
   let url = CU.host defaultOllama
   manager <- newManager defaultManagerSettings
   request <- parseRequest $ T.unpack (url <> "/api/tags")
   response <- httpLbs request manager
-  if statusCode (responseStatus response) /= 200 then pure Nothing
+  if statusCode (responseStatus response) /= 200
+    then pure Nothing
     else do
       let res = decode (responseBody response) :: Maybe Models
       case res of

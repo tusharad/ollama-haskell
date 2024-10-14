@@ -2,16 +2,16 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.Ollama.Copy ( 
-  -- * Copy Model API
-  copyModel 
+module Data.Ollama.Copy
+  ( -- * Copy Model API
+    copyModel
   ) where
 
 import Control.Monad (when)
 import Data.Aeson
-import qualified Data.Ollama.Common.Utils as CU
+import Data.Ollama.Common.Utils qualified as CU
 import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import GHC.Generics
 import Network.HTTP.Client
 import Network.HTTP.Types.Status (status404)
@@ -19,15 +19,17 @@ import Network.HTTP.Types.Status (status404)
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
 data CopyModelOps = CopyModelOps
-  { source :: Text,
-    destination :: Text
+  { source :: Text
+  , destination :: Text
   }
   deriving (Show, Eq, Generic, ToJSON)
 
 -- | Copy model from source to destination
 copyModel ::
-  Text -> -- ^ Source model
-  Text -> -- ^ Destination model
+  -- | Source model
+  Text ->
+  -- | Destination model
+  Text ->
   IO ()
 copyModel
   source
@@ -38,13 +40,13 @@ copyModel
       initialRequest <- parseRequest $ T.unpack (url <> "/api/copy")
       let reqBody =
             CopyModelOps
-              { source = source,
-                destination = destination
+              { source = source
+              , destination = destination
               }
           request =
             initialRequest
-              { method = "POST",
-                requestBody = RequestBodyLBS $ encode reqBody
+              { method = "POST"
+              , requestBody = RequestBodyLBS $ encode reqBody
               }
       response <- httpLbs request manager
       when

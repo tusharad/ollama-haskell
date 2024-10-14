@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Data.Ollama.Common.Utils (defaultOllama,OllamaClient(..)) where
+
+module Data.Ollama.Common.Utils (defaultOllama, OllamaClient (..)) where
 
 import Data.Ollama.Common.Types
 

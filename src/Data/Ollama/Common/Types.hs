@@ -7,12 +7,12 @@ import Data.Aeson
 import Data.Text (Text)
 
 data ModelDetails = ModelDetails
-  { parentModel :: Maybe Text,
-    format :: Text,
-    familiy :: Text,
-    families :: [Text],
-    parameterSize :: Text,
-    quantizationLevel :: Text
+  { parentModel :: Maybe Text
+  , format :: Text
+  , familiy :: Text
+  , families :: [Text]
+  , parameterSize :: Text
+  , quantizationLevel :: Text
   }
   deriving (Eq, Show)
 
