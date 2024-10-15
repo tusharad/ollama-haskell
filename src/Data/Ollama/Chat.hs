@@ -1,43 +1,86 @@
 {-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Ollama.Chat
   ( -- * Chat APIs
     chat
   , Message (..)
+  , Role (..)
+  , defaultChatOps
+  , ChatOps (..)
+  , ChatResponse (..)
   ) where
 
-import Control.Monad (unless)
 import Data.Aeson
+import Data.ByteString.Char8 qualified as BS
 import Data.ByteString.Lazy.Char8 qualified as BSL
+import Data.List.NonEmpty
+import Data.Maybe (isNothing)
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Text.IO qualified as T
 import Data.Time (UTCTime)
 import GHC.Generics
 import GHC.Int (Int64)
 import Network.HTTP.Client
 
--- TODO: Add Options parameter
-data ChatOps = ChatOps
-  { model :: Text
-  , messages :: [Message]
-  , tools :: Maybe Text
-  , format :: Maybe Text
-  , stream :: Maybe Bool
-  , keepAlive :: Maybe Text
-  }
+data Role = System | User | Assistant | Tool
   deriving (Show, Eq)
+
+instance ToJSON Role where
+  toJSON System = String "system"
+  toJSON User = String "user"
+  toJSON Assistant = String "assistant"
+  toJSON Tool = String "tool"
+
+instance FromJSON Role where
+  parseJSON (String "system") = pure System
+  parseJSON (String "user") = pure User
+  parseJSON (String "assistant") = pure Assistant
+  parseJSON (String "tool") = pure Tool
+  parseJSON _ = fail "Invalid Role value"
 
 -- TODO : Add tool_calls parameter
 data Message = Message
-  { role :: Text
+  { role :: Role
   , content :: Text
   , images :: Maybe [Text] -- Base64 encoded
   }
   deriving (Show, Eq, Generic, ToJSON, FromJSON)
+
+-- TODO: Add Options parameter
+data ChatOps = ChatOps
+  { chatModelName :: Text
+  , messages :: NonEmpty Message
+  , tools :: Maybe Text
+  , format :: Maybe Text
+  , stream :: Maybe (ChatResponse -> IO (), IO ())
+  , keepAlive :: Maybe Text
+  }
+
+instance Show ChatOps where
+  show (ChatOps {chatModelName = m, messages = ms, tools = t, format = f, keepAlive = ka}) =
+    let messagesStr = show (toList ms)
+        toolsStr = show t
+        formatStr = show f
+        keepAliveStr = show ka
+     in T.unpack m
+          ++ "\nMessages:\n"
+          ++ messagesStr
+          ++ "\n"
+          ++ toolsStr
+          ++ "\n"
+          ++ formatStr
+          ++ "\n"
+          ++ keepAliveStr
+
+instance Eq ChatOps where
+  (==) a b =
+    chatModelName a == chatModelName b
+      && messages a == messages b
+      && tools a == tools b
+      && format a == format b
+      && keepAlive a == keepAlive b
 
 data ChatResponse = ChatResponse
   { model :: Text
@@ -60,7 +103,7 @@ instance ToJSON ChatOps where
       , "messages" .= messages
       , "tools" .= tools
       , "format" .= format
-      , "stream" .= stream
+      , "stream" .= if isNothing stream then Just False else Just True
       , "keep_alive" .= keepAlive
       ]
 
@@ -78,76 +121,51 @@ instance FromJSON ChatResponse where
       <*> v .:? "eval_count"
       <*> v .:? "eval_duration"
 
--- | Helper function to construct request and manager for chat
-chatOps_ ::
-  Text ->
-  [Message] ->
-  Maybe Text ->
-  Maybe Text ->
-  Maybe Bool ->
-  Maybe Text ->
-  IO (Request, Manager)
-chatOps_ modelName messages mTools mFormat mStream mKeepAlive = do
+defaultChatOps :: ChatOps
+defaultChatOps =
+  ChatOps
+    { chatModelName = "llama3.2"
+    , messages = Message User "What is 2+2?" Nothing :| []
+    , tools = Nothing
+    , format = Nothing
+    , stream = Nothing
+    , keepAlive = Nothing
+    }
+
+-- | Chat with a given model
+chat :: ChatOps -> IO (Either String ChatResponse)
+chat cOps = do
   let url = CU.host defaultOllama
   manager <- newManager defaultManagerSettings
   initialRequest <- parseRequest $ T.unpack (url <> "/api/chat")
-  let reqBody =
-        ChatOps
-          { model = modelName
-          , messages = messages
-          , tools = mTools
-          , format = mFormat
-          , stream = mStream
-          , keepAlive = mKeepAlive
-          }
+  let reqBody = cOps
       request =
         initialRequest
           { method = "POST"
           , requestBody = RequestBodyLBS $ encode reqBody
           }
-  pure (request, manager)
-
--- | Chat with a given model. It's a lower level API with more options.
-chatOps ::
-  -- | Model name
-  Text ->
-  -- | Messages
-  [Message] ->
-  -- | Tools
-  Maybe Text ->
-  -- | Format
-  Maybe Text ->
-  -- | Stream
-  Maybe Bool ->
-  -- | Keep Alive
-  Maybe Text ->
-  IO ()
-chatOps modelName messages mTools mFormat mStream mKeepAlive = do
-  (request, manager) <- chatOps_ modelName messages mTools mFormat mStream mKeepAlive
   withResponse request manager $ \response -> do
-    let go = do
+    let streamResponse sendChunk flush = do
           bs <- brRead $ responseBody response
-          let eRes = decode (BSL.fromStrict bs) :: Maybe ChatResponse
-          case eRes of
-            Nothing -> do
-              putStrLn "Something went wrong"
-            Just res -> do
-              unless
-                (done res)
-                ( do
-                    let content' = maybe "" content (message res)
-                    T.putStr content'
-                    go
-                )
-    putStrLn "" -- newline after answer ends
-    go
-
--- | Chat with a given model
-chat ::
-  -- | Model name
-  Text ->
-  -- | Messages
-  [Message] ->
-  IO ()
-chat modelName messages =
-  chatOps modelName messages Nothing Nothing Nothing Nothing
+          if BS.null bs
+            then putStrLn "" >> pure (Left "")
+            else do
+              let eRes = eitherDecode (BSL.fromStrict bs) :: Either String ChatResponse
+              case eRes of
+                Left e -> pure (Left e)
+                Right r -> do
+                  _ <- sendChunk r
+                  _ <- flush
+                  if done r then pure (Left "") else streamResponse sendChunk flush
+    let genResponse op = do
+          bs <- brRead $ responseBody response
+          if BS.null bs
+            then do
+              let eRes = eitherDecode (BSL.fromStrict op) :: Either String ChatResponse
+              case eRes of
+                Left e -> pure (Left e)
+                Right r -> pure (Right r)
+            else genResponse (op <> bs)
+    case stream cOps of
+      Nothing -> genResponse ""
+      Just (sendChunk, flush) -> streamResponse sendChunk flush

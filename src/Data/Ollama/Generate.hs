@@ -28,7 +28,7 @@ import Network.HTTP.Client
 | you can pass to ollama generate api
 -}
 data GenerateOps = GenerateOps
-  { model :: Text
+  { modelName :: Text
   , prompt :: Text
   , suffix :: Maybe Text
   , images :: Maybe [Text] -- Base64 encoded
@@ -44,7 +44,7 @@ instance Show GenerateOps where
   show GenerateOps {..} =
     "GenerateOps { "
       <> "model : "
-      <> T.unpack model
+      <> T.unpack modelName
       <> ", prompt : "
       <> T.unpack prompt
       <> ", suffix : "
@@ -62,7 +62,19 @@ instance Show GenerateOps where
       <> ", raw : "
       <> show raw
       <> ", keepAlive : "
-      <> show model
+      <> show keepAlive
+
+instance Eq GenerateOps where
+    (==) a b = 
+        modelName a == modelName b &&
+        prompt a == prompt b &&
+        suffix a == suffix b &&
+        images a == images b &&
+        format a == format b &&
+        system a == system b &&
+        template a == template b &&
+        raw a == raw b &&
+        keepAlive a == keepAlive b
 
 -- TODO: Add Context Param
 
@@ -126,7 +138,7 @@ instance FromJSON GenerateResponse where
 defaultGenerateOps :: GenerateOps
 defaultGenerateOps =
   GenerateOps
-    { model = "llama3.2"
+    { modelName = "llama3.2"
     , prompt = "what is 2+2"
     , suffix = Nothing
     , images = Nothing
