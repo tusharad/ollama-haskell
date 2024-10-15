@@ -55,8 +55,11 @@ Make sure you have [Ollama](https://ollama.com) installed and running on your lo
 
 ## Future Updates
 
-- Adding test cases and setting up CI piplines.
-- `options` parameter in `generate`.
+- [x] Improve documentation
+- [x] Add tests.
+- [ ] Add examples.
+- [ ] Add CI/CD pipeline.
+- [ ] `options` parameter in `generate`.
 
 Stay tuned for future updates and improvements!
 

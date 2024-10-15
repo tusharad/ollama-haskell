@@ -24,6 +24,7 @@ import GHC.Generics
 import GHC.Int (Int64)
 import Network.HTTP.Client
 
+-- | Enumerated roles that can participate in a chat.
 data Role = System | User | Assistant | Tool
   deriving (Show, Eq)
 
@@ -41,21 +42,31 @@ instance FromJSON Role where
   parseJSON _ = fail "Invalid Role value"
 
 -- TODO : Add tool_calls parameter
+-- | Represents a message within a chat, including its role and content.
 data Message = Message
   { role :: Role
+  -- ^ The role of the entity sending the message (e.g., 'User', 'Assistant').
   , content :: Text
-  , images :: Maybe [Text] -- Base64 encoded
+  -- ^ The textual content of the message.
+  , images :: Maybe [Text]
+  -- ^ Optional list of base64 encoded images that accompany the message.
   }
   deriving (Show, Eq, Generic, ToJSON, FromJSON)
 
 -- TODO: Add Options parameter
 data ChatOps = ChatOps
   { chatModelName :: Text
+ -- ^ The name of the chat model to be used.
   , messages :: NonEmpty Message
+  -- ^ A non-empty list of messages forming the conversation context.
   , tools :: Maybe Text
+  -- ^ Optional tools that may be used in the chat.
   , format :: Maybe Text
+  -- ^ An optional format for the chat response.
   , stream :: Maybe (ChatResponse -> IO (), IO ())
+  -- ^ Optional streaming functions where the first handles each chunk of the response, and the second flushes the stream.
   , keepAlive :: Maybe Text
+  -- ^ Optional text to specify keep-alive behavior.  
   }
 
 instance Show ChatOps where
@@ -84,15 +95,25 @@ instance Eq ChatOps where
 
 data ChatResponse = ChatResponse
   { model :: Text
+ -- ^ The name of the model that generated this response.
   , createdAt :: UTCTime
+  -- ^ The timestamp when the response was created.
   , message :: Maybe Message
+  -- ^ The message content of the response, if any.
   , done :: Bool
+  -- ^ Indicates whether the chat process has completed.
   , totalDuration :: Maybe Int64
+  -- ^ Optional total duration in milliseconds for the chat process.
   , loadDuration :: Maybe Int64
+  -- ^ Optional load duration in milliseconds for loading the model.
   , promptEvalCount :: Maybe Int64
+  -- ^ Optional count of prompt evaluations during the chat process.
   , promptEvalDuration :: Maybe Int64
+  -- ^ Optional duration in milliseconds for evaluating the prompt.
   , evalCount :: Maybe Int64
+  -- ^ Optional count of evaluations during the chat process.
   , evalDuration :: Maybe Int64
+  -- ^ Optional duration in milliseconds for evaluations during the chat process.  
   }
   deriving (Show, Eq)
 
@@ -121,6 +142,14 @@ instance FromJSON ChatResponse where
       <*> v .:? "eval_count"
       <*> v .:? "eval_duration"
 
+-- | 
+-- A default configuration for initiating a chat with a model. 
+-- This can be used as a starting point and modified as needed.
+-- 
+-- Example:
+-- 
+-- > let ops = defaultChatOps { chatModelName = "customModel" }
+-- > chat ops
 defaultChatOps :: ChatOps
 defaultChatOps =
   ChatOps
@@ -132,7 +161,19 @@ defaultChatOps =
     , keepAlive = Nothing
     }
 
--- | Chat with a given model
+-- | 
+-- Initiates a chat session with the specified 'ChatOps' configuration and returns either
+-- a 'ChatResponse' or an error message.
+--
+-- This function sends a request to the Ollama chat API with the given options.
+-- 
+-- Example:
+--
+-- > let ops = defaultChatOps
+-- > result <- chat ops
+-- > case result of
+-- >   Left errorMsg -> putStrLn ("Error: " ++ errorMsg)
+-- >   Right response -> print response
 chat :: ChatOps -> IO (Either String ChatResponse)
 chat cOps = do
   let url = CU.host defaultOllama

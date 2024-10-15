@@ -62,6 +62,10 @@ main = do
         Nothing -> putStrLn "Something went wrong"
         Just res -> T.putStrLn $ Ollama.content res
 
+  -- ps
+  res <- Ollama.ps
+  print res
+
   -- Embeddings
   void $ Ollama.embedding "llama3.1" "What is 5+2?"
 
