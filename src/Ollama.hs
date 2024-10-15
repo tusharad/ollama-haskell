@@ -9,6 +9,9 @@ module Ollama
 
     -- ** Generate Texts
     generate
+  , defaultGenerateOps
+  , GenerateOps (..)
+  , GenerateResponse (..)
 
     -- ** Chat with LLMs
   , chat
@@ -60,7 +63,7 @@ import Data.Ollama.Copy (copyModel)
 import Data.Ollama.Create (createModel, createModelOps)
 import Data.Ollama.Delete (deleteModel)
 import Data.Ollama.Embeddings (embedding, embeddingOps)
-import Data.Ollama.Generate (generate)
+import Data.Ollama.Generate (GenerateOps (..), GenerateResponse (..), defaultGenerateOps, generate)
 import Data.Ollama.List (ModelInfo (..), Models (..), list)
 import Data.Ollama.Ps (RunningModel (..), RunningModels (..), ps)
 import Data.Ollama.Pull (pull, pullOps)
