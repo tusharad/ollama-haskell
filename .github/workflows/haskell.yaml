@@ -1,0 +1,34 @@
+name: Haskell CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - name: Copy repo into actions 
+      uses: actions/checkout@v3
+    
+    - name: Install ollama
+      run: make install-ollama
+    
+    - name: install dependancies, build.
+      uses: haskell-actions/setup@v2
+      id: setup
+      run: |
+        cabal build all
+    
+    - name: run tests
+      run: |
+        cabal test all
