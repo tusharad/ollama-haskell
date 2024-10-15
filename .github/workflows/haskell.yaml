@@ -23,12 +23,14 @@ jobs:
     - name: Install ollama
       run: make install-ollama
     
-    - name: install dependancies, build.
+    - name: Setup cabal
       uses: haskell-actions/setup@v2
       id: setup
+    
+    - name: Build project
       run: |
         cabal build all
     
-    - name: run tests
+    - name: Run tests
       run: |
         cabal test all
