@@ -10,11 +10,17 @@ This library allows you to interact with Ollama, a tool that lets you run large 
 {-# LANGUAGE OverloadedStrings #-}
 module Lib where
 
-import Ollama
+import Ollama (GenerateOps(..), defaultGenerateOps, generate)
 
 main :: IO ()
 main = do
-    generate "llama3.1" "Is haskell a good language?"
+    void $
+      generate
+        defaultGenerateOps
+          { modelName = "llama3.2"
+          , prompt = "what is functional programming?"
+          , stream = Just (T.putStr . Ollama.response_, pure ())
+          }
 ```
 
 ### Output
@@ -31,6 +37,8 @@ Whether Haskell is a "good" language depends on what you're looking for in a pro
 2. **Functional programming paradigm**: Haskell encourages declarative coding, making it easier to reason about code and write correct programs.
 3. **Garbage collection**: Haskell handles memory management automatically, freeing you from worries about manual memory deallocation.
 ```
+
+You can find practical examples demonstrating how to use the library in the `src/Lib.hs` file. 
 
 ## Prerequisite
 
@@ -57,8 +65,8 @@ Make sure you have [Ollama](https://ollama.com) installed and running on your lo
 
 - [x] Improve documentation
 - [x] Add tests.
-- [ ] Add examples.
-- [ ] Add CI/CD pipeline.
+- [x] Add examples.
+- [x] Add CI/CD pipeline.
 - [ ] `options` parameter in `generate`.
 
 Stay tuned for future updates and improvements!

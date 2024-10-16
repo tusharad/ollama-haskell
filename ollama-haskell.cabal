@@ -36,12 +36,13 @@ library
     -- other-modules:
     -- other-extensions:
     build-depends:    base ^>=4.18
-                    , http-client
-                    , text
-                    , bytestring
-                    , aeson
-                    , time
-                    , http-types
+                    , aeson >= 2.2.1 && < 2.3
+                    , bytestring >= 0.11.5 && < 0.12
+                    , text >= 2.0.2 && < 2.1
+                    , time >= 1.12.2 && < 1.13
+                    , http-client >= 0.7.17 && < 0.8
+                    , http-types >= 0.12.4 && < 0.13
+
     hs-source-dirs:   src
     default-language: GHC2021
 
