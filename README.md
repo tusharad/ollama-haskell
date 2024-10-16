@@ -46,13 +46,7 @@ Make sure you have [Ollama](https://ollama.com) installed and running on your lo
 
 ## How to Use It
 
-1. Add this GitHub repository link to your project's dependencies in the `stack.yaml` file:
-   ```yaml
-   extra-deps:
-     - git: https://github.com/tusharad/ollama-haskell
-       commit: <latest-commit-hash>
-   ```
-2. Include the `ollama-haskell` package in your `.cabal` file:
+1. Include the `ollama-haskell` package in your `.cabal` file:
    ```cabal
    build-depends:
        base >= 4.7 && < 5,
