@@ -38,7 +38,7 @@ Whether Haskell is a "good" language depends on what you're looking for in a pro
 3. **Garbage collection**: Haskell handles memory management automatically, freeing you from worries about manual memory deallocation.
 ```
 
-You can find practical examples demonstrating how to use the library in the `src/Lib.hs` file. 
+You can find practical examples demonstrating how to use the library in the `src/OllamaExamples.hs` file. 
 
 ## Prerequisite
 

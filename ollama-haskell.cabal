@@ -1,6 +1,6 @@
 cabal-version:      3.4
 name:               ollama-haskell
-version:            0.1.0.0
+version:            0.1.0.1
 synopsis:           Ollama Haskell library
 -- description:
 license:            MIT
@@ -40,7 +40,7 @@ library
                     , Data.Ollama.Pull
                     , Data.Ollama.Push
                     , Data.Ollama.Show
-                    , Lib
+                    , OllamaExamples
     -- other-modules:
     -- other-extensions:
     build-depends:    base ^>=4.18
