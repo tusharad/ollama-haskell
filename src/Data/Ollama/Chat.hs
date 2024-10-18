@@ -42,6 +42,7 @@ instance FromJSON Role where
   parseJSON _ = fail "Invalid Role value"
 
 -- TODO : Add tool_calls parameter
+
 -- | Represents a message within a chat, including its role and content.
 data Message = Message
   { role :: Role
@@ -56,7 +57,7 @@ data Message = Message
 -- TODO: Add Options parameter
 data ChatOps = ChatOps
   { chatModelName :: Text
- -- ^ The name of the chat model to be used.
+  -- ^ The name of the chat model to be used.
   , messages :: NonEmpty Message
   -- ^ A non-empty list of messages forming the conversation context.
   , tools :: Maybe Text
@@ -66,7 +67,7 @@ data ChatOps = ChatOps
   , stream :: Maybe (ChatResponse -> IO (), IO ())
   -- ^ Optional streaming functions where the first handles each chunk of the response, and the second flushes the stream.
   , keepAlive :: Maybe Text
-  -- ^ Optional text to specify keep-alive behavior.  
+  -- ^ Optional text to specify keep-alive behavior.
   }
 
 instance Show ChatOps where
@@ -95,7 +96,7 @@ instance Eq ChatOps where
 
 data ChatResponse = ChatResponse
   { model :: Text
- -- ^ The name of the model that generated this response.
+  -- ^ The name of the model that generated this response.
   , createdAt :: UTCTime
   -- ^ The timestamp when the response was created.
   , message :: Maybe Message
@@ -113,7 +114,7 @@ data ChatResponse = ChatResponse
   , evalCount :: Maybe Int64
   -- ^ Optional count of evaluations during the chat process.
   , evalDuration :: Maybe Int64
-  -- ^ Optional duration in milliseconds for evaluations during the chat process.  
+  -- ^ Optional duration in milliseconds for evaluations during the chat process.
   }
   deriving (Show, Eq)
 
@@ -142,14 +143,15 @@ instance FromJSON ChatResponse where
       <*> v .:? "eval_count"
       <*> v .:? "eval_duration"
 
--- | 
--- A default configuration for initiating a chat with a model. 
--- This can be used as a starting point and modified as needed.
--- 
--- Example:
--- 
--- > let ops = defaultChatOps { chatModelName = "customModel" }
--- > chat ops
+{- |
+A default configuration for initiating a chat with a model.
+This can be used as a starting point and modified as needed.
+
+Example:
+
+> let ops = defaultChatOps { chatModelName = "customModel" }
+> chat ops
+-}
 defaultChatOps :: ChatOps
 defaultChatOps =
   ChatOps
@@ -161,23 +163,26 @@ defaultChatOps =
     , keepAlive = Nothing
     }
 
--- | 
--- Initiates a chat session with the specified 'ChatOps' configuration and returns either
--- a 'ChatResponse' or an error message.
---
--- This function sends a request to the Ollama chat API with the given options.
--- 
--- Example:
---
--- > let ops = defaultChatOps
--- > result <- chat ops
--- > case result of
--- >   Left errorMsg -> putStrLn ("Error: " ++ errorMsg)
--- >   Right response -> print response
+{- |
+Initiates a chat session with the specified 'ChatOps' configuration and returns either
+a 'ChatResponse' or an error message.
+
+This function sends a request to the Ollama chat API with the given options.
+
+Example:
+
+> let ops = defaultChatOps
+> result <- chat ops
+> case result of
+>   Left errorMsg -> putStrLn ("Error: " ++ errorMsg)
+>   Right response -> print response
+-}
 chat :: ChatOps -> IO (Either String ChatResponse)
 chat cOps = do
   let url = CU.host defaultOllama
-  manager <- newManager defaultManagerSettings
+  manager <-
+    newManager defaultManagerSettings -- Setting response timeout to 5 minutes, since llm takes time
+                    { managerResponseTimeout = responseTimeoutMicro (5 * 60 * 1000000)}
   initialRequest <- parseRequest $ T.unpack (url <> "/api/chat")
   let reqBody = cOps
       request =
