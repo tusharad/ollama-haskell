@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -138,7 +139,7 @@ showModelOps ::
   IO (Maybe ShowModelResponse)
 showModelOps
   modelName
-  verbose =
+  verbose_ =
     do
       let url = CU.host CU.defaultOllama
       manager <- newManager defaultManagerSettings
@@ -146,7 +147,7 @@ showModelOps
       let reqBody =
             ShowModelOps
               { name = modelName
-              , verbose = verbose
+              , verbose = verbose_
               }
           request =
             initialRequest

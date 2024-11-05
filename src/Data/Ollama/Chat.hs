@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Ollama.Chat
@@ -119,14 +120,14 @@ data ChatResponse = ChatResponse
   deriving (Show, Eq)
 
 instance ToJSON ChatOps where
-  toJSON (ChatOps model messages tools format stream keepAlive) =
+  toJSON (ChatOps model_ messages_ tools_ format_ stream_ keepAlive_) =
     object
-      [ "model" .= model
-      , "messages" .= messages
-      , "tools" .= tools
-      , "format" .= format
-      , "stream" .= if isNothing stream then Just False else Just True
-      , "keep_alive" .= keepAlive
+      [ "model" .= model_
+      , "messages" .= messages_
+      , "tools" .= tools_
+      , "format" .= format_
+      , "stream" .= if isNothing stream_ then Just False else Just True
+      , "keep_alive" .= keepAlive_
       ]
 
 instance FromJSON ChatResponse where
@@ -181,8 +182,10 @@ chat :: ChatOps -> IO (Either String ChatResponse)
 chat cOps = do
   let url = CU.host defaultOllama
   manager <-
-    newManager defaultManagerSettings -- Setting response timeout to 5 minutes, since llm takes time
-                    { managerResponseTimeout = responseTimeoutMicro (5 * 60 * 1000000)}
+    newManager
+      defaultManagerSettings -- Setting response timeout to 5 minutes, since llm takes time
+        { managerResponseTimeout = responseTimeoutMicro (5 * 60 * 1000000)
+        }
   initialRequest <- parseRequest $ T.unpack (url <> "/api/chat")
   let reqBody = cOps
       request =

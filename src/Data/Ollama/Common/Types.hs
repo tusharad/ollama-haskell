@@ -1,7 +1,10 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.Ollama.Common.Types where
+module Data.Ollama.Common.Types
+  ( ModelDetails (..)
+  , OllamaClient (..)
+  ) where
 
 import Data.Aeson
 import Data.Text (Text)

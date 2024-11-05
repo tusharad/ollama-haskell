@@ -1,0 +1,59 @@
+name:                ollama-haskell
+version:             0.1.0.3
+github:              "tusharad/ollama-haskell"
+license:             MIT
+author:              "tushar"
+maintainer:          "tusharadhatrao@gmail.com"
+copyright:           "2024 tushar"
+
+extra-source-files:
+- README.md
+- CHANGELOG.md
+
+# Metadata used when publishing your package
+synopsis:            Haskell bindings for ollama.
+category:            Web
+description:         Please see the README on GitHub at <https://github.com/tusharad/ollama-haskell#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- aeson 
+- bytestring
+- text 
+- time
+- http-client 
+- http-types 
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wmissing-export-lists
+- -Wmissing-home-modules
+- -Wpartial-fields
+- -Wredundant-constraints
+
+library:
+  source-dirs: src
+  default-extensions:
+    - ImportQualifiedPost
+
+tests:
+  ollama-haskell-test:
+    main:                Main.hs
+    source-dirs:         test
+    default-extensions:
+      - ImportQualifiedPost
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - ollama-haskell
+    - tasty
+    - tasty-hunit
+    - text
+    - silently
+

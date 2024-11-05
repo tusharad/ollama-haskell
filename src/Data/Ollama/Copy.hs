@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -32,16 +33,16 @@ copyModel ::
   Text ->
   IO ()
 copyModel
-  source
-  destination =
+  source_
+  destination_ =
     do
       let url = CU.host CU.defaultOllama
       manager <- newManager defaultManagerSettings
       initialRequest <- parseRequest $ T.unpack (url <> "/api/copy")
       let reqBody =
             CopyModelOps
-              { source = source
-              , destination = destination
+              { source = source_
+              , destination = destination_
               }
           request =
             initialRequest
