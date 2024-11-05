@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module OllamaExamples where
+module OllamaExamples (main) where
 
 import Control.Monad (void)
 import Data.List.NonEmpty (NonEmpty((:|)))
