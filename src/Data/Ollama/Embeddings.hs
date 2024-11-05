@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -31,12 +32,12 @@ data EmbeddingResp = EmbeddingResp
   deriving (Show, Eq, Generic, FromJSON)
 
 instance ToJSON EmbeddingOps where
-  toJSON (EmbeddingOps model input truncate' keepAlive) =
+  toJSON (EmbeddingOps model_ input_ truncate' keepAlive_) =
     object
-      [ "model" .= model
-      , "input" .= input
+      [ "model" .= model_
+      , "input" .= input_
       , "truncate" .= truncate'
-      , "keep_alive" .= keepAlive
+      , "keep_alive" .= keepAlive_
       ]
 
 -- TODO: Add Options parameter
@@ -52,14 +53,14 @@ embeddingOps ::
   -- | Keep Alive
   Maybe Text ->
   IO (Maybe EmbeddingResp)
-embeddingOps modelName input mTruncate mKeepAlive = do
+embeddingOps modelName input_ mTruncate mKeepAlive = do
   let url = CU.host defaultOllama
   manager <- newManager defaultManagerSettings
   initialRequest <- parseRequest $ T.unpack (url <> "/api/embed")
   let reqBody =
         EmbeddingOps
           { model = modelName
-          , input = input
+          , input = input_
           , truncate = mTruncate
           , keepAlive = mKeepAlive
           }
@@ -83,5 +84,5 @@ embedding ::
   -- | Input
   Text ->
   IO (Maybe EmbeddingResp)
-embedding modelName input =
-  embeddingOps modelName input Nothing Nothing
+embedding modelName input_ =
+  embeddingOps modelName input_ Nothing Nothing

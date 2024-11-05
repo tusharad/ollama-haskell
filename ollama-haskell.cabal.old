@@ -1,0 +1,71 @@
+cabal-version:      3.4
+name:               ollama-haskell
+version:            0.1.0.2
+synopsis:           Ollama Haskell library
+-- description:
+license:            MIT
+license-file:       LICENSE
+author:             Tushar Adhatrao
+maintainer:         tusharadhatrao@gmail.com
+description:        Haskell bindings for Ollama.
+-- copyright:
+category:           Data
+build-type:         Simple
+extra-doc-files:    CHANGELOG.md
+-- extra-source-files:
+Homepage:            https://github.com/tusharad/ollama-haskell
+Bug-reports:         https://github.com/tusharad/ollama-haskell/issues
+extra-source-files:  CHANGELOG.md
+
+Source-repository head
+  type:     git
+  location: https://github.com/tusharad/ollama-haskell
+
+common warnings
+    ghc-options: -Wall
+
+library
+    import:           warnings
+    exposed-modules:  Ollama
+                    , Data.Ollama.Chat
+                    , Data.Ollama.Copy
+                    , Data.Ollama.Common.Types
+                    , Data.Ollama.Common.Utils
+                    , Data.Ollama.Create
+                    , Data.Ollama.Delete
+                    , Data.Ollama.Embeddings
+                    , Data.Ollama.Generate
+                    , Data.Ollama.List
+                    , Data.Ollama.Ps
+                    , Data.Ollama.Pull
+                    , Data.Ollama.Push
+                    , Data.Ollama.Show
+                    , OllamaExamples
+    -- other-modules:
+    -- other-extensions:
+    build-depends:    base ^>=4.18
+                    , aeson >= 2.2.1 && < 2.3
+                    , bytestring >= 0.11.5 && < 0.12
+                    , text >= 2.0.2 && < 2.1
+                    , time >= 1.12.2 && < 1.13
+                    , http-client >= 0.7.17 && < 0.8
+                    , http-types >= 0.12.4 && < 0.13
+
+    hs-source-dirs:   src
+    default-language: GHC2021
+
+test-suite ollama-haskell-test
+    import:           warnings
+    default-language: GHC2021
+    -- other-modules:
+    -- other-extensions:
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.18,
+        tasty,
+        tasty-hunit,
+        text,
+        silently,
+        ollama-haskell

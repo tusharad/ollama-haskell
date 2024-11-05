@@ -30,10 +30,5 @@ jobs:
         ghc-version: '9.6.6'
       id: setup
     
-    - name: Build project
-      run: |
-        cabal build all
-    
-    - name: Run tests
-      run: |
-        cabal test all
+    - name: install dependancies, build and test stack project.
+      uses: freckle/stack-action@v5

@@ -33,16 +33,16 @@ newtype CreateModelResp = CreateModelResp {status :: Text}
 instance ToJSON CreateModelOps where
   toJSON
     ( CreateModelOps
-        name
-        modelFile
-        stream
-        path
+        name_
+        modelFile_
+        stream_
+        path_
       ) =
       object
-        [ "name" .= name
-        , "modelfile" .= modelFile
-        , "stream" .= stream
-        , "path" .= path
+        [ "name" .= name_
+        , "modelfile" .= modelFile_
+        , "stream" .= stream_
+        , "path" .= path_
         ]
 
 instance FromJSON CreateModelResp where
@@ -65,9 +65,9 @@ createModelOps ::
   IO ()
 createModelOps
   modelName
-  modelFile
-  stream
-  path =
+  modelFile_
+  stream_
+  path_ =
     do
       let url = CU.host defaultOllama
       manager <- newManager defaultManagerSettings
@@ -75,9 +75,9 @@ createModelOps
       let reqBody =
             CreateModelOps
               { name = modelName
-              , modelFile = modelFile
-              , stream = stream
-              , path = path
+              , modelFile = modelFile_
+              , stream = stream_
+              , path = path_
               }
           request =
             initialRequest
@@ -113,8 +113,8 @@ createModel ::
   -- | Path
   Maybe FilePath ->
   IO ()
-createModel modelName modelFile =
+createModel modelName modelFile_ =
   createModelOps
     modelName
-    modelFile
+    modelFile_
     Nothing
