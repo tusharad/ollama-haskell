@@ -1,5 +1,9 @@
 # Revision history for ollama-haskell
 
+## 0.1.1.3 -- 2024-11-06
+
+* Added generateJson and chatJson. High level function to return response in Haskell type.
+
 ## 0.1.0.3 -- 2024-11-05
 
 * Moving to stack instead of cabal.

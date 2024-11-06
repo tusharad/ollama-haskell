@@ -7,12 +7,14 @@ module Ollama
 
     -- ** Generate Texts
     generate
+  , generateJson
   , defaultGenerateOps
   , GenerateOps (..)
   , GenerateResponse (..)
 
     -- ** Chat with LLMs
   , chat
+  , chatJson
   , Role (..)
   , defaultChatOps
   , ChatResponse (..)
@@ -66,6 +68,7 @@ import Data.Ollama.Chat
   , Message (..)
   , Role (..)
   , chat
+  , chatJson
   , defaultChatOps
   )
 import Data.Ollama.Copy (copyModel)
@@ -77,6 +80,7 @@ import Data.Ollama.Generate
   , GenerateResponse (..)
   , defaultGenerateOps
   , generate
+  , generateJson
   )
 import Data.Ollama.List (ModelInfo (..), Models (..), list)
 import Data.Ollama.Ps (RunningModel (..), RunningModels (..), ps)

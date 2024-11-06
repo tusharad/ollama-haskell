@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module OllamaExamples (main) where
 
@@ -10,6 +12,15 @@ import Data.Ollama.Chat qualified as Chat
 import Data.Text.IO qualified as T
 import Ollama (GenerateOps(..), Role(..), chat, defaultChatOps, defaultGenerateOps, generate)
 import Ollama qualified
+import Data.Aeson
+import GHC.Generics
+import Data.Ollama.Generate (generateJson)
+import Data.Ollama.Chat (chatJson)
+
+data Example = Example {
+    sortedList :: [String]
+  , wasListAlreadSorted :: Bool
+  } deriving (Show, Eq, Generic, FromJSON, ToJSON)
 
 main :: IO ()
 main = do
@@ -80,6 +91,39 @@ main = do
   -- Example 7: Embedding with Options
   -- This example uses the `embeddingOps` function, allowing for additional configuration like options and streaming.
   void $ Ollama.embeddingOps "llama3.1" "What is 5+2?" Nothing Nothing
+
+  -- Example 8: Stream Text Generation with JSON Body
+  -- It is a higher level version of generate, here with genOps, you can also provide a Haskell type. 
+  -- You will get the response from LLM in this Haskell type.
+  let expectedJsonStrucutre = Example {
+    sortedList = ["sorted List here"]
+  , wasListAlreadSorted = False
+  }
+  eRes2 <- generateJson
+      defaultGenerateOps
+        { modelName = "llama3.2"
+        , prompt = "Sort given list: [14, 12 , 13, 67]. Also tell whether list was already sorted or not."
+        }
+      expectedJsonStrucutre
+      (Just 2)
+  case eRes2 of
+    Left e -> putStrLn e
+    Right r -> print ("JSON response: " :: String, r)
+  -- ("JSON response: ",Example {sortedList = ["1","2","3","4"], wasListAlreadSorted = False})
+  
+  -- Example 9: Chat with JSON Body
+  -- This example demonstrates setting up a chat session but you receive the response in
+  -- given haskell type.
+  let msg0 = Ollama.Message User "Sort given list: [4, 2 , 3, 67]. Also tell whether list was already sorted or not." Nothing
+  eRes3 <-
+    chatJson
+      defaultChatOps
+        { Chat.chatModelName = "llama3.2"
+        , Chat.messages = msg0 :| []
+        }
+        expectedJsonStrucutre
+        (Just 2)
+  print eRes3
 
 {-
 Scotty example:

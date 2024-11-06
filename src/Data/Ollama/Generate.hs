@@ -6,6 +6,7 @@ module Data.Ollama.Generate
   ( -- * Generate Texts
     generate
   , defaultGenerateOps
+  , generateJson
   , GenerateOps (..)
   , GenerateResponse (..)
   ) where
@@ -17,6 +18,7 @@ import Data.Maybe
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Text.Encoding qualified as T
 import Data.Time (UTCTime)
 import GHC.Int (Int64)
 import Network.HTTP.Client
@@ -24,13 +26,13 @@ import Network.HTTP.Client
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
 
-{- | 
-  Input type for generate functions. This data type represents all possible configurations 
+{- |
+  Input type for generate functions. This data type represents all possible configurations
   that you can pass to the Ollama generate API.
-  
+
   Example:
-  
-  > let ops = GenerateOps 
+
+  > let ops = GenerateOps
   >         { modelName = "llama3.2"
   >         , prompt = "What is the meaning of life?"
   >         , suffix = Nothing
@@ -91,21 +93,22 @@ instance Show GenerateOps where
       <> show keepAlive
 
 instance Eq GenerateOps where
-    (==) a b = 
-        modelName a == modelName b &&
-        prompt a == prompt b &&
-        suffix a == suffix b &&
-        images a == images b &&
-        format a == format b &&
-        system a == system b &&
-        template a == template b &&
-        raw a == raw b &&
-        keepAlive a == keepAlive b
+  (==) a b =
+    modelName a == modelName b
+      && prompt a == prompt b
+      && suffix a == suffix b
+      && images a == images b
+      && format a == format b
+      && system a == system b
+      && template a == template b
+      && raw a == raw b
+      && keepAlive a == keepAlive b
 
 -- TODO: Add Context Param
 
--- | 
--- Result type for generate function containing the model's response and meta-information.
+{- |
+Result type for generate function containing the model's response and meta-information.
+-}
 data GenerateResponse = GenerateResponse
   { model :: Text
   -- ^ The name of the model that generated the response.
@@ -171,15 +174,16 @@ instance FromJSON GenerateResponse where
       <*> v .:? "eval_count"
       <*> v .:? "eval_duration"
 
--- | 
--- A function to create a default 'GenerateOps' type with preset values.
--- 
--- Example:
---
--- > let ops = defaultGenerateOps
--- > generate ops
--- 
--- This will generate a response using the default configuration.
+{- |
+A function to create a default 'GenerateOps' type with preset values.
+
+Example:
+
+> let ops = defaultGenerateOps
+> generate ops
+
+This will generate a response using the default configuration.
+-}
 defaultGenerateOps :: GenerateOps
 defaultGenerateOps =
   GenerateOps
@@ -195,43 +199,44 @@ defaultGenerateOps =
     , keepAlive = Nothing
     }
 
--- | 
--- Generate function that returns either a 'GenerateResponse' type or an error message.
--- It takes a 'GenerateOps' configuration and performs a request to the Ollama generate API.
--- 
--- Examples:
---
--- Basic usage without streaming:
---
--- > let ops = GenerateOps 
--- >         { modelName = "llama3.2"
--- >         , prompt = "Tell me a joke."
--- >         , suffix = Nothing
--- >         , images = Nothing
--- >         , format = Nothing
--- >         , system = Nothing
--- >         , template = Nothing
--- >         , stream = Nothing
--- >         , raw = Nothing
--- >         , keepAlive = Nothing
--- >         }
--- > result <- generate ops
--- > case result of
--- >   Left errorMsg -> putStrLn ("Error: " ++ errorMsg)
--- >   Right response -> print response
---
--- Usage with streaming to print responses to the console:
---
--- > void $
--- >   generate
--- >     defaultGenerateOps
--- >       { modelName = "llama3.2"
--- >       , prompt = "what is functional programming?"
--- >       , stream = Just (T.putStr . response_, pure ())
--- >       }
---
--- In this example, the first function in the 'stream' tuple processes each chunk of response by printing it,
--- and the second function is a simple no-op flush.generate :: GenerateOps -> IO (Either String GenerateResponse)
+{- |
+Generate function that returns either a 'GenerateResponse' type or an error message.
+It takes a 'GenerateOps' configuration and performs a request to the Ollama generate API.
+
+Examples:
+
+Basic usage without streaming:
+
+> let ops = GenerateOps
+>         { modelName = "llama3.2"
+>         , prompt = "Tell me a joke."
+>         , suffix = Nothing
+>         , images = Nothing
+>         , format = Nothing
+>         , system = Nothing
+>         , template = Nothing
+>         , stream = Nothing
+>         , raw = Nothing
+>         , keepAlive = Nothing
+>         }
+> result <- generate ops
+> case result of
+>   Left errorMsg -> putStrLn ("Error: " ++ errorMsg)
+>   Right response -> print response
+
+Usage with streaming to print responses to the console:
+
+> void $
+>   generate
+>     defaultGenerateOps
+>       { modelName = "llama3.2"
+>       , prompt = "what is functional programming?"
+>       , stream = Just (T.putStr . response_, pure ())
+>       }
+
+In this example, the first function in the 'stream' tuple processes each chunk of response by printing it,
+and the second function is a simple no-op flush.generate :: GenerateOps -> IO (Either String GenerateResponse)
+-}
 generate :: GenerateOps -> IO (Either String GenerateResponse)
 generate genOps = do
   let url = CU.host defaultOllama
@@ -270,3 +275,65 @@ generate genOps = do
     case stream genOps of
       Nothing -> genResponse ""
       Just (sendChunk, flush) -> streamResponse sendChunk flush
+
+{- |
+ generateJson is a higher level function that takes generateOps (similar to generate) and also takes
+ a Haskell type (that has To and From JSON instance) and returns the response in provided type.
+
+ This function simply calls generate with extra prompt appended to it, telling LLM to return the
+ response in certain JSON format and serializes the response. This function will be helpful when you
+ want to use the LLM to do something programmatic.
+
+ For Example:
+  > let expectedJsonStrucutre = Example {
+  >   sortedList = ["sorted List here"]
+  > , wasListAlreadSorted = False
+  > }
+  > eRes2 <- generateJson
+  >     defaultGenerateOps
+  >      { modelName = "llama3.2"
+  >     , prompt = "Sort given list: [4, 2 , 3, 67]. Also tell whether list was already sorted or not."
+  >       }
+  >     expectedJsonStrucutre
+  >     Nothing
+  > case eRes2 of
+  >   Left e -> putStrLn e
+  >   Right r -> print ("JSON response: " :: String, r)
+
+Output:
+  > ("JSON response: ",Example {sortedList = ["1","2","3","4"], wasListAlreadSorted = False})
+
+Note: While Passing the type, construct the type that will help LLM understand the field better.
+ For example, in the above example, the sortedList's value is written as "Sorted List here". This
+ will help LLM understand context better.
+
+ You can also provide number of retries in case the LLM field to return the response in correct JSON
+ in first attempt.
+-}
+generateJson ::
+  (ToJSON jsonResult, FromJSON jsonResult) =>
+  GenerateOps ->
+  jsonResult -> -- ^ Haskell type that you want your result in
+  Maybe Int -> -- ^ Max retries
+  IO (Either String jsonResult)
+generateJson genOps@GenerateOps {..} jsonStructure mMaxRetries = do
+  let jsonHelperPrompt =
+        "You are an AI that returns only JSON object. \n"
+          <> "* Your output should be a JSON object that matches the following schema: \n"
+          <> T.decodeUtf8 (BSL.toStrict $ encode jsonStructure)
+          <> prompt
+          <> "\n"
+          <> "# How to treat the task:\n"
+          <> "* Stricly follow the schema for the output.\n"
+          <> "* Never return anything other than a JSON object.\n"
+          <> "* Do not talk to the user.\n"
+  generatedResponse <- generate genOps {prompt = jsonHelperPrompt}
+  case generatedResponse of
+    Left err -> return $ Left err
+    Right r -> do
+      case decode (BSL.fromStrict . T.encodeUtf8 $ response_ r) of
+        Nothing -> do 
+            case mMaxRetries of
+                Nothing -> return $ Left "Decoding Failed :("
+                Just n -> if n < 1 then return $ Left "Decoding failed :(" else generateJson genOps jsonStructure (Just (n - 1))
+        Just resultInType -> return $ Right resultInType

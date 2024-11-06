@@ -1,10 +1,12 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Data.Ollama.Chat
   ( -- * Chat APIs
     chat
+  , chatJson
   , Message (..)
   , Role (..)
   , defaultChatOps
@@ -15,11 +17,12 @@ module Data.Ollama.Chat
 import Data.Aeson
 import Data.ByteString.Char8 qualified as BS
 import Data.ByteString.Lazy.Char8 qualified as BSL
-import Data.List.NonEmpty
+import Data.List.NonEmpty as NonEmpty
 import Data.Maybe (isNothing)
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Text.Encoding qualified as T
 import Data.Time (UTCTime)
 import GHC.Generics
 import GHC.Int (Int64)
@@ -218,3 +221,75 @@ chat cOps = do
     case stream cOps of
       Nothing -> genResponse ""
       Just (sendChunk, flush) -> streamResponse sendChunk flush
+
+{- |
+ chatJson is a higher level function that takes ChatOps (similar to chat) and also takes
+ a Haskell type (that has To and From JSON instance) and returns the response in provided type.
+
+ This function simply calls chat with extra prompt appended to it, telling LLM to return the
+ response in certain JSON format and serializes the response. This function will be helpful when you
+ want to use the LLM to do something programmatic.
+
+ For Example:
+  > let expectedJsonStrucutre = Example {
+  >   sortedList = ["sorted List here"]
+  > , wasListAlreadSorted = False
+  > }
+  > let msg0 = Ollama.Message User "Sort given list: [4, 2 , 3, 67]. Also tell whether list was already sorted or not." Nothing
+  > eRes3 <-
+  >  chatJson
+  >   defaultChatOps
+  >    { Chat.chatModelName = "llama3.2"
+  >      , Chat.messages = msg0 :| []
+  >   }
+  >      expectedJsonStrucutre
+  >      (Just 2)
+  > print eRes3
+ Output:
+  > Example {sortedList = ["1","2","3","4"], wasListAlreadSorted = False}
+
+Note: While Passing the type, construct the type that will help LLM understand the field better.
+ For example, in the above example, the sortedList's value is written as "Sorted List here". This
+ will help LLM understand context better.
+
+ You can also provide number of retries in case the LLM field to return the response in correct JSON
+ in first attempt.
+-}
+chatJson ::
+  (FromJSON jsonResult, ToJSON jsonResult) =>
+  ChatOps ->
+  jsonResult -> -- ^ Haskell type that you want your result in
+  Maybe Int -> -- ^ Max retries
+  IO (Either String jsonResult)
+chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
+  let lastMessage = NonEmpty.last messages
+      jsonHelperPrompt =
+        "You are an AI that returns only JSON object. \n"
+          <> "* Your output should be a JSON object that matches the following schema: \n"
+          <> T.decodeUtf8 (BSL.toStrict $ encode jsonStructure)
+          <> content lastMessage
+          <> "\n"
+          <> "# How to treat the task:\n"
+          <> "* Stricly follow the schema for the output.\n"
+          <> "* Never return anything other than a JSON object.\n"
+          <> "* Do not talk to the user.\n"
+  chatResponse <-
+    chat
+      cOps
+        { messages =
+            NonEmpty.fromList $
+              lastMessage {content = jsonHelperPrompt} : NonEmpty.init messages
+        }
+  case chatResponse of
+    Left err -> return $ Left err
+    Right r -> do
+      let mMessage = message r
+      case mMessage of
+        Nothing -> return $ Left "Something went wrong"
+        Just res -> do
+          case decode (BSL.fromStrict . T.encodeUtf8 $ content res) of
+            Nothing -> do 
+                case mMaxRetries of
+                    Nothing -> return $ Left "Decoding Failed :("
+                    Just n -> if n < 1 then return $ Left "Decoding Failed :(" else chatJson cOps jsonStructure (Just (n - 1))
+            Just resultInType -> return $ Right resultInType
