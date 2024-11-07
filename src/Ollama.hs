@@ -1,3 +1,4 @@
+{-# LANGUAGE DuplicateRecordFields #-}
 {- |
   #Ollama-Haskell#
   This library lets you run LlMs from within Haskell projects. Inspired by `ollama-python`.
