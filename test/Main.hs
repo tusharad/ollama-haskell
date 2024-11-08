@@ -23,12 +23,12 @@ tests = testGroup "Tests" [
 generateTest :: TestTree
 generateTest = testGroup "Generate tests" [
        testCase "generate stream" $ do
-          output <- capture $ Ollama.generate defaultGenerateOps { modelName = "smollm:360m"
+          output <- capture $ Ollama.generate defaultGenerateOps { modelName = "llama3.2"
                , prompt = "what is 4 + 2?"
                , stream = Just (T.putStr . Ollama.response_, pure ()) }
           assertBool "Checking if generate function is printing anything" (length output > 0)
     , testCase "Generate non-stream" $ do
-          eRes <- Ollama.generate defaultGenerateOps { modelName = "smollm:360m"
+          eRes <- Ollama.generate defaultGenerateOps { modelName = "llama3.2"
                , prompt = "what is 4 + 2?" }
           assertBool "Checking if generate function returns a valid value" (isRight eRes)
     , testCase "Generate with invalid model" $ do
@@ -42,7 +42,7 @@ chatTest = testGroup "Chat tests" [
           let msg = Ollama.Message User "What is 29 + 3?" Nothing
               defaultMsg = Ollama.Message User "" Nothing
           output <- capture $ Ollama.chat defaultChatOps { 
-                 Chat.chatModelName = "smollm:360m"
+                 Chat.chatModelName = "llama3.2"
                , Chat.messages = msg :| []
                , Chat.stream = Just (T.putStr . Chat.content . fromMaybe defaultMsg . Chat.message, pure ())
                }
@@ -51,7 +51,7 @@ chatTest = testGroup "Chat tests" [
     , testCase "Chat non-stream" $ do
           let msg = Ollama.Message User "What is 29 + 3?" Nothing
           eRes <- Ollama.chat defaultChatOps { 
-                 Chat.chatModelName = "smollm:360m"
+                 Chat.chatModelName = "llama3.2"
                , Chat.messages = msg :| []
                }
           assertBool "Checking if chat function returns a valid value" (isRight eRes)
@@ -67,7 +67,7 @@ psTest = testGroup "PS test" [
 showTest :: TestTree
 showTest = testGroup "Show test" [
        testCase "check show" $ do
-           mRes <- Ollama.showModel "smollm:360m"
+           mRes <- Ollama.showModel "llama3.2"
            assertBool "Check if model exists or not" (isJust mRes)
    ]
 

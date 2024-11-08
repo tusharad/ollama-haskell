@@ -4,4 +4,4 @@ sayHello:
 install-ollama:
 	curl -fsSL https://ollama.com/install.sh | sh
 	ollama
-	ollama pull smollm:360m
+	ollama pull llama3.2
