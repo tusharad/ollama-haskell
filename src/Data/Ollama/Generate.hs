@@ -242,7 +242,7 @@ generate genOps = do
   let url = CU.host defaultOllama
   manager <-
     newManager -- Setting response timeout to 5 minutes, since llm takes time
-      defaultManagerSettings {managerResponseTimeout = responseTimeoutMicro (5 * 60 * 1000000)}
+      defaultManagerSettings {managerResponseTimeout = responseTimeoutMicro (15 * 60 * 1000000)}
   initialRequest <- parseRequest $ T.unpack (url <> "/api/generate")
   let reqBody = genOps
       request =
@@ -313,8 +313,10 @@ Note: While Passing the type, construct the type that will help LLM understand t
 generateJson ::
   (ToJSON jsonResult, FromJSON jsonResult) =>
   GenerateOps ->
-  jsonResult -> -- ^ Haskell type that you want your result in
-  Maybe Int -> -- ^ Max retries
+  -- | Haskell type that you want your result in
+  jsonResult ->
+  -- | Max retries
+  Maybe Int ->
   IO (Either String jsonResult)
 generateJson genOps@GenerateOps {..} jsonStructure mMaxRetries = do
   let jsonHelperPrompt =
@@ -332,8 +334,11 @@ generateJson genOps@GenerateOps {..} jsonStructure mMaxRetries = do
     Left err -> return $ Left err
     Right r -> do
       case decode (BSL.fromStrict . T.encodeUtf8 $ response_ r) of
-        Nothing -> do 
-            case mMaxRetries of
-                Nothing -> return $ Left "Decoding Failed :("
-                Just n -> if n < 1 then return $ Left "Decoding failed :(" else generateJson genOps jsonStructure (Just (n - 1))
+        Nothing -> do
+          case mMaxRetries of
+            Nothing -> return $ Left "Decoding Failed :("
+            Just n ->
+              if n < 1
+                then return $ Left "Decoding failed :("
+                else generateJson genOps jsonStructure (Just (n - 1))
         Just resultInType -> return $ Right resultInType

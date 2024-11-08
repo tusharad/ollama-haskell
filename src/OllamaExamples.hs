@@ -1,26 +1,28 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module OllamaExamples (main) where
 
 import Control.Monad (void)
-import Data.List.NonEmpty (NonEmpty((:|)))
-import Data.Maybe (fromMaybe)
-import Data.Ollama.Chat qualified as Chat
-import Data.Text.IO qualified as T
-import Ollama (GenerateOps(..), Role(..), chat, defaultChatOps, defaultGenerateOps, generate)
-import Ollama qualified
 import Data.Aeson
-import GHC.Generics
-import Data.Ollama.Generate (generateJson)
+import Data.List.NonEmpty (NonEmpty ((:|)))
+import Data.Maybe (fromMaybe)
 import Data.Ollama.Chat (chatJson)
+import Data.Ollama.Chat qualified as Chat
+import Data.Ollama.Common.Utils (encodeImage)
+import Data.Ollama.Generate (generateJson)
+import Data.Text.IO qualified as T
+import GHC.Generics
+import Ollama (GenerateOps (..), Role (..), chat, defaultChatOps, defaultGenerateOps, generate)
+import Ollama qualified
 
-data Example = Example {
-    sortedList :: [String]
+data Example = Example
+  { sortedList :: [String]
   , wasListAlreadSorted :: Bool
-  } deriving (Show, Eq, Generic, FromJSON, ToJSON)
+  }
+  deriving (Show, Eq, Generic, FromJSON, ToJSON)
 
 main :: IO ()
 main = do
@@ -93,13 +95,15 @@ main = do
   void $ Ollama.embeddingOps "llama3.1" "What is 5+2?" Nothing Nothing
 
   -- Example 8: Stream Text Generation with JSON Body
-  -- It is a higher level version of generate, here with genOps, you can also provide a Haskell type. 
+  -- It is a higher level version of generate, here with genOps, you can also provide a Haskell type.
   -- You will get the response from LLM in this Haskell type.
-  let expectedJsonStrucutre = Example {
-    sortedList = ["sorted List here"]
-  , wasListAlreadSorted = False
-  }
-  eRes2 <- generateJson
+  let expectedJsonStrucutre =
+        Example
+          { sortedList = ["sorted List here"]
+          , wasListAlreadSorted = False
+          }
+  eRes2 <-
+    generateJson
       defaultGenerateOps
         { modelName = "llama3.2"
         , prompt = "Sort given list: [14, 12 , 13, 67]. Also tell whether list was already sorted or not."
@@ -110,20 +114,36 @@ main = do
     Left e -> putStrLn e
     Right r -> print ("JSON response: " :: String, r)
   -- ("JSON response: ",Example {sortedList = ["1","2","3","4"], wasListAlreadSorted = False})
-  
+
   -- Example 9: Chat with JSON Body
   -- This example demonstrates setting up a chat session but you receive the response in
   -- given haskell type.
-  let msg0 = Ollama.Message User "Sort given list: [4, 2 , 3, 67]. Also tell whether list was already sorted or not." Nothing
+  let msg0 =
+        Ollama.Message
+          User
+          "Sort given list: [4, 2 , 3, 67]. Also tell whether list was already sorted or not."
+          Nothing
   eRes3 <-
     chatJson
       defaultChatOps
         { Chat.chatModelName = "llama3.2"
         , Chat.messages = msg0 :| []
         }
-        expectedJsonStrucutre
-        (Just 2)
+      expectedJsonStrucutre
+      (Just 2)
   print eRes3
+
+  -- Example 10: Chat with Image
+  -- This example demonstrates chatting with example using an image.
+  mImg <- encodeImage "/home/user/sample.png"
+  void $
+    generate
+      defaultGenerateOps
+        { modelName = "llama3.2-vision"
+        , prompt = "Describe the given image"
+        , images = (\x -> Just [x]) =<< mImg
+        , stream = Just (T.putStr . Ollama.response_, pure ())
+        }
 
 {-
 Scotty example:
@@ -153,7 +173,7 @@ main = do
   conn <- open "chat.db"
   execute_ conn "CREATE TABLE IF NOT EXISTS conversation (convo_id INTEGER PRIMARY KEY, convo_title TEXT)"
   execute_ conn "CREATE TABLE IF NOT EXISTS chats (chat_id INTEGER PRIMARY KEY, convo_id INTEGER, role TEXT, message TEXT, FOREIGN KEY(convo_id) REFERENCES conversation(convo_id))"
-  
+
   scotty 3000 $ do
     post "/chat" $ do
       p <- jsonData :: ActionM PromptInput
@@ -167,7 +187,7 @@ main = do
         _ -> pure cId
 
       liftIO $ execute conn "INSERT INTO chats (convo_id, role, message) VALUES (?, 'user', ?)" (newConvoId, trimmedP)
-      
+
       stream $ \sendChunk flush -> do
         eRes <- generate defaultGenerateOps
                 { modelName = "llama3.2"

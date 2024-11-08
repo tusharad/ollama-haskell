@@ -187,7 +187,7 @@ chat cOps = do
   manager <-
     newManager
       defaultManagerSettings -- Setting response timeout to 5 minutes, since llm takes time
-        { managerResponseTimeout = responseTimeoutMicro (5 * 60 * 1000000)
+        { managerResponseTimeout = responseTimeoutMicro (15 * 60 * 1000000)
         }
   initialRequest <- parseRequest $ T.unpack (url <> "/api/chat")
   let reqBody = cOps
