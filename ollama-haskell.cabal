@@ -41,7 +41,6 @@ library
       Data.Ollama.Push
       Data.Ollama.Show
       Ollama
-      OllamaExamples
   other-modules:
       Paths_ollama_haskell
   hs-source-dirs:
