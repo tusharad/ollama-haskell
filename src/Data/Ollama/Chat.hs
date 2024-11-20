@@ -14,11 +14,12 @@ module Data.Ollama.Chat
   , ChatResponse (..)
   ) where
 
+import Control.Exception (try)
 import Data.Aeson
 import Data.ByteString.Char8 qualified as BS
 import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.List.NonEmpty as NonEmpty
-import Data.Maybe (isNothing)
+import Data.Maybe (fromMaybe, isNothing)
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -72,6 +73,10 @@ data ChatOps = ChatOps
   -- ^ Optional streaming functions where the first handles each chunk of the response, and the second flushes the stream.
   , keepAlive :: Maybe Text
   -- ^ Optional text to specify keep-alive behavior.
+  , hostUrl :: Maybe Text
+  -- ^ Override default Ollama host url. Default url = "http://127.0.0.1:11434"
+  , responseTimeOut :: Maybe Int
+  -- ^ Override default response timeout in minutes. Default = 15 minutes
   }
 
 instance Show ChatOps where
@@ -123,7 +128,7 @@ data ChatResponse = ChatResponse
   deriving (Show, Eq)
 
 instance ToJSON ChatOps where
-  toJSON (ChatOps model_ messages_ tools_ format_ stream_ keepAlive_) =
+  toJSON (ChatOps model_ messages_ tools_ format_ stream_ keepAlive_ _ _) =
     object
       [ "model" .= model_
       , "messages" .= messages_
@@ -165,6 +170,8 @@ defaultChatOps =
     , format = Nothing
     , stream = Nothing
     , keepAlive = Nothing
+    , hostUrl = Nothing
+    , responseTimeOut = Nothing
     }
 
 {- |
@@ -183,44 +190,56 @@ Example:
 -}
 chat :: ChatOps -> IO (Either String ChatResponse)
 chat cOps = do
-  let url = defaultOllamaUrl
+  let url = fromMaybe defaultOllamaUrl (hostUrl cOps)
+      responseTimeout = fromMaybe 15 (responseTimeOut cOps)
   manager <-
     newManager
       defaultManagerSettings -- Setting response timeout to 5 minutes, since llm takes time
-        { managerResponseTimeout = responseTimeoutMicro (15 * 60 * 1000000)
+        { managerResponseTimeout = responseTimeoutMicro (responseTimeout * 60 * 1000000)
         }
-  initialRequest <- parseRequest $ T.unpack (url <> "/api/chat")
-  let reqBody = cOps
-      request =
-        initialRequest
-          { method = "POST"
-          , requestBody = RequestBodyLBS $ encode reqBody
-          }
-  withResponse request manager $ \response -> do
-    let streamResponse sendChunk flush = do
-          bs <- brRead $ responseBody response
-          if BS.null bs
-            then putStrLn "" >> pure (Left "")
-            else do
-              let eRes = eitherDecode (BSL.fromStrict bs) :: Either String ChatResponse
-              case eRes of
-                Left e -> pure (Left e)
-                Right r -> do
-                  _ <- sendChunk r
-                  _ <- flush
-                  if done r then pure (Left "") else streamResponse sendChunk flush
-    let genResponse op = do
-          bs <- brRead $ responseBody response
-          if BS.null bs
-            then do
-              let eRes = eitherDecode (BSL.fromStrict op) :: Either String ChatResponse
-              case eRes of
-                Left e -> pure (Left e)
-                Right r -> pure (Right r)
-            else genResponse (op <> bs)
-    case stream cOps of
-      Nothing -> genResponse ""
-      Just (sendChunk, flush) -> streamResponse sendChunk flush
+  eInitialRequest <- try $ parseRequest $ T.unpack (url <> "/api/chat") :: IO (Either HttpException Request)
+  case eInitialRequest of
+    Left e -> return $ Left $ "Failed to parse host url: " <> show e
+    Right initialRequest -> do
+      let reqBody = cOps
+          request =
+            initialRequest
+              { method = "POST"
+              , requestBody = RequestBodyLBS $ encode reqBody
+              }
+      eRes <-
+        try (withResponse request manager $ handleRequest cOps) ::
+          IO (Either HttpException (Either String ChatResponse))
+      case eRes of
+        Left e -> return $ Left $ "HTTP error occured: " <> show e
+        Right r -> return r
+
+handleRequest :: ChatOps -> Response BodyReader -> IO (Either String ChatResponse)
+handleRequest cOps response = do
+  let streamResponse sendChunk flush = do
+        bs <- brRead $ responseBody response
+        if BS.null bs
+          then putStrLn "" >> pure (Left "")
+          else do
+            let eRes = eitherDecode (BSL.fromStrict bs) :: Either String ChatResponse
+            case eRes of
+              Left e -> pure (Left e)
+              Right r -> do
+                _ <- sendChunk r
+                _ <- flush
+                if done r then pure (Left "") else streamResponse sendChunk flush
+  let genResponse op = do
+        bs <- brRead $ responseBody response
+        if BS.null bs
+          then do
+            let eRes = eitherDecode (BSL.fromStrict op) :: Either String ChatResponse
+            case eRes of
+              Left e -> pure (Left e)
+              Right r -> pure (Right r)
+          else genResponse (op <> bs)
+  case stream cOps of
+    Nothing -> genResponse ""
+    Just (sendChunk, flush) -> streamResponse sendChunk flush
 
 {- |
  chatJson is a higher level function that takes ChatOps (similar to chat) and also takes
@@ -258,8 +277,10 @@ Note: While Passing the type, construct the type that will help LLM understand t
 chatJson ::
   (FromJSON jsonResult, ToJSON jsonResult) =>
   ChatOps ->
-  jsonResult -> -- ^ Haskell type that you want your result in
-  Maybe Int -> -- ^ Max retries
+  -- | Haskell type that you want your result in
+  jsonResult ->
+  -- | Max retries
+  Maybe Int ->
   IO (Either String jsonResult)
 chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
   let lastMessage = NonEmpty.last messages
@@ -288,8 +309,8 @@ chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
         Nothing -> return $ Left "Something went wrong"
         Just res -> do
           case decode (BSL.fromStrict . T.encodeUtf8 $ content res) of
-            Nothing -> do 
-                case mMaxRetries of
-                    Nothing -> return $ Left "Decoding Failed :("
-                    Just n -> if n < 1 then return $ Left "Decoding Failed :(" else chatJson cOps jsonStructure (Just (n - 1))
+            Nothing -> do
+              case mMaxRetries of
+                Nothing -> return $ Left "Decoding Failed :("
+                Just n -> if n < 1 then return $ Left "Decoding Failed :(" else chatJson cOps jsonStructure (Just (n - 1))
             Just resultInType -> return $ Right resultInType

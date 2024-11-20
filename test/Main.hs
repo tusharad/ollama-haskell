@@ -84,6 +84,17 @@ chatTest =
               , Chat.messages = msg :| []
               }
         assertBool "Checking if chat function returns a valid value" (isRight eRes)
+    , testCase "Chat invalid host url" $ do
+        let msg = Ollama.Message User "What is 29 + 3?" Nothing
+        eRes <-
+          Ollama.chat
+            defaultChatOps
+              { Chat.chatModelName = "llama3.2"
+              , Chat.messages = msg :| []
+              , Chat.hostUrl = pure "some random value"
+              , Chat.responseTimeOut = pure 2
+              }
+        assertBool "It should return Left" (isLeft eRes)
     ]
 
 psTest :: TestTree

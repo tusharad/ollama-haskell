@@ -11,6 +11,7 @@ module Data.Ollama.Generate
   , GenerateResponse (..)
   ) where
 
+import Control.Exception (try)
 import Data.Aeson
 import Data.ByteString.Char8 qualified as BS
 import Data.ByteString.Lazy.Char8 qualified as BSL
@@ -22,7 +23,6 @@ import Data.Text.Encoding qualified as T
 import Data.Time (UTCTime)
 import GHC.Int (Int64)
 import Network.HTTP.Client
-import Control.Exception (try)
 
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
@@ -255,9 +255,10 @@ generate genOps = do
       defaultManagerSettings
         { managerResponseTimeout = responseTimeoutMicro (responseTimeout * 60 * 1000000)
         }
-  eInitialRequest <- try $ parseRequest $ T.unpack (url <> "/api/generate") :: IO (Either HttpException Request)
+  eInitialRequest <-
+    try $ parseRequest $ T.unpack (url <> "/api/generate") :: IO (Either HttpException Request)
   case eInitialRequest of
-    Left e -> do 
+    Left e -> do
       return $ Left $ show e
     Right initialRequest -> do
       let reqBody = genOps
@@ -266,7 +267,9 @@ generate genOps = do
               { method = "POST"
               , requestBody = RequestBodyLBS $ encode reqBody
               }
-      eRes <- try (withResponse request manager $ handleRequest genOps) :: IO (Either HttpException (Either String GenerateResponse))
+      eRes <-
+        try (withResponse request manager $ handleRequest genOps) ::
+          IO (Either HttpException (Either String GenerateResponse))
       case eRes of
         Left e -> do
           return $ Left $ "HTTP error occured: " <> show e
@@ -274,30 +277,30 @@ generate genOps = do
 
 handleRequest :: GenerateOps -> Response BodyReader -> IO (Either String GenerateResponse)
 handleRequest genOps response = do
-        let streamResponse sendChunk flush = do
-              bs <- brRead $ responseBody response
-              if BS.null bs
-                then putStrLn "" >> pure (Left "")
-                else do
-                  let eRes = eitherDecode (BSL.fromStrict bs) :: Either String GenerateResponse
-                  case eRes of
-                    Left e -> pure (Left e)
-                    Right r -> do
-                      _ <- sendChunk r
-                      _ <- flush
-                      if done r then pure (Left "") else streamResponse sendChunk flush
-        let genResponse op = do
-              bs <- brRead $ responseBody response
-              if bs == ""
-                then do
-                    let eRes0 = eitherDecode (BSL.fromStrict op) :: Either String GenerateResponse
-                    case eRes0 of
-                        Left e -> pure (Left e)
-                        Right r -> pure (Right r)
-               else genResponse (op <> bs)
-        case stream genOps of
-          Nothing -> genResponse ""
-          Just (sendChunk, flush) -> streamResponse sendChunk flush
+  let streamResponse sendChunk flush = do
+        bs <- brRead $ responseBody response
+        if BS.null bs
+          then putStrLn "" >> pure (Left "")
+          else do
+            let eRes = eitherDecode (BSL.fromStrict bs) :: Either String GenerateResponse
+            case eRes of
+              Left e -> pure (Left e)
+              Right r -> do
+                _ <- sendChunk r
+                _ <- flush
+                if done r then pure (Left "") else streamResponse sendChunk flush
+  let genResponse op = do
+        bs <- brRead $ responseBody response
+        if bs == ""
+          then do
+            let eRes0 = eitherDecode (BSL.fromStrict op) :: Either String GenerateResponse
+            case eRes0 of
+              Left e -> pure (Left e)
+              Right r -> pure (Right r)
+          else genResponse (op <> bs)
+  case stream genOps of
+    Nothing -> genResponse ""
+    Just (sendChunk, flush) -> streamResponse sendChunk flush
 
 {- |
  generateJson is a higher level function that takes generateOps (similar to generate) and also takes
