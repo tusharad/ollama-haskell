@@ -1,5 +1,10 @@
 # Revision history for ollama-haskell
 
+## 0.1.2.0 -- 2024-11-20
+
+* Added hostUrl and responseTimeOut options in generate function.
+* Added hostUrl and responseTimeOut options in chat function.
+
 ## 0.1.1.3 -- 2024-11-08
 
 * Increase response timeout to 15 minutes
