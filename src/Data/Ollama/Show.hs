@@ -141,7 +141,7 @@ showModelOps
   modelName
   verbose_ =
     do
-      let url = CU.host CU.defaultOllama
+      let url = CU.defaultOllamaUrl
       manager <- newManager defaultManagerSettings
       initialRequest <- parseRequest $ T.unpack (url <> "/api/show")
       let reqBody =

@@ -48,7 +48,7 @@ instance FromJSON RunningModel where
 -- | List running models
 ps :: IO (Maybe RunningModels)
 ps = do
-  let url = CU.host defaultOllama
+  let url = defaultOllamaUrl
   manager <- newManager defaultManagerSettings
   request <- parseRequest $ T.unpack (url <> "/api/ps")
   response <- httpLbs request manager

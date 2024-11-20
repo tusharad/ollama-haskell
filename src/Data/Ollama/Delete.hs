@@ -28,7 +28,7 @@ deleteModel ::
   IO ()
 deleteModel modelName =
   do
-    let url = CU.host CU.defaultOllama
+    let url = CU.defaultOllamaUrl
     manager <- newManager defaultManagerSettings
     initialRequest <- parseRequest $ T.unpack (url <> "/api/delete")
     let reqBody =

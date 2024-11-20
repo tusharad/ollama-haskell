@@ -183,7 +183,7 @@ Example:
 -}
 chat :: ChatOps -> IO (Either String ChatResponse)
 chat cOps = do
-  let url = CU.host defaultOllama
+  let url = defaultOllamaUrl
   manager <-
     newManager
       defaultManagerSettings -- Setting response timeout to 5 minutes, since llm takes time

@@ -46,7 +46,7 @@ instance FromJSON ModelInfo where
 -- | List all models from local
 list :: IO (Maybe Models)
 list = do
-  let url = CU.host defaultOllama
+  let url = defaultOllamaUrl
   manager <- newManager defaultManagerSettings
   request <- parseRequest $ T.unpack (url <> "/api/tags")
   response <- httpLbs request manager

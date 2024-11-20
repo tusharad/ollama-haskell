@@ -44,7 +44,7 @@ pushOps ::
   Maybe Bool ->
   IO ()
 pushOps modelName mInsecure mStream = do
-  let url = CU.host defaultOllama
+  let url = defaultOllamaUrl
   manager <- newManager defaultManagerSettings
   initialRequest <- parseRequest $ T.unpack (url <> "/api/push")
   let reqBody =

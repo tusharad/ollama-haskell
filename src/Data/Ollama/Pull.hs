@@ -66,7 +66,7 @@ pullOps ::
   Maybe Bool ->
   IO ()
 pullOps modelName mInsecure mStream = do
-  let url = CU.host defaultOllama
+  let url = defaultOllamaUrl
   manager <- newManager defaultManagerSettings
   initialRequest <- parseRequest $ T.unpack (url <> "/api/pull")
   let reqBody =

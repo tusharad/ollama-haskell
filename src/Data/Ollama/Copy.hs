@@ -36,7 +36,7 @@ copyModel
   source_
   destination_ =
     do
-      let url = CU.host CU.defaultOllama
+      let url = CU.defaultOllamaUrl
       manager <- newManager defaultManagerSettings
       initialRequest <- parseRequest $ T.unpack (url <> "/api/copy")
       let reqBody =

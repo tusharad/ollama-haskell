@@ -69,7 +69,7 @@ createModelOps
   stream_
   path_ =
     do
-      let url = CU.host defaultOllama
+      let url = defaultOllamaUrl
       manager <- newManager defaultManagerSettings
       initialRequest <- parseRequest $ T.unpack (url <> "/api/create")
       let reqBody =

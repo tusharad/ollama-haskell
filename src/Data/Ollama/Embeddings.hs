@@ -54,7 +54,7 @@ embeddingOps ::
   Maybe Text ->
   IO (Maybe EmbeddingResp)
 embeddingOps modelName input_ mTruncate mKeepAlive = do
-  let url = CU.host defaultOllama
+  let url = defaultOllamaUrl
   manager <- newManager defaultManagerSettings
   initialRequest <- parseRequest $ T.unpack (url <> "/api/embed")
   let reqBody =
