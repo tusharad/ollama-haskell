@@ -45,6 +45,15 @@ generateTest =
               , prompt = "what is 4 + 2?"
               }
         assertBool "Checking if generate function returns a valid value" (isRight eRes)
+    , testCase "Generate with invalid host" $ do
+        eRes <- Ollama.generate defaultGenerateOps {
+            modelName = "llama3.2"
+          , prompt = "what is 23 + 9?"
+          , hostUrl = pure "http://some-site"
+          , responseTimeOut = pure 2
+        }
+        print ("got response" :: String ,eRes)
+        assertBool "Expecting Left" (isLeft eRes)
     , testCase "Generate with invalid model" $ do
         eRes <- Ollama.generate defaultGenerateOps {modelName = "invalid-model"}
         assertBool "Expecting generation to fail with invalid model" (isLeft eRes)
@@ -96,8 +105,8 @@ showTest =
     ]
 
 main :: IO ()
-main = do 
-    mRes <- Ollama.list
-    case mRes of
-        Nothing -> pure () -- Ollama is likely not running. Not running tests.
-        Just _ -> defaultMain tests
+main = do
+  mRes <- Ollama.list
+  case mRes of
+    Nothing -> pure () -- Ollama is likely not running. Not running tests.
+    Just _ -> defaultMain tests
