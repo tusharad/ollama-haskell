@@ -53,6 +53,7 @@ library
     , base >=4.7 && <5
     , base64-bytestring
     , bytestring
+    , containers
     , directory
     , filepath
     , http-client
@@ -76,6 +77,7 @@ test-suite ollama-haskell-test
     , base >=4.7 && <5
     , base64-bytestring
     , bytestring
+    , containers
     , directory
     , filepath
     , http-client

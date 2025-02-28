@@ -26,6 +26,7 @@ dependencies:
 - base64-bytestring
 - filepath
 - directory
+- containers
 
 ghc-options:
 - -Wall

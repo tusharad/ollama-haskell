@@ -12,22 +12,25 @@ module Data.Ollama.Chat
   , defaultChatOps
   , ChatOps (..)
   , ChatResponse (..)
+  , Format (..)
+  , schemaFromType 
   ) where
 
 import Control.Exception (try)
 import Data.Aeson
-import Data.ByteString.Char8 qualified as BS
-import Data.ByteString.Lazy.Char8 qualified as BSL
+import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Lazy.Char8 as BSL
 import Data.List.NonEmpty as NonEmpty
 import Data.Maybe (fromMaybe, isNothing)
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
-import Data.Text qualified as T
-import Data.Text.Encoding qualified as T
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import Data.Time (UTCTime)
 import GHC.Generics
 import GHC.Int (Int64)
 import Network.HTTP.Client
+import qualified Data.Aeson.KeyMap as HM
 
 -- | Enumerated roles that can participate in a chat.
 data Role = System | User | Assistant | Tool
@@ -45,6 +48,14 @@ instance FromJSON Role where
   parseJSON (String "assistant") = pure Assistant
   parseJSON (String "tool") = pure Tool
   parseJSON _ = fail "Invalid Role value"
+
+-- | Format specification for the chat output
+data Format = JsonFormat | SchemaFormat Value
+  deriving (Show, Eq, Generic)
+
+instance ToJSON Format where
+  toJSON JsonFormat = String "json"
+  toJSON (SchemaFormat schema) = schema
 
 -- TODO : Add tool_calls parameter
 
@@ -67,8 +78,8 @@ data ChatOps = ChatOps
   -- ^ A non-empty list of messages forming the conversation context.
   , tools :: Maybe Text
   -- ^ Optional tools that may be used in the chat.
-  , format :: Maybe Text
-  -- ^ An optional format for the chat response.
+  , format :: Maybe Format
+  -- ^ An optional format for the chat response (json or JSON schema).
   , stream :: Maybe (ChatResponse -> IO (), IO ())
   -- ^ Optional streaming functions where the first handles each chunk of the response, and the second flushes the stream.
   , keepAlive :: Maybe Text
@@ -187,6 +198,18 @@ Example:
 > case result of
 >   Left errorMsg -> putStrLn ("Error: " ++ errorMsg)
 >   Right response -> print response
+
+To request a JSON format response:
+
+> let ops = defaultChatOps { format = Just JsonFormat }
+> result <- chat ops
+
+To request a structured output with a JSON schema:
+
+> import Data.Aeson (object, (.=))
+> let schema = object [ "type" .= ("object" :: Text), "properties" .= object ["answer" .= object ["type" .= ("number" :: Text)]] ]
+> let ops = defaultChatOps { format = Just (SchemaFormat schema) }
+> result <- chat ops
 -}
 chat :: ChatOps -> IO (Either String ChatResponse)
 chat cOps = do
@@ -212,7 +235,9 @@ chat cOps = do
           IO (Either HttpException (Either String ChatResponse))
       case eRes of
         Left e -> return $ Left $ "HTTP error occured: " <> show e
-        Right r -> return r
+        Right r -> do 
+            print eRes
+            return r
 
 handleRequest :: ChatOps -> Response BodyReader -> IO (Either String ChatResponse)
 handleRequest cOps response = do
@@ -249,6 +274,10 @@ handleRequest cOps response = do
  response in certain JSON format and serializes the response. This function will be helpful when you
  want to use the LLM to do something programmatic.
 
+ Note: This function predates the format parameter in the API. For new code, consider using
+ the `format` parameter with a SchemaFormat instead, which leverages the model's native
+ JSON output capabilities.
+
  For Example:
   > let expectedJsonStrucutre = Example {
   >   sortedList = ["sorted List here"]
@@ -283,34 +312,57 @@ chatJson ::
   Maybe Int ->
   IO (Either String jsonResult)
 chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
-  let lastMessage = NonEmpty.last messages
-      jsonHelperPrompt =
-        "You are an AI that returns only JSON object. \n"
-          <> "* Your output should be a JSON object that matches the following schema: \n"
-          <> T.decodeUtf8 (BSL.toStrict $ encode jsonStructure)
-          <> content lastMessage
-          <> "\n"
-          <> "# How to treat the task:\n"
-          <> "* Stricly follow the schema for the output.\n"
-          <> "* Never return anything other than a JSON object.\n"
-          <> "* Do not talk to the user.\n"
-  chatResponse <-
-    chat
-      cOps
-        { messages =
-            NonEmpty.fromList $
-              lastMessage {content = jsonHelperPrompt} : NonEmpty.init messages
-        }
-  case chatResponse of
-    Left err -> return $ Left err
-    Right r -> do
-      let mMessage = message r
-      case mMessage of
-        Nothing -> return $ Left "Something went wrong"
-        Just res -> do
-          case decode (BSL.fromStrict . T.encodeUtf8 $ content res) of
-            Nothing -> do
-              case mMaxRetries of
-                Nothing -> return $ Left "Decoding Failed :("
-                Just n -> if n < 1 then return $ Left "Decoding Failed :(" else chatJson cOps jsonStructure (Just (n - 1))
-            Just resultInType -> return $ Right resultInType
+  -- For models that support the format parameter, use that directly
+  --let jsonSchema = encode jsonStructure
+  let useNativeFormat = False  -- Set to True to use the native format parameter when appropriate
+  
+  if useNativeFormat
+    then do
+      let formattedOps = cOps { format = Just (SchemaFormat (Object $ HM.fromList [("schema", Object $ HM.fromList [("type", String "object")])])) }
+      chatResponse <- chat formattedOps
+      case chatResponse of
+        Left err -> return $ Left err
+        Right r -> do
+          let mMessage = message r
+          case mMessage of
+            Nothing -> return $ Left "Something went wrong"
+            Just res -> case decode (BSL.fromStrict . T.encodeUtf8 $ content res) of
+              Nothing -> return $ Left "Decoding Failed :("
+              Just resultInType -> return $ Right resultInType
+    else do
+      -- Fall back to the original implementation using prompts
+      let lastMessage = NonEmpty.last messages
+          jsonHelperPrompt =
+            "You are an AI that returns only JSON object. \n"
+              <> "* Your output should be a JSON object that matches the following schema: \n"
+              <> T.decodeUtf8 (BSL.toStrict $ encode jsonStructure)
+              <> content lastMessage
+              <> "\n"
+              <> "# How to treat the task:\n"
+              <> "* Stricly follow the schema for the output.\n"
+              <> "* Never return anything other than a JSON object.\n"
+              <> "* Do not talk to the user.\n"
+      chatResponse <-
+        chat
+          cOps
+            { messages =
+                NonEmpty.fromList $
+                  lastMessage {content = jsonHelperPrompt} : NonEmpty.init messages
+            }
+      case chatResponse of
+        Left err -> return $ Left err
+        Right r -> do
+          let mMessage = message r
+          case mMessage of
+            Nothing -> return $ Left "Something went wrong"
+            Just res -> do
+              case decode (BSL.fromStrict . T.encodeUtf8 $ content res) of
+                Nothing -> do
+                  case mMaxRetries of
+                    Nothing -> return $ Left "Decoding Failed :("
+                    Just n -> if n < 1 then return $ Left "Decoding Failed :(" else chatJson cOps jsonStructure (Just (n - 1))
+                Just resultInType -> return $ Right resultInType
+
+-- | Helper function to create a JSON schema from a Haskell type
+schemaFromType :: ToJSON a => a -> BSL.ByteString
+schemaFromType = encode  -- This is a simplified version; a real implementation would generate a JSON Schema

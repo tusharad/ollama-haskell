@@ -288,7 +288,7 @@ handleRequest genOps response = do
               Right r -> do
                 _ <- sendChunk r
                 _ <- flush
-                if done r then pure (Left "") else streamResponse sendChunk flush
+                if done r then pure (Right r) else streamResponse sendChunk flush
   let genResponse op = do
         bs <- brRead $ responseBody response
         if bs == ""
