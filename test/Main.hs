@@ -21,6 +21,7 @@ tests =
     , chatTest
     , psTest
     , showTest
+    , embeddingTest
     ]
 
 generateTest :: TestTree
@@ -113,6 +114,15 @@ showTest =
     [ testCase "check show" $ do
         mRes <- Ollama.showModel "llama3.2"
         assertBool "Check if model exists or not" (isJust mRes)
+    ]
+
+embeddingTest :: TestTree
+embeddingTest =
+  testGroup
+    "Embedding test"
+    [ testCase "check embedding" $ do
+        eRes <- Ollama.embedding "llama3.2" "Why is sky blue?"
+        assertBool "Check if embedding returns anything" (isRight eRes)
     ]
 
 main :: IO ()

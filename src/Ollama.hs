@@ -24,6 +24,8 @@ module Ollama
     -- ** Embeddings
   , embedding
   , embeddingOps
+  , EmbeddingOps (..)
+  , EmbeddingResp (..)
 
     -- * Ollama operations
 
@@ -75,7 +77,7 @@ import Data.Ollama.Chat
 import Data.Ollama.Copy (copyModel)
 import Data.Ollama.Create (createModel, createModelOps)
 import Data.Ollama.Delete (deleteModel)
-import Data.Ollama.Embeddings (embedding, embeddingOps)
+import Data.Ollama.Embeddings (embedding, embeddingOps, EmbeddingOps (..), EmbeddingResp (..))
 import Data.Ollama.Generate
   ( GenerateOps (..)
   , GenerateResponse (..)
