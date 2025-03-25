@@ -60,6 +60,8 @@ data Message = Message
   -- ^ The textual content of the message.
   , images :: Maybe [Text]
   -- ^ Optional list of base64 encoded images that accompany the message.
+  , tool_calls :: Maybe [Value]
+  -- ^ a list of tools in JSON that the model wants to use
   }
   deriving (Show, Eq, Generic, ToJSON, FromJSON)
 
@@ -69,7 +71,7 @@ data ChatOps = ChatOps
   -- ^ The name of the chat model to be used.
   , messages :: NonEmpty Message
   -- ^ A non-empty list of messages forming the conversation context.
-  , tools :: Maybe Text
+  , tools :: Maybe [Value]
   -- ^ Optional tools that may be used in the chat.
   , format :: Maybe Format
   -- ^ An optional format for the chat response (json or JSON schema).
@@ -172,7 +174,7 @@ defaultChatOps :: ChatOps
 defaultChatOps =
   ChatOps
     { chatModelName = "llama3.2"
-    , messages = Message User "What is 2+2?" Nothing :| []
+    , messages = Message User "What is 2+2?" Nothing Nothing :| []
     , tools = Nothing
     , format = Nothing
     , stream = Nothing
@@ -232,7 +234,6 @@ chat cOps = do
       case eRes of
         Left e -> return $ Left $ "HTTP error occured: " <> show e
         Right r -> do 
-            print eRes
             return r
 
 handleRequest :: ChatOps -> Response BodyReader -> IO (Either String ChatResponse)
@@ -363,13 +364,35 @@ chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
 schemaFromType :: ToJSON a => a -> BSL.ByteString
 schemaFromType = encode  -- This is a simplified version; a real implementation would generate a JSON Schema
 
-{-
-let x = object [ "type" .= "object", "properties" .= object [ "age" .= object ["type" .= "integer"]]]
-let m = (Chat.Message Chat.User "Ollama is 22 years old and is busy saving the world. Respond using JSON" Nothing) NE.:| []
-res <- chat defaultChatOps { chatModelName = "llama3.2", messages = m, Chat.format = Just $ SchemaFormat x }
-print (message res)
---> Just (Message {role = Assistant, content = "{\n    \"age\": 22\n}", images = Nothing})
---
-chat defaultChatOps { chatModelName = "llama3.2", messages = m, Chat.format = Just JsonFormat }
-message = Just (Message {role = Assistant, content = "{ \"Name\": \"Ollama\", \"Age\": 22, \"Occupation\": \"World Savior\", \"Goals\": [\"Save humanity from alien invasion\", \"Unite warring nations\", \"Protect the environment\"] }", images = Nothing})
+{- |
+   Example usage of 'Ollama.chat' with a JSON schema format and options field.
+
+   The first example sends a message requesting a JSON response conforming to a given schema.
+   The second example uses an alternative JSON format (here, @JsonFormat@).
+
+   >>> import Data.Aeson (Value, object, (.=))
+   >>> import Data.List.NonEmpty (NonEmpty(..))
+   >>> import Ollama (defaultChatOps, Message(..), SchemaFormat, JsonFormat)
+   >>> let x :: Value
+   ...     x = object [ "type" .= ("object" :: String)
+   ...                , "properties" .= object [ "age" .= object ["type" .= ("integer" :: String)] ]
+   ...                ]
+   >>> let msg = Message User "Ollama is 22 years old and is busy saving the world. Respond using JSON" Nothing
+   >>> let opts = object ["option" .= ("some value" :: String)]
+   >>> res <- chat defaultChatOps
+   ...   { chatModelName = "llama3.2"
+   ...   , messages = msg :| []
+   ...   , format = Just (SchemaFormat x)
+   ...   , options = opts
+   ...   }
+   >>> print (message res)
+   Just (Message {role = Assistant, content = "{\n    \"age\": 22\n}", images = Nothing})
+   >>> res2 <- chat defaultChatOps
+   ...   { chatModelName = "llama3.2"
+   ...   , messages = msg :| []
+   ...   , format = Just JsonFormat
+   ...   , options = object ["option" .= ("other value" :: String)]
+   ...   }
+   >>> print (message res2)
+   Just (Message {role = Assistant, content = "{ \"Name\": \"Ollama\", \"Age\": 22, \"Occupation\": \"World Savior\", \"Goals\": [\"Save humanity from alien invasion\", \"Unite warring nations\", \"Protect the environment\"] }", images = Nothing})
 -}

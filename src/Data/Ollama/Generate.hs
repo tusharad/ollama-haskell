@@ -378,7 +378,31 @@ generateJson genOps@GenerateOps {..} jsonStructure mMaxRetries = do
                 else generateJson genOps jsonStructure (Just (n - 1))
         Just resultInType -> return $ Right resultInType
 
-{-
-ghci> generate defaultGenerateOps { Gen.modelName = "llama3.2", prompt = "Ollama is 22 years old and is busy saving the world. Respond using JSON", Gen.format = Just $ SchemaFormat x }
-Right (GenerateResponse {model = "llama3.2", createdAt = 2025-03-25 09:34:15.853417157 UTC, response_ = "{\n    \"age\": 22\n}", done = True, totalDuration = Just 6625631744, loadDuration = Just 2578791966, promptEvalCount = Just 43, promptEvalDuration = Just 2983000000, evalCount = Just 10, evalDuration = Just 1061000000})
+
+{- |
+   Example usage of 'Ollama.generate' with a JSON schema format and options field.
+
+   In this example we pass a JSON schema that expects an object with an integer field @age@.
+   The options field is supplied as a JSON value.
+
+   >>> import Data.Aeson (Value, object, (.=))
+   >>> import Ollama (GenerateOps, defaultGenerateOps, SchemaFormat)
+   >>> let x :: Value
+   ...     x = object [ "type" .= ("object" :: String)
+   ...                , "properties" .= object [ "age" .= object ["type" .= ("integer" :: String)] ]
+   ...                ]
+   >>> let opts :: Value
+   ...     opts = object ["option" .= ("some value" :: String)]
+   >>> generate defaultGenerateOps
+   ...   { modelName = "llama3.2"
+   ...   , prompt = "Ollama is 22 years old and is busy saving the world. Respond using JSON"
+   ...   , format = Just (SchemaFormat x)
+   ...   , options = opts
+   ...   }
+   Right (GenerateResponse {model = "llama3.2", createdAt = 2025-03-25 09:34:15.853417157 UTC,
+                            response_ = "{\n    \"age\": 22\n}", done = True,
+                            totalDuration = Just 6625631744, loadDuration = Just 2578791966,
+                            promptEvalCount = Just 43, promptEvalDuration = Just 2983000000,
+                            evalCount = Just 10, evalDuration = Just 1061000000})
 -}
+
