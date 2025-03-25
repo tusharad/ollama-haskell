@@ -104,8 +104,8 @@ chatTest =
   testGroup
     "Chat tests"
     [ testCase "chat stream" $ do
-        let msg = Ollama.Message User "What is 29 + 3?" Nothing
-            defaultMsg = Ollama.Message User "" Nothing
+        let msg = Ollama.Message User "What is 29 + 3?" Nothing Nothing
+            defaultMsg = Ollama.Message User "" Nothing Nothing
         output <-
           capture $
             Ollama.chat
@@ -116,7 +116,7 @@ chatTest =
                 }
         assertBool "Checking if chat function is printing anything" (length output > 0)
     , testCase "Chat non-stream" $ do
-        let msg = Ollama.Message User "What is 29 + 3?" Nothing
+        let msg = Ollama.Message User "What is 29 + 3?" Nothing Nothing
         eRes <-
           Ollama.chat
             defaultChatOps
@@ -125,7 +125,7 @@ chatTest =
               }
         assertBool "Checking if chat function returns a valid value" (isRight eRes)
     , testCase "Chat invalid host url" $ do
-        let msg = Ollama.Message User "What is 29 + 3?" Nothing
+        let msg = Ollama.Message User "What is 29 + 3?" Nothing Nothing
         eRes <-
           Ollama.chat
             defaultChatOps
@@ -145,7 +145,7 @@ chatFormatTest =
               [ "type" .= ("object" :: String)
               , "properties" .= object [ "age" .= object ["type" .= ("integer" :: String)] ]
               ]
-            msg = Ollama.Message User "Ollama is 22 years old and is busy saving the world. Respond using JSON" Nothing
+            msg = Ollama.Message User "Ollama is 22 years old and is busy saving the world. Respond using JSON" Nothing Nothing
         eRes <-
           Ollama.chat
             defaultChatOps
@@ -161,7 +161,7 @@ chatFormatTest =
           Left err ->
             assertFailure $ "Chat failed with error: " ++ show err
     , testCase "Chat with JsonFormat and options" $ do
-        let msg = Ollama.Message User "Tell me about Ollama in JSON format." Nothing
+        let msg = Ollama.Message User "Tell me about Ollama in JSON format." Nothing Nothing
         eRes <-
           Ollama.chat
             defaultChatOps
