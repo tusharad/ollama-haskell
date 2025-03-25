@@ -4,6 +4,7 @@
 module Data.Ollama.Common.Types
   ( ModelDetails (..)
   , OllamaClient (..)
+  , Format (..)
   ) where
 
 import Data.Aeson
@@ -33,3 +34,30 @@ newtype OllamaClient = OllamaClient
   { host :: Text
   }
   deriving (Eq, Show)
+
+
+-- | Format specification for the chat output
+{-|
+E.g SchemaFormat
+{
+    "type": "object",
+    "properties": {
+      "age": {
+        "type": "integer"
+      },
+      "available": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "age",
+      "available"
+    ]
+  }
+|-}
+data Format = JsonFormat | SchemaFormat Value
+  deriving (Show, Eq)
+
+instance ToJSON Format where
+  toJSON JsonFormat = String "json"
+  toJSON (SchemaFormat schema) = schema

@@ -60,4 +60,5 @@ tests:
     - tasty-hunit
     - text
     - silently
+    - aeson
 

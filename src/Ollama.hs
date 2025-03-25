@@ -62,6 +62,7 @@ module Ollama
   , RunningModels (..)
   , RunningModel (..)
   , Message (..)
+  , Format(..)
   )
 where
 
@@ -90,3 +91,4 @@ import Data.Ollama.Ps (RunningModel (..), RunningModels (..), ps)
 import Data.Ollama.Pull (pull, pullOps)
 import Data.Ollama.Push (push, pushOps)
 import Data.Ollama.Show (ShowModelResponse (..), showModel, showModelOps)
+import Data.Ollama.Common.Types (Format (..))

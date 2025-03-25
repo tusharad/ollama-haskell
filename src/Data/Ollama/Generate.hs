@@ -17,6 +17,7 @@ import Data.ByteString.Char8 qualified as BS
 import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.Maybe
 import Data.Ollama.Common.Utils as CU
+import Data.Ollama.Common.Types (Format(..))
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
@@ -55,7 +56,7 @@ data GenerateOps = GenerateOps
   -- ^ An optional suffix to append to the generated text.
   , images :: Maybe [Text]
   -- ^ Optional list of base64 encoded images to include with the request.
-  , format :: Maybe Text
+  , format :: Maybe Format
   -- ^ An optional format specifier for the response.
   , system :: Maybe Text
   -- ^ Optional system text that can be included in the generation context.
@@ -71,6 +72,8 @@ data GenerateOps = GenerateOps
   -- ^ Override default Ollama host url. Default url = "http://127.0.0.1:11434"
   , responseTimeOut :: Maybe Int
   -- ^ Override default response timeout in minutes. Default = 15 minutes
+  , options :: Maybe Value
+  -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
   }
 
 instance Show GenerateOps where
@@ -96,6 +99,8 @@ instance Show GenerateOps where
       <> show raw
       <> ", keepAlive : "
       <> show keepAlive
+      <> ", options : "
+      <> show options
 
 instance Eq GenerateOps where
   (==) a b =
@@ -108,6 +113,7 @@ instance Eq GenerateOps where
       && template a == template b
       && raw a == raw b
       && keepAlive a == keepAlive b
+      && options a == options b
 
 -- TODO: Add Context Param
 
@@ -153,6 +159,7 @@ instance ToJSON GenerateOps where
         keepAlive
         _ -- Host url
         _ -- Response timeout
+        options 
       ) =
       object
         [ "model" .= model
@@ -165,6 +172,7 @@ instance ToJSON GenerateOps where
         , "stream" .= if isNothing stream then Just False else Just True
         , "raw" .= raw
         , "keep_alive" .= keepAlive
+        , "options" .= options
         ]
 
 instance FromJSON GenerateResponse where
@@ -206,6 +214,7 @@ defaultGenerateOps =
     , keepAlive = Nothing
     , hostUrl = Nothing
     , responseTimeOut = Nothing
+    , options = Nothing
     }
 
 {- |
@@ -368,3 +377,8 @@ generateJson genOps@GenerateOps {..} jsonStructure mMaxRetries = do
                 then return $ Left "Decoding failed :("
                 else generateJson genOps jsonStructure (Just (n - 1))
         Just resultInType -> return $ Right resultInType
+
+{-
+ghci> generate defaultGenerateOps { Gen.modelName = "llama3.2", prompt = "Ollama is 22 years old and is busy saving the world. Respond using JSON", Gen.format = Just $ SchemaFormat x }
+Right (GenerateResponse {model = "llama3.2", createdAt = 2025-03-25 09:34:15.853417157 UTC, response_ = "{\n    \"age\": 22\n}", done = True, totalDuration = Just 6625631744, loadDuration = Just 2578791966, promptEvalCount = Just 43, promptEvalDuration = Just 2983000000, evalCount = Just 10, evalDuration = Just 1061000000})
+-}

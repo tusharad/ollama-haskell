@@ -12,6 +12,8 @@ import Ollama qualified
 import System.IO.Silently (capture)
 import Test.Tasty
 import Test.Tasty.HUnit
+import qualified Data.Text as T 
+import Data.Aeson 
 
 tests :: TestTree
 tests =
@@ -22,6 +24,8 @@ tests =
     , psTest
     , showTest
     , embeddingTest
+    , generateFormatTest
+    , chatFormatTest
     ]
 
 generateTest :: TestTree
@@ -60,6 +64,41 @@ generateTest =
         assertBool "Expecting generation to fail with invalid model" (isLeft eRes)
     ]
 
+generateFormatTest :: TestTree
+generateFormatTest =
+  testGroup "Generate tests with format and options"
+    [ testCase "Generate with SchemaFormat and options" $ do
+        let schema = object
+              [ "type" .= ("object" :: String)
+              , "properties" .= object [ "age" .= object ["type" .= ("integer" :: String)] ]
+              ]
+        eRes <-
+          Ollama.generate
+            defaultGenerateOps
+              { modelName = "llama3.2"
+              , prompt = "Ollama is 22 years old and is busy saving the world. Respond using JSON"
+              , format = Just (Ollama.SchemaFormat schema)
+              }
+        case eRes of
+          Right res ->
+            assertBool "Response should contain JSON with key \"age\"" ( "age" `T.isInfixOf` Ollama.response_ res )
+          Left err ->
+            assertFailure $ "Generation failed with error: " ++ show err
+    , testCase "Generate with JsonFormat and options" $ do
+        eRes <-
+          Ollama.generate
+            defaultGenerateOps
+              { modelName = "llama3.2"
+              , prompt = "Provide a simple JSON response describing Ollama."
+              , format = Just Ollama.JsonFormat
+              }
+        case eRes of
+          Right res ->
+            assertBool "Response should start with '{'" ( "{" `T.isPrefixOf` Ollama.response_ res )
+          Left err ->
+            assertFailure $ "Generation failed with error: " ++ show err
+    ]
+
 chatTest :: TestTree
 chatTest =
   testGroup
@@ -96,6 +135,46 @@ chatTest =
               , Chat.responseTimeOut = pure 2
               }
         assertBool "It should return Left" (isLeft eRes)
+    ]
+
+chatFormatTest :: TestTree
+chatFormatTest =
+  testGroup "Chat tests with format and options"
+    [ testCase "Chat with SchemaFormat and options" $ do
+        let schema = object
+              [ "type" .= ("object" :: String)
+              , "properties" .= object [ "age" .= object ["type" .= ("integer" :: String)] ]
+              ]
+            msg = Ollama.Message User "Ollama is 22 years old and is busy saving the world. Respond using JSON" Nothing
+        eRes <-
+          Ollama.chat
+            defaultChatOps
+              { Chat.chatModelName = "llama3.2"
+              , Chat.messages = msg :| []
+              , Chat.format = Just (Ollama.SchemaFormat schema)
+              , Chat.options = Just $ object ["penalize_newline" .= Bool True]
+              }
+        case eRes of
+          Right res ->
+            assertBool "Chat response should contain key \"age\"" $
+              maybe False (\m -> "age" `T.isInfixOf` Chat.content m) (Chat.message res)
+          Left err ->
+            assertFailure $ "Chat failed with error: " ++ show err
+    , testCase "Chat with JsonFormat and options" $ do
+        let msg = Ollama.Message User "Tell me about Ollama in JSON format." Nothing
+        eRes <-
+          Ollama.chat
+            defaultChatOps
+              { Chat.chatModelName = "llama3.2"
+              , Chat.messages = msg :| []
+              , Chat.format = Just Ollama.JsonFormat
+              }
+        case eRes of
+          Right res ->
+            assertBool "Chat response should start with '{'" $
+              maybe False (\m -> "{" `T.isPrefixOf` Chat.content m) (Chat.message res)
+          Left err ->
+            assertFailure $ "Chat failed with error: " ++ show err
     ]
 
 psTest :: TestTree

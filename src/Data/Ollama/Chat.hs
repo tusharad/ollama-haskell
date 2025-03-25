@@ -23,6 +23,7 @@ import qualified Data.ByteString.Lazy.Char8 as BSL
 import Data.List.NonEmpty as NonEmpty
 import Data.Maybe (fromMaybe, isNothing)
 import Data.Ollama.Common.Utils as CU
+import Data.Ollama.Common.Types (Format(..))
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -48,14 +49,6 @@ instance FromJSON Role where
   parseJSON (String "assistant") = pure Assistant
   parseJSON (String "tool") = pure Tool
   parseJSON _ = fail "Invalid Role value"
-
--- | Format specification for the chat output
-data Format = JsonFormat | SchemaFormat Value
-  deriving (Show, Eq, Generic)
-
-instance ToJSON Format where
-  toJSON JsonFormat = String "json"
-  toJSON (SchemaFormat schema) = schema
 
 -- TODO : Add tool_calls parameter
 
@@ -88,6 +81,8 @@ data ChatOps = ChatOps
   -- ^ Override default Ollama host url. Default url = "http://127.0.0.1:11434"
   , responseTimeOut :: Maybe Int
   -- ^ Override default response timeout in minutes. Default = 15 minutes
+  , options :: Maybe Value
+  -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
   }
 
 instance Show ChatOps where
@@ -139,7 +134,7 @@ data ChatResponse = ChatResponse
   deriving (Show, Eq)
 
 instance ToJSON ChatOps where
-  toJSON (ChatOps model_ messages_ tools_ format_ stream_ keepAlive_ _ _) =
+  toJSON (ChatOps model_ messages_ tools_ format_ stream_ keepAlive_ _ _ options) =
     object
       [ "model" .= model_
       , "messages" .= messages_
@@ -147,6 +142,7 @@ instance ToJSON ChatOps where
       , "format" .= format_
       , "stream" .= if isNothing stream_ then Just False else Just True
       , "keep_alive" .= keepAlive_
+      , "options" .= options
       ]
 
 instance FromJSON ChatResponse where
@@ -183,6 +179,7 @@ defaultChatOps =
     , keepAlive = Nothing
     , hostUrl = Nothing
     , responseTimeOut = Nothing
+    , options = Nothing
     }
 
 {- |
@@ -207,7 +204,6 @@ To request a JSON format response:
 To request a structured output with a JSON schema:
 
 > import Data.Aeson (object, (.=))
-> let schema = object [ "type" .= ("object" :: Text), "properties" .= object ["answer" .= object ["type" .= ("number" :: Text)]] ]
 > let ops = defaultChatOps { format = Just (SchemaFormat schema) }
 > result <- chat ops
 -}
@@ -366,3 +362,14 @@ chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
 -- | Helper function to create a JSON schema from a Haskell type
 schemaFromType :: ToJSON a => a -> BSL.ByteString
 schemaFromType = encode  -- This is a simplified version; a real implementation would generate a JSON Schema
+
+{-
+let x = object [ "type" .= "object", "properties" .= object [ "age" .= object ["type" .= "integer"]]]
+let m = (Chat.Message Chat.User "Ollama is 22 years old and is busy saving the world. Respond using JSON" Nothing) NE.:| []
+res <- chat defaultChatOps { chatModelName = "llama3.2", messages = m, Chat.format = Just $ SchemaFormat x }
+print (message res)
+--> Just (Message {role = Assistant, content = "{\n    \"age\": 22\n}", images = Nothing})
+--
+chat defaultChatOps { chatModelName = "llama3.2", messages = m, Chat.format = Just JsonFormat }
+message = Just (Message {role = Assistant, content = "{ \"Name\": \"Ollama\", \"Age\": 22, \"Occupation\": \"World Savior\", \"Goals\": [\"Save humanity from alien invasion\", \"Unite warring nations\", \"Protect the environment\"] }", images = Nothing})
+-}
