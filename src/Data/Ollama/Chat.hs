@@ -62,6 +62,7 @@ data Message = Message
   -- ^ Optional list of base64 encoded images that accompany the message.
   , tool_calls :: Maybe [Value]
   -- ^ a list of tools in JSON that the model wants to use
+  -- ^ Since 0.1.3.0
   }
   deriving (Show, Eq, Generic, ToJSON, FromJSON)
 
@@ -75,6 +76,7 @@ data ChatOps = ChatOps
   -- ^ Optional tools that may be used in the chat.
   , format :: Maybe Format
   -- ^ An optional format for the chat response (json or JSON schema).
+  -- ^ Since 0.1.3.0
   , stream :: Maybe (ChatResponse -> IO (), IO ())
   -- ^ Optional streaming functions where the first handles each chunk of the response, and the second flushes the stream.
   , keepAlive :: Maybe Text
@@ -85,6 +87,7 @@ data ChatOps = ChatOps
   -- ^ Override default response timeout in minutes. Default = 15 minutes
   , options :: Maybe Value
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
+  -- ^ Since 0.1.3.0
   }
 
 instance Show ChatOps where

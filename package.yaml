@@ -1,5 +1,5 @@
 name:                ollama-haskell
-version:             0.1.2.0
+version:             0.1.3.0
 github:              "tusharad/ollama-haskell"
 license:             MIT
 author:              "tushar"
@@ -10,10 +10,9 @@ extra-source-files:
 - README.md
 - CHANGELOG.md
 
-# Metadata used when publishing your package
 synopsis:            Haskell bindings for ollama.
 category:            Web
-description:         Please see the README on GitHub at <https://github.com/tusharad/ollama-haskell#readme>
+description:         Ollama client for Haskell
 
 dependencies:
 - base >= 4.7 && < 5
@@ -61,4 +60,3 @@ tests:
     - text
     - silently
     - aeson
-

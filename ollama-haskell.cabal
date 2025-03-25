@@ -5,9 +5,9 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           ollama-haskell
-version:        0.1.2.0
+version:        0.1.3.0
 synopsis:       Haskell bindings for ollama.
-description:    Please see the README on GitHub at <https://github.com/tusharad/ollama-haskell#readme>
+description:    Ollama client for Haskell
 category:       Web
 homepage:       https://github.com/tusharad/ollama-haskell#readme
 bug-reports:    https://github.com/tusharad/ollama-haskell/issues

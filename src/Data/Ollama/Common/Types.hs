@@ -36,7 +36,6 @@ newtype OllamaClient = OllamaClient
   deriving (Eq, Show)
 
 
--- | Format specification for the chat output
 {-|
 E.g SchemaFormat
 {
@@ -55,6 +54,8 @@ E.g SchemaFormat
     ]
   }
 |-}
+-- | Format specification for the chat output
+-- | Since 0.1.3.0
 data Format = JsonFormat | SchemaFormat Value
   deriving (Show, Eq)
 

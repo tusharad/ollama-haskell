@@ -58,6 +58,7 @@ data GenerateOps = GenerateOps
   -- ^ Optional list of base64 encoded images to include with the request.
   , format :: Maybe Format
   -- ^ An optional format specifier for the response.
+  -- ^ Since 0.1.3.0
   , system :: Maybe Text
   -- ^ Optional system text that can be included in the generation context.
   , template :: Maybe Text
@@ -74,6 +75,7 @@ data GenerateOps = GenerateOps
   -- ^ Override default response timeout in minutes. Default = 15 minutes
   , options :: Maybe Value
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
+  -- ^ Since 0.1.3.0
   }
 
 instance Show GenerateOps where
