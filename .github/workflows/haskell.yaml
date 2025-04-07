@@ -20,16 +20,11 @@ jobs:
     - name: Copy repo into actions 
       uses: actions/checkout@v3
     
-    - name: Install ollama
-      run: make install-ollama
-    
-    - name: Setup cabal
-      uses: haskell-actions/setup@v2
+    - name: Installing ollama
+      uses: pydantic/ollama-action@v3
       with:
-        cabal-version: '3.10.3.0'
-        ghc-version: '9.6.6'
-      id: setup
-    
+        model: llama3.2:latest
+
     - name: install dependancies, build and test stack project.
       uses: freckle/stack-action@v5
       with:
