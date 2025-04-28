@@ -46,8 +46,12 @@ data ShowModelResponse = ShowModelResponse
   , template :: Text
   , details :: CT.ModelDetails
   , modelInfo :: ModelInfo
+  , license :: Maybe Text
+  , capabilities :: Maybe [Text]
   }
   deriving (Show, Eq)
+
+
 
 data ModelInfo = ModelInfo
   { generalArchitecture :: Maybe Text
@@ -85,6 +89,8 @@ instance FromJSON ShowModelResponse where
       <*> v .: "template"
       <*> v .: "details"
       <*> v .: "model_info"
+      <*> v .:? "license"
+      <*> v .:? "capabilities"
 
 instance FromJSON ModelInfo where
   parseJSON = withObject "ModelInfo" $ \v ->
