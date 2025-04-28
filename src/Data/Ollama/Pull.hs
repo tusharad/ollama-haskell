@@ -58,6 +58,8 @@ Example:
 This will attempt to pull "myModel" with insecure connections allowed and enable streaming.
 -}
 pullOps ::
+  -- | Ollama URL
+  Maybe Text ->
   -- | Model Name
   Text ->
   -- | Insecure
@@ -65,8 +67,8 @@ pullOps ::
   -- | Stream
   Maybe Bool ->
   IO ()
-pullOps modelName mInsecure mStream = do
-  let url = defaultOllamaUrl
+pullOps hostUrl modelName mInsecure mStream = do
+  let url = fromMaybe defaultOllamaUrl hostUrl
   manager <- newManager defaultManagerSettings
   initialRequest <- parseRequest $ T.unpack (url <> "/api/pull")
   let reqBody =
@@ -111,4 +113,4 @@ pull ::
   -- | Model Name
   Text ->
   IO ()
-pull modelName = pullOps modelName Nothing Nothing
+pull modelName = pullOps Nothing modelName Nothing Nothing

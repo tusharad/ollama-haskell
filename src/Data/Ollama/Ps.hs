@@ -12,6 +12,7 @@ import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time
+import Data.Maybe (fromMaybe)
 import GHC.Int (Int64)
 import Network.HTTP.Client
 import Network.HTTP.Types.Status (statusCode)
@@ -47,8 +48,14 @@ instance FromJSON RunningModel where
 
 -- | List running models
 ps :: IO (Maybe RunningModels)
-ps = do
-  let url = defaultOllamaUrl
+ps = psOps Nothing
+
+
+
+-- | List running models
+psOps :: Maybe Text -> IO (Maybe RunningModels)
+psOps hostUrl = do
+  let url = fromMaybe defaultOllamaUrl hostUrl
   manager <- newManager defaultManagerSettings
   request <- parseRequest $ T.unpack (url <> "/api/ps")
   response <- httpLbs request manager

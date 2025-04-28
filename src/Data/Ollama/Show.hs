@@ -17,6 +17,7 @@ import Data.Ollama.Common.Types qualified as CT
 import Data.Ollama.Common.Utils qualified as CU
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Maybe (fromMaybe)
 import GHC.Generics
 import GHC.Int (Int64)
 import Network.HTTP.Client
@@ -115,16 +116,19 @@ instance FromJSON ModelInfo where
 @since 1.0.0.0
 -}
 showModelOps ::
+  -- | Ollama URL
+  Maybe Text ->
   -- | model name
   Text ->
   -- | verbose
   Maybe Bool ->
   IO (Maybe ShowModelResponse)
 showModelOps
+  hostUrl
   modelName
   verbose_ =
     do
-      let url = CU.defaultOllamaUrl
+      let url = fromMaybe CU.defaultOllamaUrl hostUrl
       manager <- newManager defaultManagerSettings
       initialRequest <- parseRequest $ T.unpack (url <> "/api/show")
       let reqBody =
@@ -155,4 +159,4 @@ showModel ::
   Text ->
   IO (Maybe ShowModelResponse)
 showModel modelName =
-  showModelOps modelName Nothing
+  showModelOps Nothing modelName Nothing
