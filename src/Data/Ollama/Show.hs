@@ -8,9 +8,12 @@ module Data.Ollama.Show
     showModel
   , showModelOps
   , ShowModelResponse (..)
+  , ModelInfo (..)
+  , CT.ModelDetails (..)
   ) where
 
 import Data.Aeson
+import Data.Ollama.Common.Types qualified as CT
 import Data.Ollama.Common.Utils qualified as CU
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -40,18 +43,8 @@ data ShowModelResponse = ShowModelResponse
   { modelFile :: Text
   , parameters :: Text
   , template :: Text
-  , details :: ModelDetails
+  , details :: CT.ModelDetails
   , modelInfo :: ModelInfo
-  }
-  deriving (Show, Eq)
-
-data ModelDetails = ModelDetails
-  { parentModel :: Text
-  , format :: Text
-  , familiy :: Text
-  , families :: [Text]
-  , parameterSize :: Text
-  , quantizationLevel :: Text
   }
   deriving (Show, Eq)
 
@@ -91,16 +84,6 @@ instance FromJSON ShowModelResponse where
       <*> v .: "template"
       <*> v .: "details"
       <*> v .: "model_info"
-
-instance FromJSON ModelDetails where
-  parseJSON = withObject "ModelDetails" $ \v ->
-    ModelDetails
-      <$> v .: "parent_model"
-      <*> v .: "format"
-      <*> v .: "family"
-      <*> v .: "families"
-      <*> v .: "parameter_size"
-      <*> v .: "quantization_level"
 
 instance FromJSON ModelInfo where
   parseJSON = withObject "ModelInfo" $ \v ->
