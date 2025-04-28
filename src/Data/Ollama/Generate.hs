@@ -295,7 +295,7 @@ handleRequest genOps response = do
           else do
             let eRes = eitherDecode (BSL.fromStrict bs) :: Either String GenerateResponse
             case eRes of
-              Left e -> pure (Left e)
+              Left e -> pure (Left $ e <> show bs)
               Right r -> do
                 _ <- sendChunk r
                 _ <- flush
@@ -306,7 +306,7 @@ handleRequest genOps response = do
           then do
             let eRes0 = eitherDecode (BSL.fromStrict op) :: Either String GenerateResponse
             case eRes0 of
-              Left e -> pure (Left e)
+              Left e -> pure (Left $ e <> show op)
               Right r -> pure (Right r)
           else genResponse (op <> bs)
   case stream genOps of

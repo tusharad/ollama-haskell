@@ -92,7 +92,7 @@ createModelOps
                       Either String CreateModelResp
               case eRes of
                 Left err -> do
-                  putStrLn $ "Error: " <> err
+                  putStrLn $ "Error: " <> err <> show bs
                 Right res -> do
                   unless
                     (status res /= "success")

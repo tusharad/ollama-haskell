@@ -13,25 +13,25 @@ module Data.Ollama.Chat
   , ChatOps (..)
   , ChatResponse (..)
   , Format (..)
-  , schemaFromType 
+  , schemaFromType
   ) where
 
 import Control.Exception (try)
 import Data.Aeson
-import qualified Data.ByteString.Char8 as BS
-import qualified Data.ByteString.Lazy.Char8 as BSL
+import Data.Aeson.KeyMap qualified as HM
+import Data.ByteString.Char8 qualified as BS
+import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.List.NonEmpty as NonEmpty
 import Data.Maybe (fromMaybe, isNothing)
+import Data.Ollama.Common.Types (Format (..))
 import Data.Ollama.Common.Utils as CU
-import Data.Ollama.Common.Types (Format(..))
 import Data.Text (Text)
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as T
+import Data.Text qualified as T
+import Data.Text.Encoding qualified as T
 import Data.Time (UTCTime)
 import GHC.Generics
 import GHC.Int (Int64)
 import Network.HTTP.Client
-import qualified Data.Aeson.KeyMap as HM
 
 -- | Enumerated roles that can participate in a chat.
 data Role = System | User | Assistant | Tool
@@ -66,7 +66,6 @@ data Message = Message
   }
   deriving (Show, Eq, Generic, ToJSON, FromJSON)
 
--- TODO: Add Options parameter
 data ChatOps = ChatOps
   { chatModelName :: Text
   -- ^ The name of the chat model to be used.
@@ -221,7 +220,8 @@ chat cOps = do
       defaultManagerSettings -- Setting response timeout to 5 minutes, since llm takes time
         { managerResponseTimeout = responseTimeoutMicro (responseTimeout * 60 * 1000000)
         }
-  eInitialRequest <- try $ parseRequest $ T.unpack (url <> "/api/chat") :: IO (Either HttpException Request)
+  eInitialRequest <-
+    try $ parseRequest $ T.unpack (url <> "/api/chat") :: IO (Either HttpException Request)
   case eInitialRequest of
     Left e -> return $ Left $ "Failed to parse host url: " <> show e
     Right initialRequest -> do
@@ -236,8 +236,8 @@ chat cOps = do
           IO (Either HttpException (Either String ChatResponse))
       case eRes of
         Left e -> return $ Left $ "HTTP error occured: " <> show e
-        Right r -> do 
-            return r
+        Right r -> do
+          return r
 
 handleRequest :: ChatOps -> Response BodyReader -> IO (Either String ChatResponse)
 handleRequest cOps response = do
@@ -248,7 +248,7 @@ handleRequest cOps response = do
           else do
             let eRes = eitherDecode (BSL.fromStrict bs) :: Either String ChatResponse
             case eRes of
-              Left e -> pure (Left e)
+              Left e -> pure (Left $ e <> show bs)
               Right r -> do
                 _ <- sendChunk r
                 _ <- flush
@@ -259,7 +259,7 @@ handleRequest cOps response = do
           then do
             let eRes = eitherDecode (BSL.fromStrict op) :: Either String ChatResponse
             case eRes of
-              Left e -> pure (Left e)
+              Left e -> pure (Left $ e <> show op)
               Right r -> pure (Right r)
           else genResponse (op <> bs)
   case stream cOps of
@@ -313,12 +313,16 @@ chatJson ::
   IO (Either String jsonResult)
 chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
   -- For models that support the format parameter, use that directly
-  --let jsonSchema = encode jsonStructure
-  let useNativeFormat = False  -- Set to True to use the native format parameter when appropriate
-  
+  -- let jsonSchema = encode jsonStructure
+  let useNativeFormat = False -- Set to True to use the native format parameter when appropriate
   if useNativeFormat
     then do
-      let formattedOps = cOps { format = Just (SchemaFormat (Object $ HM.fromList [("schema", Object $ HM.fromList [("type", String "object")])])) }
+      let formattedOps =
+            cOps
+              { format =
+                  Just
+                    (SchemaFormat (Object $ HM.fromList [("schema", Object $ HM.fromList [("type", String "object")])]))
+              }
       chatResponse <- chat formattedOps
       case chatResponse of
         Left err -> return $ Left err
@@ -365,7 +369,7 @@ chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
 
 -- | Helper function to create a JSON schema from a Haskell type
 schemaFromType :: ToJSON a => a -> BSL.ByteString
-schemaFromType = encode  -- This is a simplified version; a real implementation would generate a JSON Schema
+schemaFromType = encode -- This is a simplified version; a real implementation would generate a JSON Schema
 
 {- |
    Example usage of 'Ollama.chat' with a JSON schema format and options field.

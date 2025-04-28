@@ -40,6 +40,7 @@ generateTest =
                 { modelName = "llama3.2"
                 , prompt = "what is 4 + 2?"
                 , stream = Just (T.putStr . Ollama.response_, pure ())
+                , suffix = Just " [End]"
                 }
         assertBool "Checking if generate function is printing anything" (length output > 0)
     , testCase "Generate non-stream" $ do
