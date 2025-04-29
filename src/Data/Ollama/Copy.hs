@@ -25,18 +25,26 @@ data CopyModelOps = CopyModelOps
   }
   deriving (Show, Eq, Generic, ToJSON)
 
+
+copyModel :: Text -> Text -> IO ()
+copyModel = copyModelOps Nothing
+
+
 -- | Copy model from source to destination
 copyModel ::
+  -- | Ollama URL
+  Maybe Text ->
   -- | Source model
   Text ->
   -- | Destination model
   Text ->
   IO ()
 copyModel
+  hostUrl
   source_
   destination_ =
     do
-      let url = CU.defaultOllamaUrl
+      let url = fromMaybe hostUrl CU.defaultOllamaUrl
       manager <- newManager defaultManagerSettings
       initialRequest <- parseRequest $ T.unpack (url <> "/api/copy")
       let reqBody =

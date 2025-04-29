@@ -6,6 +6,7 @@
 module Data.Ollama.Delete
   ( -- * Delete downloaded Models
     deleteModel
+  , deleteModelOps
   ) where
 
 import Control.Monad (when)
@@ -21,14 +22,21 @@ import Network.HTTP.Types.Status (status404)
 newtype DeleteModelReq = DeleteModelReq {name :: Text}
   deriving newtype (Show, Eq, ToJSON)
 
+
+deleteModel :: Text -> IO ()
+deleteModel = deleteModelOps Nothing
+
+
 -- | Delete a model
-deleteModel ::
+deleteModelOps ::
+  -- | Ollama URL
+  Maybe Text ->
   -- | Model name
   Text ->
   IO ()
-deleteModel modelName =
+deleteModel hostUrl modelName =
   do
-    let url = CU.defaultOllamaUrl
+    let url = fromMaybe hostUrl CU.defaultOllamaUrl
     manager <- newManager defaultManagerSettings
     initialRequest <- parseRequest $ T.unpack (url <> "/api/delete")
     let reqBody =

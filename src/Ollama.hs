@@ -31,6 +31,7 @@ module Ollama
 
     -- ** Copy Models
   , copyModel
+  , copyModelOps
 
     -- ** Create Models
   , createModel
@@ -38,12 +39,15 @@ module Ollama
 
     -- ** Delete Models
   , deleteModel
+  , deleteModelOps
 
     -- ** List Models
   , list
+  , listOps
 
     -- ** List currently running models
   , ps
+  , psOps
 
     -- ** Push and Pull
   , push
