@@ -3,6 +3,7 @@
 module Data.Ollama.List
   ( -- * List Models API
     list
+  , listOps
   , Models (..)
   , ModelInfo (..)
   )
