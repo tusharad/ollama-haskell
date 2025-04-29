@@ -42,8 +42,8 @@ data ShowModelOps = ShowModelOps
 -}
 data ShowModelResponse = ShowModelResponse
   { modelFile :: !Text
-  , parameters :: !Text
-  , template :: !Text
+  , parameters :: !(Maybe Text)
+  , template :: !(Maybe Text)
   , details :: !CT.ModelDetails
   , modelInfo :: !ShowModelInfo
   , license :: !(Maybe Text)
@@ -85,8 +85,8 @@ instance FromJSON ShowModelResponse where
   parseJSON = withObject "ShowModelResponse" $ \v ->
     ShowModelResponse
       <$> v .: "modelfile"
-      <*> v .: "parameters"
-      <*> v .: "template"
+      <*> v .:? "parameters"
+      <*> v .:? "template"
       <*> v .: "details"
       <*> v .: "model_info"
       <*> v .:? "license"
@@ -152,7 +152,7 @@ showModelOps
             eitherDecode (responseBody response) ::
               Either String ShowModelResponse
       case eRes of
-        Left _ -> pure Nothing
+        Left e -> print e >> pure Nothing
         Right r -> pure $ Just r
 
 {- | Show given model's information.
