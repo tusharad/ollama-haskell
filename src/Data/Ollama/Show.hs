@@ -8,7 +8,7 @@ module Data.Ollama.Show
     showModel
   , showModelOps
   , ShowModelResponse (..)
-  , ModelInfo (..)
+  , ShowModelInfo (..)
   , CT.ModelDetails (..)
   ) where
 
@@ -45,7 +45,7 @@ data ShowModelResponse = ShowModelResponse
   , parameters :: Text
   , template :: Text
   , details :: CT.ModelDetails
-  , modelInfo :: ModelInfo
+  , modelInfo :: ShowModelInfo
   , license :: Maybe Text
   , capabilities :: Maybe [Text]
   }
@@ -53,7 +53,7 @@ data ShowModelResponse = ShowModelResponse
 
 
 
-data ModelInfo = ModelInfo
+data ShowModelInfo = ShowModelInfo
   { generalArchitecture :: Maybe Text
   , generalFileType :: Maybe Int
   , generalParameterCount :: Maybe Int64
@@ -92,9 +92,9 @@ instance FromJSON ShowModelResponse where
       <*> v .:? "license"
       <*> v .:? "capabilities"
 
-instance FromJSON ModelInfo where
+instance FromJSON ShowModelInfo where
   parseJSON = withObject "ModelInfo" $ \v ->
-    ModelInfo
+    ShowModelInfo
       <$> v .:? "general.architecture"
       <*> v .:? "general.file_type"
       <*> v .:? "general.parameter_count"
