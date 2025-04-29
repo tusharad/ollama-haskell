@@ -14,6 +14,7 @@ import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time
+import Data.Maybe (fromMaybe)
 import GHC.Int (Int64)
 import Network.HTTP.Client
 import Network.HTTP.Types.Status (statusCode)
@@ -22,11 +23,11 @@ newtype Models = Models [ModelInfo]
   deriving (Eq, Show)
 
 data ModelInfo = ModelInfo
-  { name :: Text
-  , modifiedAt :: UTCTime
-  , size :: Int64
-  , digest :: Text
-  , details :: ModelDetails
+  { name :: !Text
+  , modifiedAt :: !UTCTime
+  , size :: !Int64
+  , digest :: !Text
+  , details :: !ModelDetails
   }
   deriving (Eq, Show)
 
@@ -45,8 +46,16 @@ instance FromJSON ModelInfo where
 
 -- | List all models from local
 list :: IO (Maybe Models)
-list = do
-  let url = defaultOllamaUrl
+list = listOps Nothing
+
+
+
+listOps ::
+  -- | Ollama URL
+  Maybe Text ->
+  IO (Maybe Models)
+listOps hostUrl = do
+  let url = fromMaybe defaultOllamaUrl hostUrl
   manager <- newManager defaultManagerSettings
   request <- parseRequest $ T.unpack (url <> "/api/tags")
   response <- httpLbs request manager

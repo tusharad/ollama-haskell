@@ -13,22 +13,23 @@ import Data.Aeson
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Maybe (fromMaybe)
 import Network.HTTP.Client
 import Control.Exception (try)
 import Data.ByteString.Lazy.Char8 (ByteString)
 
 -- TODO: Add Options parameter
 data EmbeddingOps = EmbeddingOps
-  { model :: Text
-  , input :: Text
-  , truncate :: Maybe Bool
-  , keepAlive :: Maybe Text
+  { model :: !Text
+  , input :: !Text
+  , truncate :: !(Maybe Bool)
+  , keepAlive :: !(Maybe Text)
   }
   deriving (Show, Eq)
 
 data EmbeddingResp = EmbeddingResp
-  { model :: Text
-  , embedding_ :: [[Float]]
+  { model :: !Text
+  , embedding_ :: ![[Float]]
   }
   deriving (Show, Eq)
 
@@ -50,6 +51,8 @@ instance ToJSON EmbeddingOps where
 
 -- | Embedding API
 embeddingOps ::
+  -- | Ollama URL
+  Maybe Text ->
   -- | Model
   Text ->
   -- | Input
@@ -59,8 +62,8 @@ embeddingOps ::
   -- | Keep Alive
   Maybe Text ->
   IO (Either String EmbeddingResp)
-embeddingOps modelName input_ mTruncate mKeepAlive = do
-  let url = defaultOllamaUrl
+embeddingOps hostUrl modelName input_ mTruncate mKeepAlive = do
+  let url = fromMaybe defaultOllamaUrl hostUrl
   manager <- newManager defaultManagerSettings
   --einitialRequest <- parseRequest $ T.unpack (url <> "/api/embed")
   eInitialRequest <-
@@ -84,7 +87,7 @@ embeddingOps modelName input_ mTruncate mKeepAlive = do
       eResp <- try $ httpLbs request manager :: IO (Either HttpException (Response ByteString))
       case eResp of
         Left err -> return $ Left (show err)
-        Right resp -> 
+        Right resp ->
           case decode (responseBody resp) of
             Nothing -> return $ Left $ "Couldn't decode response: " <> show (responseBody resp)
             Just r -> return $ Right r
@@ -99,4 +102,4 @@ embedding ::
   Text ->
   IO (Either String EmbeddingResp)
 embedding modelName input_ =
-  embeddingOps modelName input_ Nothing Nothing
+  embeddingOps Nothing modelName input_ Nothing Nothing

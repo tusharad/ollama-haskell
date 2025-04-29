@@ -21,21 +21,23 @@ import Network.HTTP.Client
 
 -- TODO: Add Options parameter
 data PushOps = PushOps
-  { name :: Text
-  , insecure :: Maybe Bool
-  , stream :: Maybe Bool
+  { name :: !Text
+  , insecure :: !(Maybe Bool)
+  , stream :: !(Maybe Bool)
   }
   deriving (Show, Eq, Generic, ToJSON)
 
 data PushResp = PushResp
-  { status :: Text
-  , digest :: Maybe Text
-  , total :: Maybe Int64
+  { status :: !Text
+  , digest :: !(Maybe Text)
+  , total :: !(Maybe Int64)
   }
   deriving (Show, Eq, Generic, FromJSON)
 
 -- | Push a model with options
 pushOps ::
+  -- | Ollama URL
+  Maybe Text ->
   -- | Model name
   Text ->
   -- | Insecure
@@ -43,8 +45,8 @@ pushOps ::
   -- | Stream
   Maybe Bool ->
   IO ()
-pushOps modelName mInsecure mStream = do
-  let url = defaultOllamaUrl
+pushOps hostUrl modelName mInsecure mStream = do
+  let url = fromMaybe defaultOllamaUrl hostUrl
   manager <- newManager defaultManagerSettings
   initialRequest <- parseRequest $ T.unpack (url <> "/api/push")
   let reqBody =
@@ -82,4 +84,4 @@ push ::
   -- | Model name
   Text ->
   IO ()
-push modelName = pushOps modelName Nothing Nothing
+push modelName = pushOps Nothing modelName Nothing Nothing
