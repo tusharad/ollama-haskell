@@ -22,13 +22,13 @@ newtype RunningModels = RunningModels [RunningModel]
   deriving (Eq, Show)
 
 data RunningModel = RunningModel
-  { name_ :: Text
-  , modelName :: Text
-  , size_ :: Int64
-  , modelDigest :: Text
-  , modelDetails :: ModelDetails
-  , expiresAt :: UTCTime
-  , sizeVRam :: Int64
+  { name_ :: !Text
+  , modelName :: !Text
+  , size_ :: !Int64
+  , modelDigest :: !Text
+  , modelDetails :: !ModelDetails
+  , expiresAt :: !UTCTime
+  , sizeVRam :: !Int64
   }
   deriving (Eq, Show)
 

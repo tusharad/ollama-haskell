@@ -20,8 +20,8 @@ import Network.HTTP.Types.Status (status404)
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
 data CopyModelOps = CopyModelOps
-  { source :: Text
-  , destination :: Text
+  { source :: !Text
+  , destination :: !Text
   }
   deriving (Show, Eq, Generic, ToJSON)
 

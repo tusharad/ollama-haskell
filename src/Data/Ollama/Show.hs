@@ -30,8 +30,8 @@ import Network.HTTP.Client
  Input parameters for show model information.
 -}
 data ShowModelOps = ShowModelOps
-  { name :: Text
-  , verbose :: Maybe Bool
+  { name :: !Text
+  , verbose :: !(Maybe Bool)
   }
   deriving (Show, Eq, Generic, ToJSON)
 
@@ -41,12 +41,12 @@ data ShowModelOps = ShowModelOps
  Ouput structure for show model information.
 -}
 data ShowModelResponse = ShowModelResponse
-  { modelFile :: Text
-  , parameters :: Text
-  , template :: Text
-  , details :: CT.ModelDetails
-  , modelInfo :: ShowModelInfo
-  , license :: Maybe Text
+  { modelFile :: !Text
+  , parameters :: !Text
+  , template :: !Text
+  , details :: !CT.ModelDetails
+  , modelInfo :: !ShowModelInfo
+  , license :: !(Maybe Text)
   , capabilities :: Maybe [Text]
   }
   deriving (Show, Eq)
@@ -54,27 +54,27 @@ data ShowModelResponse = ShowModelResponse
 
 
 data ShowModelInfo = ShowModelInfo
-  { generalArchitecture :: Maybe Text
-  , generalFileType :: Maybe Int
-  , generalParameterCount :: Maybe Int64
-  , generalQuantizationVersion :: Maybe Int
-  , llamaAttentionHeadCount :: Maybe Int
-  , llamaAttentionHeadCountKV :: Maybe Int
-  , llamaAttentionLayerNormRMSEpsilon :: Maybe Float
-  , llamaBlockCount :: Maybe Int
-  , llamaContextLength :: Maybe Int
-  , llamaEmbeddingLength :: Maybe Int
-  , llamaFeedForwardLength :: Maybe Int
-  , llamaRopeDimensionCount :: Maybe Int
-  , llamaRopeFreqBase :: Maybe Int64
-  , llamaVocabSize :: Maybe Int64
-  , tokenizerGgmlBosToken_id :: Maybe Int
-  , tokenizerGgmlEosToken_id :: Maybe Int
-  , tokenizerGgmlMerges :: Maybe [Text]
-  , tokenizerGgmlMode :: Maybe Text
-  , tokenizerGgmlPre :: Maybe Text
-  , tokenizerGgmlTokenType :: Maybe [Text]
-  , tokenizerGgmlTokens :: Maybe [Text]
+  { generalArchitecture :: !(Maybe Text)
+  , generalFileType :: !(Maybe Int)
+  , generalParameterCount :: !(Maybe Int64)
+  , generalQuantizationVersion :: !(Maybe Int)
+  , llamaAttentionHeadCount :: !(Maybe Int)
+  , llamaAttentionHeadCountKV :: !(Maybe Int)
+  , llamaAttentionLayerNormRMSEpsilon :: !(Maybe Float)
+  , llamaBlockCount :: !(Maybe Int)
+  , llamaContextLength :: !(Maybe Int)
+  , llamaEmbeddingLength :: !(Maybe Int)
+  , llamaFeedForwardLength :: !(Maybe Int)
+  , llamaRopeDimensionCount :: !(Maybe Int)
+  , llamaRopeFreqBase :: !(Maybe Int64)
+  , llamaVocabSize :: !(Maybe Int64)
+  , tokenizerGgmlBosToken_id :: !(Maybe Int)
+  , tokenizerGgmlEosToken_id :: !(Maybe Int)
+  , tokenizerGgmlMerges :: !(Maybe [Text])
+  , tokenizerGgmlMode :: !(Maybe Text)
+  , tokenizerGgmlPre :: !(Maybe Text)
+  , tokenizerGgmlTokenType :: !(Maybe [Text])
+  , tokenizerGgmlTokens :: !(Maybe [Text])
   }
   deriving (Show, Eq)
 

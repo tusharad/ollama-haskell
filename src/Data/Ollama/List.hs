@@ -23,11 +23,11 @@ newtype Models = Models [ModelInfo]
   deriving (Eq, Show)
 
 data ModelInfo = ModelInfo
-  { name :: Text
-  , modifiedAt :: UTCTime
-  , size :: Int64
-  , digest :: Text
-  , details :: ModelDetails
+  { name :: !Text
+  , modifiedAt :: !UTCTime
+  , size :: !Int64
+  , digest :: !Text
+  , details :: !ModelDetails
   }
   deriving (Eq, Show)
 

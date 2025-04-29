@@ -20,16 +20,16 @@ import Data.ByteString.Lazy.Char8 (ByteString)
 
 -- TODO: Add Options parameter
 data EmbeddingOps = EmbeddingOps
-  { model :: Text
-  , input :: Text
-  , truncate :: Maybe Bool
-  , keepAlive :: Maybe Text
+  { model :: !Text
+  , input :: !Text
+  , truncate :: !(Maybe Bool)
+  , keepAlive :: !(Maybe Text)
   }
   deriving (Show, Eq)
 
 data EmbeddingResp = EmbeddingResp
-  { model :: Text
-  , embedding_ :: [[Float]]
+  { model :: !Text
+  , embedding_ :: ![[Float]]
   }
   deriving (Show, Eq)
 

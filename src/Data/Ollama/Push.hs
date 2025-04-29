@@ -21,16 +21,16 @@ import Network.HTTP.Client
 
 -- TODO: Add Options parameter
 data PushOps = PushOps
-  { name :: Text
-  , insecure :: Maybe Bool
-  , stream :: Maybe Bool
+  { name :: !Text
+  , insecure :: !(Maybe Bool)
+  , stream :: !(Maybe Bool)
   }
   deriving (Show, Eq, Generic, ToJSON)
 
 data PushResp = PushResp
-  { status :: Text
-  , digest :: Maybe Text
-  , total :: Maybe Int64
+  { status :: !Text
+  , digest :: !(Maybe Text)
+  , total :: !(Maybe Int64)
   }
   deriving (Show, Eq, Generic, FromJSON)
 

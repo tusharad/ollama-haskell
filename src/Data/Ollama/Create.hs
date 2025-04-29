@@ -19,10 +19,10 @@ import Network.HTTP.Client
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
 data CreateModelOps = CreateModelOps
-  { name :: Text
-  , modelFile :: Maybe Text
-  , stream :: Maybe Bool
-  , path :: Maybe FilePath
+  { name :: !Text
+  , modelFile :: !(Maybe Text)
+  , stream :: !(Maybe Bool)
+  , path :: !(Maybe FilePath)
   }
   deriving (Show, Eq)
 
