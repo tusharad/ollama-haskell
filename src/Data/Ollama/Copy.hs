@@ -5,7 +5,8 @@
 
 module Data.Ollama.Copy
   ( -- * Copy Model API
-    copyModel
+    copyModelOps
+  , copyModel
   ) where
 
 import Control.Monad (when)
@@ -13,6 +14,7 @@ import Data.Aeson
 import Data.Ollama.Common.Utils qualified as CU
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Maybe (fromMaybe)
 import GHC.Generics
 import Network.HTTP.Client
 import Network.HTTP.Types.Status (status404)
@@ -25,18 +27,26 @@ data CopyModelOps = CopyModelOps
   }
   deriving (Show, Eq, Generic, ToJSON)
 
+
+copyModel :: Text -> Text -> IO ()
+copyModel = copyModelOps Nothing
+
+
 -- | Copy model from source to destination
-copyModel ::
+copyModelOps ::
+  -- | Ollama URL
+  Maybe Text ->
   -- | Source model
   Text ->
   -- | Destination model
   Text ->
   IO ()
-copyModel
+copyModelOps
+  hostUrl
   source_
   destination_ =
     do
-      let url = CU.defaultOllamaUrl
+      let url = fromMaybe CU.defaultOllamaUrl hostUrl
       manager <- newManager defaultManagerSettings
       initialRequest <- parseRequest $ T.unpack (url <> "/api/copy")
       let reqBody =

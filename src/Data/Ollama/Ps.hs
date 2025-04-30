@@ -2,6 +2,7 @@
 
 module Data.Ollama.Ps
   ( ps
+  , psOps
   , RunningModels (..)
   , RunningModel (..)
   ) where

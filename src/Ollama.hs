@@ -31,6 +31,7 @@ module Ollama
 
     -- ** Copy Models
   , copyModel
+  , copyModelOps
 
     -- ** Create Models
   , createModel
@@ -38,12 +39,15 @@ module Ollama
 
     -- ** Delete Models
   , deleteModel
+  , deleteModelOps
 
     -- ** List Models
   , list
+  , listOps
 
     -- ** List currently running models
   , ps
+  , psOps
 
     -- ** Push and Pull
   , push
@@ -77,9 +81,9 @@ import Data.Ollama.Chat
   , chatJson
   , defaultChatOps
   )
-import Data.Ollama.Copy (copyModel)
+import Data.Ollama.Copy (copyModel, copyModelOps)
 import Data.Ollama.Create (createModel, createModelOps)
-import Data.Ollama.Delete (deleteModel)
+import Data.Ollama.Delete (deleteModel, deleteModelOps)
 import Data.Ollama.Embeddings (embedding, embeddingOps, EmbeddingOps (..), EmbeddingResp (..))
 import Data.Ollama.Generate
   ( GenerateOps (..)
@@ -88,8 +92,8 @@ import Data.Ollama.Generate
   , generate
   , generateJson
   )
-import Data.Ollama.List (ModelInfo (..), Models (..), list)
-import Data.Ollama.Ps (RunningModel (..), RunningModels (..), ps)
+import Data.Ollama.List (ModelInfo (..), Models (..), list, listOps)
+import Data.Ollama.Ps (RunningModel (..), RunningModels (..), ps, psOps)
 import Data.Ollama.Pull (pull, pullOps)
 import Data.Ollama.Push (push, pushOps)
 import Data.Ollama.Show (ShowModelResponse (..), ShowModelInfo (..), showModel, showModelOps)
