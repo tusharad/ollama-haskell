@@ -10,6 +10,7 @@ This library allows you to interact with Ollama, a tool that lets you run large 
 {-# LANGUAGE OverloadedStrings #-}
 module Lib where
 
+import Control.Monad (void)
 import Ollama (GenerateOps(..), defaultGenerateOps, generate)
 
 main :: IO ()
