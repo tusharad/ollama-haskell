@@ -10,7 +10,22 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: generate
+        uses: freckle/stack-action/generate-matrix@v5
+    outputs:
+      stack-yamls: ${{ steps.generate.outputs.stack-yamls }}
+  
+  tests:
+    needs: generate
+    strategy:
+      matrix:
+        stack-yaml: ${{ fromJSON(needs.generate.outputs.stack-yamls) }}
+      fail-fast: false
+
     runs-on: ubuntu-22.04
     defaults:
       run:
@@ -18,8 +33,8 @@ jobs:
 
     steps:
     - name: Copy repo into actions 
-      uses: actions/checkout@v3
-    
+      uses: actions/checkout@v4
+ 
     - name: Installing ollama
       uses: pydantic/ollama-action@v3
       with:
@@ -28,5 +43,4 @@ jobs:
     - name: install dependancies, build and test stack project.
       uses: freckle/stack-action@v5
       with:
-        stack-build-arguments: --ghc-options="-fno-warn-unused-imports -fno-warn-unused-matches -fno-warn-type-defaults -fno-warn-missing-export-lists"
-        stack-build-arguments-test: --ghc-options="-fno-warn-unused-imports -fno-warn-unused-matches -fno-warn-type-defaults -fno-warn-missing-export-lists"
+          stack-arguments: --stack-yaml ${{ matrix.stack-yaml }}
