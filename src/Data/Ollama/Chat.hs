@@ -54,37 +54,37 @@ instance FromJSON Role where
 
 -- | Represents a message within a chat, including its role and content.
 data Message = Message
-  { role :: Role
+  { role :: !Role
   -- ^ The role of the entity sending the message (e.g., 'User', 'Assistant').
-  , content :: Text
+  , content :: !Text
   -- ^ The textual content of the message.
-  , images :: Maybe [Text]
+  , images :: !(Maybe [Text])
   -- ^ Optional list of base64 encoded images that accompany the message.
-  , tool_calls :: Maybe [Value]
+  , tool_calls :: !(Maybe [Value])
   -- ^ a list of tools in JSON that the model wants to use
   -- ^ Since 0.1.3.0
   }
   deriving (Show, Eq, Generic, ToJSON, FromJSON)
 
 data ChatOps = ChatOps
-  { chatModelName :: Text
+  { chatModelName :: !Text
   -- ^ The name of the chat model to be used.
-  , messages :: NonEmpty Message
+  , messages :: !(NonEmpty Message)
   -- ^ A non-empty list of messages forming the conversation context.
-  , tools :: Maybe [Value]
+  , tools :: !(Maybe [Value])
   -- ^ Optional tools that may be used in the chat.
-  , format :: Maybe Format
+  , format :: !(Maybe Format)
   -- ^ An optional format for the chat response (json or JSON schema).
   -- ^ Since 0.1.3.0
-  , stream :: Maybe (ChatResponse -> IO (), IO ())
+  , stream :: !(Maybe (ChatResponse -> IO (), IO ()))
   -- ^ Optional streaming functions where the first handles each chunk of the response, and the second flushes the stream.
-  , keepAlive :: Maybe Text
+  , keepAlive :: !(Maybe Text)
   -- ^ Optional text to specify keep-alive behavior.
-  , hostUrl :: Maybe Text
+  , hostUrl :: !(Maybe Text)
   -- ^ Override default Ollama host url. Default url = "http://127.0.0.1:11434"
-  , responseTimeOut :: Maybe Int
+  , responseTimeOut :: !(Maybe Int)
   -- ^ Override default response timeout in minutes. Default = 15 minutes
-  , options :: Maybe Value
+  , options :: !(Maybe Value)
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
   -- ^ Since 0.1.3.0
   }
@@ -114,25 +114,25 @@ instance Eq ChatOps where
       && keepAlive a == keepAlive b
 
 data ChatResponse = ChatResponse
-  { model :: Text
+  { model :: !Text
   -- ^ The name of the model that generated this response.
-  , createdAt :: UTCTime
+  , createdAt :: !UTCTime
   -- ^ The timestamp when the response was created.
-  , message :: Maybe Message
+  , message :: !(Maybe Message)
   -- ^ The message content of the response, if any.
-  , done :: Bool
+  , done :: !Bool
   -- ^ Indicates whether the chat process has completed.
-  , totalDuration :: Maybe Int64
+  , totalDuration :: !(Maybe Int64)
   -- ^ Optional total duration in milliseconds for the chat process.
-  , loadDuration :: Maybe Int64
+  , loadDuration :: !(Maybe Int64)
   -- ^ Optional load duration in milliseconds for loading the model.
-  , promptEvalCount :: Maybe Int64
+  , promptEvalCount :: !(Maybe Int64)
   -- ^ Optional count of prompt evaluations during the chat process.
-  , promptEvalDuration :: Maybe Int64
+  , promptEvalDuration :: !(Maybe Int64)
   -- ^ Optional duration in milliseconds for evaluating the prompt.
-  , evalCount :: Maybe Int64
+  , evalCount :: !(Maybe Int64)
   -- ^ Optional count of evaluations during the chat process.
-  , evalDuration :: Maybe Int64
+  , evalDuration :: !(Maybe Int64)
   -- ^ Optional duration in milliseconds for evaluations during the chat process.
   }
   deriving (Show, Eq)

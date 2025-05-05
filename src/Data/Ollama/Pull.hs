@@ -23,12 +23,12 @@ import Network.HTTP.Client
 
 -- | Configuration options for pulling a model.
 data PullOps = PullOps
-  { name :: Text
+  { name :: !Text
   -- ^ The name of the model to pull.
-  , insecure :: Maybe Bool
+  , insecure :: !(Maybe Bool)
   -- ^ Option to allow insecure connections.
   -- If set to 'Just True', the pull operation will allow insecure connections.
-  , stream :: Maybe Bool
+  , stream :: !(Maybe Bool)
   -- ^ Option to enable streaming of the download.
   -- If set to 'Just True', the download will be streamed.
   }
@@ -36,13 +36,13 @@ data PullOps = PullOps
 
 -- | Response data from a pull operation.
 data PullResp = PullResp
-  { status :: Text
+  { status :: !Text
   -- ^ The status of the pull operation, e.g., "success" or "failure".
-  , digest :: Maybe Text
+  , digest :: !(Maybe Text)
   -- ^ The digest of the model, if available.
-  , total :: Maybe Int64
+  , total :: !(Maybe Int64)
   -- ^ The total size of the model in bytes, if available.
-  , completed :: Maybe Int64
+  , completed :: !(Maybe Int64)
   -- ^ The number of bytes completed, if available.
   }
   deriving (Show, Eq, Generic, FromJSON)
@@ -58,6 +58,8 @@ Example:
 This will attempt to pull "myModel" with insecure connections allowed and enable streaming.
 -}
 pullOps ::
+  -- | Ollama URL
+  Maybe Text ->
   -- | Model Name
   Text ->
   -- | Insecure
@@ -65,8 +67,8 @@ pullOps ::
   -- | Stream
   Maybe Bool ->
   IO ()
-pullOps modelName mInsecure mStream = do
-  let url = defaultOllamaUrl
+pullOps hostUrl modelName mInsecure mStream = do
+  let url = fromMaybe defaultOllamaUrl hostUrl
   manager <- newManager defaultManagerSettings
   initialRequest <- parseRequest $ T.unpack (url <> "/api/pull")
   let reqBody =
@@ -111,4 +113,4 @@ pull ::
   -- | Model Name
   Text ->
   IO ()
-pull modelName = pullOps modelName Nothing Nothing
+pull modelName = pullOps Nothing modelName Nothing Nothing

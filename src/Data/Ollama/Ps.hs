@@ -2,6 +2,7 @@
 
 module Data.Ollama.Ps
   ( ps
+  , psOps
   , RunningModels (..)
   , RunningModel (..)
   ) where
@@ -12,6 +13,7 @@ import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Time
+import Data.Maybe (fromMaybe)
 import GHC.Int (Int64)
 import Network.HTTP.Client
 import Network.HTTP.Types.Status (statusCode)
@@ -21,13 +23,13 @@ newtype RunningModels = RunningModels [RunningModel]
   deriving (Eq, Show)
 
 data RunningModel = RunningModel
-  { name_ :: Text
-  , modelName :: Text
-  , size_ :: Int64
-  , modelDigest :: Text
-  , modelDetails :: ModelDetails
-  , expiresAt :: UTCTime
-  , sizeVRam :: Int64
+  { name_ :: !Text
+  , modelName :: !Text
+  , size_ :: !Int64
+  , modelDigest :: !Text
+  , modelDetails :: !ModelDetails
+  , expiresAt :: !UTCTime
+  , sizeVRam :: !Int64
   }
   deriving (Eq, Show)
 
@@ -47,8 +49,14 @@ instance FromJSON RunningModel where
 
 -- | List running models
 ps :: IO (Maybe RunningModels)
-ps = do
-  let url = defaultOllamaUrl
+ps = psOps Nothing
+
+
+
+-- | List running models
+psOps :: Maybe Text -> IO (Maybe RunningModels)
+psOps hostUrl = do
+  let url = fromMaybe defaultOllamaUrl hostUrl
   manager <- newManager defaultManagerSettings
   request <- parseRequest $ T.unpack (url <> "/api/ps")
   response <- httpLbs request manager

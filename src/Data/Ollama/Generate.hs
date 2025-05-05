@@ -48,32 +48,32 @@ import Network.HTTP.Client
   >         }
 -}
 data GenerateOps = GenerateOps
-  { modelName :: Text
+  { modelName :: !Text
   -- ^ The name of the model to be used for generation.
-  , prompt :: Text
+  , prompt :: !Text
   -- ^ The prompt text that will be provided to the model for generating a response.
   , suffix :: Maybe Text
   -- ^ An optional suffix to append to the generated text.
-  , images :: Maybe [Text]
+  , images :: !(Maybe [Text])
   -- ^ Optional list of base64 encoded images to include with the request.
-  , format :: Maybe Format
+  , format :: !(Maybe Format)
   -- ^ An optional format specifier for the response.
   -- ^ Since 0.1.3.0
-  , system :: Maybe Text
+  , system :: !(Maybe Text)
   -- ^ Optional system text that can be included in the generation context.
-  , template :: Maybe Text
+  , template :: !(Maybe Text)
   -- ^ An optional template to format the response.
-  , stream :: Maybe (GenerateResponse -> IO (), IO ())
+  , stream :: !(Maybe (GenerateResponse -> IO (), IO ()))
   -- ^ An optional streaming function where the first function handles each chunk of response, and the second flushes the stream.
-  , raw :: Maybe Bool
+  , raw :: !(Maybe Bool)
   -- ^ An optional flag to return the raw response.
-  , keepAlive :: Maybe Text
+  , keepAlive :: !(Maybe Text)
   -- ^ Optional text to specify keep-alive behavior.
-  , hostUrl :: Maybe Text
+  , hostUrl :: !(Maybe Text)
   -- ^ Override default Ollama host url. Default url = "http://127.0.0.1:11434"
-  , responseTimeOut :: Maybe Int
+  , responseTimeOut :: !(Maybe Int)
   -- ^ Override default response timeout in minutes. Default = 15 minutes
-  , options :: Maybe Value
+  , options :: !(Maybe Value)
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
   -- ^ Since 0.1.3.0
   }
@@ -123,25 +123,25 @@ instance Eq GenerateOps where
 Result type for generate function containing the model's response and meta-information.
 -}
 data GenerateResponse = GenerateResponse
-  { model :: Text
+  { model :: !Text
   -- ^ The name of the model that generated the response.
-  , createdAt :: UTCTime
+  , createdAt :: !UTCTime
   -- ^ The timestamp when the response was created.
-  , response_ :: Text
+  , response_ :: !Text
   -- ^ The generated response from the model.
-  , done :: Bool
+  , done :: !Bool
   -- ^ A flag indicating whether the generation process is complete.
-  , totalDuration :: Maybe Int64
+  , totalDuration :: !(Maybe Int64)
   -- ^ Optional total duration in milliseconds for the generation process.
-  , loadDuration :: Maybe Int64
+  , loadDuration :: !(Maybe Int64)
   -- ^ Optional load duration in milliseconds for loading the model.
-  , promptEvalCount :: Maybe Int64
+  , promptEvalCount :: !(Maybe Int64)
   -- ^ Optional count of prompt evaluations during the generation process.
-  , promptEvalDuration :: Maybe Int64
+  , promptEvalDuration :: !(Maybe Int64)
   -- ^ Optional duration in milliseconds for evaluating the prompt.
-  , evalCount :: Maybe Int64
+  , evalCount :: !(Maybe Int64)
   -- ^ Optional count of evaluations during the generation process.
-  , evalDuration :: Maybe Int64
+  , evalDuration :: !(Maybe Int64)
   -- ^ Optional duration in milliseconds for evaluations during the generation process.
   }
   deriving (Show, Eq)
@@ -161,7 +161,7 @@ instance ToJSON GenerateOps where
         keepAlive
         _ -- Host url
         _ -- Response timeout
-        options 
+        options
       ) =
       object
         [ "model" .= model

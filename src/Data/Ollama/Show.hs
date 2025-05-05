@@ -8,12 +8,16 @@ module Data.Ollama.Show
     showModel
   , showModelOps
   , ShowModelResponse (..)
+  , ShowModelInfo (..)
+  , CT.ModelDetails (..)
   ) where
 
 import Data.Aeson
+import Data.Ollama.Common.Types qualified as CT
 import Data.Ollama.Common.Utils qualified as CU
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Maybe (fromMaybe)
 import GHC.Generics
 import GHC.Int (Int64)
 import Network.HTTP.Client
@@ -26,8 +30,8 @@ import Network.HTTP.Client
  Input parameters for show model information.
 -}
 data ShowModelOps = ShowModelOps
-  { name :: Text
-  , verbose :: Maybe Bool
+  { name :: !Text
+  , verbose :: !(Maybe Bool)
   }
   deriving (Show, Eq, Generic, ToJSON)
 
@@ -37,46 +41,40 @@ data ShowModelOps = ShowModelOps
  Ouput structure for show model information.
 -}
 data ShowModelResponse = ShowModelResponse
-  { modelFile :: Text
-  , parameters :: Text
-  , template :: Text
-  , details :: ModelDetails
-  , modelInfo :: ModelInfo
+  { modelFile :: !Text
+  , parameters :: !(Maybe Text)
+  , template :: !(Maybe Text)
+  , details :: !CT.ModelDetails
+  , modelInfo :: !ShowModelInfo
+  , license :: !(Maybe Text)
+  , capabilities :: Maybe [Text]
   }
   deriving (Show, Eq)
 
-data ModelDetails = ModelDetails
-  { parentModel :: Text
-  , format :: Text
-  , familiy :: Text
-  , families :: [Text]
-  , parameterSize :: Text
-  , quantizationLevel :: Text
-  }
-  deriving (Show, Eq)
 
-data ModelInfo = ModelInfo
-  { generalArchitecture :: Maybe Text
-  , generalFileType :: Maybe Int
-  , generalParameterCount :: Maybe Int64
-  , generalQuantizationVersion :: Maybe Int
-  , llamaAttentionHeadCount :: Maybe Int
-  , llamaAttentionHeadCountKV :: Maybe Int
-  , llamaAttentionLayerNormRMSEpsilon :: Maybe Float
-  , llamaBlockCount :: Maybe Int
-  , llamaContextLength :: Maybe Int
-  , llamaEmbeddingLength :: Maybe Int
-  , llamaFeedForwardLength :: Maybe Int
-  , llamaRopeDimensionCount :: Maybe Int
-  , llamaRopeFreqBase :: Maybe Int64
-  , llamaVocabSize :: Maybe Int64
-  , tokenizerGgmlBosToken_id :: Maybe Int
-  , tokenizerGgmlEosToken_id :: Maybe Int
-  , tokenizerGgmlMerges :: Maybe [Text]
-  , tokenizerGgmlMode :: Maybe Text
-  , tokenizerGgmlPre :: Maybe Text
-  , tokenizerGgmlTokenType :: Maybe [Text]
-  , tokenizerGgmlTokens :: Maybe [Text]
+
+data ShowModelInfo = ShowModelInfo
+  { generalArchitecture :: !(Maybe Text)
+  , generalFileType :: !(Maybe Int)
+  , generalParameterCount :: !(Maybe Int64)
+  , generalQuantizationVersion :: !(Maybe Int)
+  , llamaAttentionHeadCount :: !(Maybe Int)
+  , llamaAttentionHeadCountKV :: !(Maybe Int)
+  , llamaAttentionLayerNormRMSEpsilon :: !(Maybe Float)
+  , llamaBlockCount :: !(Maybe Int)
+  , llamaContextLength :: !(Maybe Int)
+  , llamaEmbeddingLength :: !(Maybe Int)
+  , llamaFeedForwardLength :: !(Maybe Int)
+  , llamaRopeDimensionCount :: !(Maybe Int)
+  , llamaRopeFreqBase :: !(Maybe Int64)
+  , llamaVocabSize :: !(Maybe Int64)
+  , tokenizerGgmlBosToken_id :: !(Maybe Int)
+  , tokenizerGgmlEosToken_id :: !(Maybe Int)
+  , tokenizerGgmlMerges :: !(Maybe [Text])
+  , tokenizerGgmlMode :: !(Maybe Text)
+  , tokenizerGgmlPre :: !(Maybe Text)
+  , tokenizerGgmlTokenType :: !(Maybe [Text])
+  , tokenizerGgmlTokens :: !(Maybe [Text])
   }
   deriving (Show, Eq)
 
@@ -87,24 +85,16 @@ instance FromJSON ShowModelResponse where
   parseJSON = withObject "ShowModelResponse" $ \v ->
     ShowModelResponse
       <$> v .: "modelfile"
-      <*> v .: "parameters"
-      <*> v .: "template"
+      <*> v .:? "parameters"
+      <*> v .:? "template"
       <*> v .: "details"
       <*> v .: "model_info"
+      <*> v .:? "license"
+      <*> v .:? "capabilities"
 
-instance FromJSON ModelDetails where
-  parseJSON = withObject "ModelDetails" $ \v ->
-    ModelDetails
-      <$> v .: "parent_model"
-      <*> v .: "format"
-      <*> v .: "family"
-      <*> v .: "families"
-      <*> v .: "parameter_size"
-      <*> v .: "quantization_level"
-
-instance FromJSON ModelInfo where
+instance FromJSON ShowModelInfo where
   parseJSON = withObject "ModelInfo" $ \v ->
-    ModelInfo
+    ShowModelInfo
       <$> v .:? "general.architecture"
       <*> v .:? "general.file_type"
       <*> v .:? "general.parameter_count"
@@ -132,16 +122,19 @@ instance FromJSON ModelInfo where
 @since 1.0.0.0
 -}
 showModelOps ::
+  -- | Ollama URL
+  Maybe Text ->
   -- | model name
   Text ->
   -- | verbose
   Maybe Bool ->
   IO (Maybe ShowModelResponse)
 showModelOps
+  hostUrl
   modelName
   verbose_ =
     do
-      let url = CU.defaultOllamaUrl
+      let url = fromMaybe CU.defaultOllamaUrl hostUrl
       manager <- newManager defaultManagerSettings
       initialRequest <- parseRequest $ T.unpack (url <> "/api/show")
       let reqBody =
@@ -159,7 +152,7 @@ showModelOps
             eitherDecode (responseBody response) ::
               Either String ShowModelResponse
       case eRes of
-        Left _ -> pure Nothing
+        Left e -> print e >> pure Nothing
         Right r -> pure $ Just r
 
 {- | Show given model's information.
@@ -172,4 +165,4 @@ showModel ::
   Text ->
   IO (Maybe ShowModelResponse)
 showModel modelName =
-  showModelOps modelName Nothing
+  showModelOps Nothing modelName Nothing
