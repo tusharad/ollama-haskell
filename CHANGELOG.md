@@ -1,5 +1,9 @@
 # Revision history for ollama-haskell
 
+## Unreleased
+
+* Added stack matrix to ensure lib is buildable from lts-19.33
+
 ## 0.1.3.0 -- 2025-03-25
 
 * Added options, tools and tool_calls fields in chat and generate.
