@@ -21,7 +21,16 @@ import Network.HTTP.Types.Status (status404)
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
 newtype DeleteModelReq = DeleteModelReq {name :: Text}
-  deriving newtype (Show, Eq, ToJSON)
+  deriving newtype (Show, Eq)
+
+instance ToJSON DeleteModelReq where
+  toJSON
+    ( DeleteModelReq
+        name_
+      ) =
+      object
+        [ "name" .= name_
+        ]
 
 
 deleteModel :: Text -> IO ()
