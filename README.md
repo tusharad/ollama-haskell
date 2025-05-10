@@ -39,6 +39,10 @@ Whether Haskell is a "good" language depends on what you're looking for in a pro
 3. **Garbage collection**: Haskell handles memory management automatically, freeing you from worries about manual memory deallocation.
 ```
 
+### Note
+
+Make sure you have installed the model that you want to use.
+
 You can find practical examples demonstrating how to use the library in the `examples/OllamaExamples.hs` file. 
 
 ## Prerequisite
@@ -56,13 +60,22 @@ Make sure you have [Ollama](https://ollama.com) installed and running on your lo
 
 3. Import the `Ollama` module and start integrating with your local LLM.
 
+## Nix build
+
+If you have nix package manager installed. You can simply run:
+
+```
+nix-shell
+```
+
+This will install the latest version of ollama along with stack.
+
 ## Future Updates
 
 - [x] Improve documentation
 - [x] Add tests.
 - [x] Add examples.
 - [x] Add CI/CD pipeline.
-- [ ] `options` parameter in `generate`.
 
 Stay tuned for future updates and improvements!
 
