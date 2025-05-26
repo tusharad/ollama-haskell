@@ -16,6 +16,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Maybe (fromMaybe)
 import GHC.Generics
+import Network.HTTP.Client.TLS
 import Network.HTTP.Client
 import Network.HTTP.Types.Status (status404)
 
@@ -47,7 +48,7 @@ copyModelOps
   destination_ =
     do
       let url = fromMaybe CU.defaultOllamaUrl hostUrl
-      manager <- newManager defaultManagerSettings
+      manager <- newTlsManagerWith defaultManagerSettings
       initialRequest <- parseRequest $ T.unpack (url <> "/api/copy")
       let reqBody =
             CopyModelOps

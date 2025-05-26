@@ -21,6 +21,7 @@ dependencies:
 - text 
 - time
 - http-client 
+- http-client-tls
 - http-types 
 - base64-bytestring
 - filepath

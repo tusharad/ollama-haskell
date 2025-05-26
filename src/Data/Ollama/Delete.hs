@@ -16,6 +16,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Maybe (fromMaybe)
 import Network.HTTP.Client
+import Network.HTTP.Client.TLS
 import Network.HTTP.Types.Status (status404)
 
 -- TODO: Add Options parameter
@@ -46,7 +47,7 @@ deleteModelOps ::
   IO ()
 deleteModelOps hostUrl modelName = do
     let url = fromMaybe CU.defaultOllamaUrl hostUrl
-    manager <- newManager defaultManagerSettings
+    manager <- newTlsManagerWith defaultManagerSettings
     initialRequest <- parseRequest $ T.unpack (url <> "/api/delete")
     let reqBody =
           DeleteModelReq {name = modelName}

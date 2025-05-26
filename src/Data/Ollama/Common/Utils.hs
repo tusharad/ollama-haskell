@@ -20,6 +20,7 @@ import Data.Ollama.Common.Types
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
+import Network.HTTP.Client.TLS
 import Network.HTTP.Client
 import System.Directory
 import System.FilePath
@@ -79,20 +80,20 @@ withOllamaRequest endpoint reqMethod mbPayload hostUrl mTimeout handler = do
       timeoutMicros = fromMaybe (15 * 60 * 1000000) (fmap (\x -> x * 60 * 1000000) mTimeout)
 
   manager <-
-    newManager
-      defaultManagerSettings
+    newTlsManagerWith
+      tlsManagerSettings
         { managerResponseTimeout = responseTimeoutMicro timeoutMicros
         }
-  eRequest <- try (parseRequest fullUrl) :: IO (Either HttpException Request)
+  eRequest <- try $ parseRequest fullUrl :: IO (Either HttpException Request)
   case eRequest of
     Left ex -> return $ Left $ "Failed to parse request URL: " <> show ex
     Right req -> do
       let request =
             req
               { method = reqMethod
-              , requestBody = maybe mempty (\x -> RequestBodyLBS (encode x)) mbPayload
+              , requestBody = maybe mempty (\x -> RequestBodyLBS $ encode x) mbPayload
               }
-      eResponse <- try (withResponse request manager handler)
+      eResponse <- try $ withResponse request manager handler
       case eResponse of
         Left ex -> return $ Left $ "HTTP error occurred: " <> show (ex :: SomeException)
         Right result -> return result
@@ -102,7 +103,6 @@ commonNonStreamingHandler ::
   Response BodyReader ->
   IO (Either String a)
 commonNonStreamingHandler resp = do
-  -- body <- responseBody resp
   let bodyReader = responseBody resp
   -- Accumulate all chunks until EOF
   finalBs <- go BS.empty bodyReader
