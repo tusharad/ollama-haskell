@@ -1,5 +1,6 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Data.Ollama.Create
   ( -- * Create Model API
@@ -7,14 +8,11 @@ module Data.Ollama.Create
   , createModelOps
   ) where
 
-import Control.Monad (unless)
+import Control.Monad (void)
 import Data.Aeson
-import Data.ByteString.Lazy.Char8 qualified as BSL
+import Data.Ollama.Common.Types (HasDone (getDone))
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
-import Data.Text qualified as T
-import Data.Text.IO qualified as T
-import Network.HTTP.Client
 
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
@@ -29,6 +27,9 @@ data CreateModelOps = CreateModelOps
 -- TODO: Add Context Param
 newtype CreateModelResp = CreateModelResp {status :: Text}
   deriving (Show, Eq)
+
+instance HasDone CreateModelResp where
+  getDone CreateModelResp {..} = status /= "success"
 
 instance ToJSON CreateModelOps where
   toJSON
@@ -68,39 +69,28 @@ createModelOps
   modelFile_
   stream_
   path_ =
-    do
-      let url = defaultOllamaUrl
-      manager <- newManager defaultManagerSettings
-      initialRequest <- parseRequest $ T.unpack (url <> "/api/create")
-      let reqBody =
+    void $
+      withOllamaRequest
+        "/api/pull"
+        "POST"
+        ( Just $
             CreateModelOps
               { name = modelName
               , modelFile = modelFile_
               , stream = stream_
               , path = path_
               }
-          request =
-            initialRequest
-              { method = "POST"
-              , requestBody = RequestBodyLBS $ encode reqBody
-              }
-      withResponse request manager $ \response -> do
-        let go = do
-              bs <- brRead $ responseBody response
-              let eRes =
-                    eitherDecode (BSL.fromStrict bs) ::
-                      Either String CreateModelResp
-              case eRes of
-                Left err -> do
-                  putStrLn $ "Error: " <> err <> show bs
-                Right res -> do
-                  unless
-                    (status res /= "success")
-                    ( do
-                        T.putStr $ status res
-                        go
-                    )
-        go
+        )
+        Nothing
+        Nothing
+        (commonStreamHandler onToken onComplete)
+    where
+      onToken :: CreateModelResp -> IO ()
+      onToken _ = do
+        putStrLn $ "Creating model..."
+
+      onComplete :: IO ()
+      onComplete = putStrLn "Completed"
 
 {- | Create a new model
 | Please note, if you specify both ModelFile and Path, ModelFile will be used.

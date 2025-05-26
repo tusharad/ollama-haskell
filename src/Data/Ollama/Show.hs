@@ -14,13 +14,10 @@ module Data.Ollama.Show
 
 import Data.Aeson
 import Data.Ollama.Common.Types qualified as CT
-import Data.Ollama.Common.Utils qualified as CU
 import Data.Text (Text)
-import Data.Text qualified as T
-import Data.Maybe (fromMaybe)
 import GHC.Generics
 import GHC.Int (Int64)
-import Network.HTTP.Client
+import Data.Ollama.Common.Utils (withOllamaRequest, commonNonStreamingHandler)
 
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
@@ -128,32 +125,18 @@ showModelOps ::
   Text ->
   -- | verbose
   Maybe Bool ->
-  IO (Maybe ShowModelResponse)
-showModelOps
-  hostUrl
-  modelName
-  verbose_ =
-    do
-      let url = fromMaybe CU.defaultOllamaUrl hostUrl
-      manager <- newManager defaultManagerSettings
-      initialRequest <- parseRequest $ T.unpack (url <> "/api/show")
-      let reqBody =
-            ShowModelOps
-              { name = modelName
-              , verbose = verbose_
-              }
-          request =
-            initialRequest
-              { method = "POST"
-              , requestBody = RequestBodyLBS $ encode reqBody
-              }
-      response <- httpLbs request manager
-      let eRes =
-            eitherDecode (responseBody response) ::
-              Either String ShowModelResponse
-      case eRes of
-        Left e -> print e >> pure Nothing
-        Right r -> pure $ Just r
+  IO (Either String ShowModelResponse)
+showModelOps hostUrl modelName verbose_ = do
+  withOllamaRequest
+    "/api/show"
+    "POST"
+    (Just $ ShowModelOps {
+        name = modelName
+      , verbose = verbose_
+    })
+    hostUrl 
+    Nothing
+    commonNonStreamingHandler
 
 {- | Show given model's information.
 
@@ -163,6 +146,6 @@ Higher level API for show.
 showModel ::
   -- | model name
   Text ->
-  IO (Maybe ShowModelResponse)
+  IO (Either String ShowModelResponse)
 showModel modelName =
   showModelOps Nothing modelName Nothing

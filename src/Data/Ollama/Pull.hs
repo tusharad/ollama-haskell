@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Data.Ollama.Pull
   ( -- * Downloaded Models
@@ -9,15 +10,14 @@ module Data.Ollama.Pull
   , pullOps
   ) where
 
+import Control.Monad (void)
 import Data.Aeson
-import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.Maybe (fromMaybe)
+import Data.Ollama.Common.Types (HasDone (..))
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
-import Data.Text qualified as T
 import GHC.Generics
 import GHC.Int (Int64)
-import Network.HTTP.Client
 
 -- TODO: Add Options parameter
 
@@ -47,6 +47,9 @@ data PullResp = PullResp
   }
   deriving (Show, Eq, Generic, FromJSON)
 
+instance HasDone PullResp where
+  getDone PullResp {..} = status /= "success"
+
 {- |
 Pull a model with additional options for insecure connections and streaming.
 This function interacts directly with the Ollama API to download the specified model.
@@ -68,36 +71,23 @@ pullOps ::
   Maybe Bool ->
   IO ()
 pullOps hostUrl modelName mInsecure mStream = do
-  let url = fromMaybe defaultOllamaUrl hostUrl
-  manager <- newManager defaultManagerSettings
-  initialRequest <- parseRequest $ T.unpack (url <> "/api/pull")
-  let reqBody =
-        PullOps
-          { name = modelName
-          , insecure = mInsecure
-          , stream = mStream
-          }
-      request =
-        initialRequest
-          { method = "POST"
-          , requestBody = RequestBodyLBS $ encode reqBody
-          }
-  withResponse request manager $ \response -> do
-    let go = do
-          bs <- brRead $ responseBody response
-          let eRes = decode (BSL.fromStrict bs) :: Maybe PullResp
-          case eRes of
-            Nothing -> putStrLn "Something went wrong"
-            Just res -> do
-              if status res /= "success"
-                then do
-                  let completed' = fromMaybe 0 (completed res)
-                  let total' = fromMaybe 0 (total res)
-                  putStrLn $ "Remaining bytes: " <> show (total' - completed')
-                  go
-                else do
-                  putStrLn "Completed"
-    go
+  void $
+    withOllamaRequest
+      "/api/pull"
+      "POST"
+      (Just $ PullOps {name = modelName, insecure = mInsecure, stream = mStream})
+      hostUrl
+      Nothing
+      (commonStreamHandler onToken onComplete)
+  where
+    onToken :: PullResp -> IO ()
+    onToken res = do
+      let completed' = fromMaybe 0 (completed res)
+      let total' = fromMaybe 0 (total res)
+      putStrLn $ "Remaining bytes: " <> show (total' - completed')
+
+    onComplete :: IO ()
+    onComplete = putStrLn "Completed"
 
 {- |
 Pull a model using default options. This simplifies the pull operation by

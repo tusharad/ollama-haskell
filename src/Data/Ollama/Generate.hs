@@ -11,21 +11,15 @@ module Data.Ollama.Generate
   , GenerateResponse (..)
   ) where
 
-import Control.Exception (try)
 import Data.Aeson
-import Data.ByteString.Char8 qualified as BS
 import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.Maybe
+import Data.Ollama.Common.Types (Format (..), GenerateResponse (..))
 import Data.Ollama.Common.Utils as CU
-import Data.Ollama.Common.Types (Format(..))
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
-import Data.Time (UTCTime)
-import GHC.Int (Int64)
-import Network.HTTP.Client
 
--- TODO: Add Options parameter
 -- TODO: Add Context parameter
 
 {- |
@@ -64,7 +58,8 @@ data GenerateOps = GenerateOps
   , template :: !(Maybe Text)
   -- ^ An optional template to format the response.
   , stream :: !(Maybe (GenerateResponse -> IO (), IO ()))
-  -- ^ An optional streaming function where the first function handles each chunk of response, and the second flushes the stream.
+  -- ^ An optional streaming function where the first function handles
+  -- each chunk of response, and the second flushes the stream.
   , raw :: !(Maybe Bool)
   -- ^ An optional flag to return the raw response.
   , keepAlive :: !(Maybe Text)
@@ -117,35 +112,6 @@ instance Eq GenerateOps where
       && keepAlive a == keepAlive b
       && options a == options b
 
--- TODO: Add Context Param
-
-{- |
-Result type for generate function containing the model's response and meta-information.
--}
-data GenerateResponse = GenerateResponse
-  { model :: !Text
-  -- ^ The name of the model that generated the response.
-  , createdAt :: !UTCTime
-  -- ^ The timestamp when the response was created.
-  , response_ :: !Text
-  -- ^ The generated response from the model.
-  , done :: !Bool
-  -- ^ A flag indicating whether the generation process is complete.
-  , totalDuration :: !(Maybe Int64)
-  -- ^ Optional total duration in milliseconds for the generation process.
-  , loadDuration :: !(Maybe Int64)
-  -- ^ Optional load duration in milliseconds for loading the model.
-  , promptEvalCount :: !(Maybe Int64)
-  -- ^ Optional count of prompt evaluations during the generation process.
-  , promptEvalDuration :: !(Maybe Int64)
-  -- ^ Optional duration in milliseconds for evaluating the prompt.
-  , evalCount :: !(Maybe Int64)
-  -- ^ Optional count of evaluations during the generation process.
-  , evalDuration :: !(Maybe Int64)
-  -- ^ Optional duration in milliseconds for evaluations during the generation process.
-  }
-  deriving (Show, Eq)
-
 instance ToJSON GenerateOps where
   toJSON
     ( GenerateOps
@@ -176,20 +142,6 @@ instance ToJSON GenerateOps where
         , "keep_alive" .= keepAlive
         , "options" .= options
         ]
-
-instance FromJSON GenerateResponse where
-  parseJSON = withObject "GenerateResponse" $ \v ->
-    GenerateResponse
-      <$> v .: "model"
-      <*> v .: "created_at"
-      <*> v .: "response"
-      <*> v .: "done"
-      <*> v .:? "total_duration"
-      <*> v .:? "load_duration"
-      <*> v .:? "prompt_eval_count"
-      <*> v .:? "prompt_eval_duration"
-      <*> v .:? "eval_count"
-      <*> v .:? "eval_duration"
 
 {- |
 A function to create a default 'GenerateOps' type with preset values.
@@ -254,64 +206,24 @@ Usage with streaming to print responses to the console:
 >       , stream = Just (T.putStr . response_, pure ())
 >       }
 
-In this example, the first function in the 'stream' tuple processes each chunk of response by printing it,
-and the second function is a simple no-op flush.generate :: GenerateOps -> IO (Either String GenerateResponse)
+In this example, the first function in the 'stream' tuple processes
+each chunk of response by printing it,
+and the second function is a simple no-op
+flush.generate :: GenerateOps -> IO (Either String GenerateResponse)
 -}
 generate :: GenerateOps -> IO (Either String GenerateResponse)
-generate genOps = do
-  let url = fromMaybe defaultOllamaUrl (hostUrl genOps)
-      responseTimeout = fromMaybe 15 (responseTimeOut genOps)
-  manager <-
-    newManager -- Setting response timeout to 5 minutes, since llm takes time
-      defaultManagerSettings
-        { managerResponseTimeout = responseTimeoutMicro (responseTimeout * 60 * 1000000)
-        }
-  eInitialRequest <-
-    try $ parseRequest $ T.unpack (url <> "/api/generate") :: IO (Either HttpException Request)
-  case eInitialRequest of
-    Left e -> do
-      return $ Left $ show e
-    Right initialRequest -> do
-      let reqBody = genOps
-          request =
-            initialRequest
-              { method = "POST"
-              , requestBody = RequestBodyLBS $ encode reqBody
-              }
-      eRes <-
-        try (withResponse request manager $ handleRequest genOps) ::
-          IO (Either HttpException (Either String GenerateResponse))
-      case eRes of
-        Left e -> do
-          return $ Left $ "HTTP error occured: " <> show e
-        Right r -> return r
-
-handleRequest :: GenerateOps -> Response BodyReader -> IO (Either String GenerateResponse)
-handleRequest genOps response = do
-  let streamResponse sendChunk flush = do
-        bs <- brRead $ responseBody response
-        if BS.null bs
-          then putStrLn "" >> pure (Left "")
-          else do
-            let eRes = eitherDecode (BSL.fromStrict bs) :: Either String GenerateResponse
-            case eRes of
-              Left e -> pure (Left $ e <> show bs)
-              Right r -> do
-                _ <- sendChunk r
-                _ <- flush
-                if done r then pure (Right r) else streamResponse sendChunk flush
-  let genResponse op = do
-        bs <- brRead $ responseBody response
-        if bs == ""
-          then do
-            let eRes0 = eitherDecode (BSL.fromStrict op) :: Either String GenerateResponse
-            case eRes0 of
-              Left e -> pure (Left $ e <> show op)
-              Right r -> pure (Right r)
-          else genResponse (op <> bs)
-  case stream genOps of
-    Nothing -> genResponse ""
-    Just (sendChunk, flush) -> streamResponse sendChunk flush
+generate ops =
+  withOllamaRequest
+    "/api/generate"
+    "POST"
+    (Just ops)
+    (hostUrl ops)
+    (responseTimeOut ops)
+    handler
+  where
+    handler = case stream ops of
+      Nothing -> commonNonStreamingHandler
+      Just (sc, fl) -> commonStreamHandler sc fl
 
 {- |
  generateJson is a higher level function that takes generateOps (similar to generate) and also takes
@@ -380,7 +292,6 @@ generateJson genOps@GenerateOps {..} jsonStructure mMaxRetries = do
                 else generateJson genOps jsonStructure (Just (n - 1))
         Just resultInType -> return $ Right resultInType
 
-
 {- |
    Example usage of 'Ollama.generate' with a JSON schema format and options field.
 
@@ -407,4 +318,3 @@ generateJson genOps@GenerateOps {..} jsonStructure mMaxRetries = do
                             promptEvalCount = Just 43, promptEvalDuration = Just 2983000000,
                             evalCount = Just 10, evalDuration = Just 1061000000})
 -}
-

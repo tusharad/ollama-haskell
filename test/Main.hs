@@ -2,18 +2,18 @@
 
 module Main (main) where
 
+import Data.Aeson
 import Data.Either
 import Data.List.NonEmpty hiding (length)
 import Data.Maybe
 import Data.Ollama.Chat qualified as Chat
+import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Ollama (GenerateOps (..), Role (..), defaultChatOps, defaultGenerateOps)
 import Ollama qualified
 import System.IO.Silently (capture)
 import Test.Tasty
 import Test.Tasty.HUnit
-import qualified Data.Text as T 
-import Data.Aeson 
 
 tests :: TestTree
 tests =
@@ -52,13 +52,15 @@ generateTest =
               }
         assertBool "Checking if generate function returns a valid value" (isRight eRes)
     , testCase "Generate with invalid host" $ do
-        eRes <- Ollama.generate defaultGenerateOps {
-            modelName = "llama3.2"
-          , prompt = "what is 23 + 9?"
-          , hostUrl = pure "http://some-site"
-          , responseTimeOut = pure 2
-        }
-        print ("got response" :: String ,eRes)
+        eRes <-
+          Ollama.generate
+            defaultGenerateOps
+              { modelName = "llama3.2"
+              , prompt = "what is 23 + 9?"
+              , hostUrl = pure "http://some-site"
+              , responseTimeOut = pure 2
+              }
+        print ("got response" :: String, eRes)
         assertBool "Expecting Left" (isLeft eRes)
     , testCase "Generate with invalid model" $ do
         eRes <- Ollama.generate defaultGenerateOps {modelName = "invalid-model"}
@@ -67,12 +69,14 @@ generateTest =
 
 generateFormatTest :: TestTree
 generateFormatTest =
-  testGroup "Generate tests with format and options"
+  testGroup
+    "Generate tests with format and options"
     [ testCase "Generate with SchemaFormat and options" $ do
-        let schema = object
-              [ "type" .= ("object" :: String)
-              , "properties" .= object [ "age" .= object ["type" .= ("integer" :: String)] ]
-              ]
+        let schema =
+              object
+                [ "type" .= ("object" :: String)
+                , "properties" .= object ["age" .= object ["type" .= ("integer" :: String)]]
+                ]
         eRes <-
           Ollama.generate
             defaultGenerateOps
@@ -82,7 +86,9 @@ generateFormatTest =
               }
         case eRes of
           Right res ->
-            assertBool "Response should contain JSON with key \"age\"" ( "age" `T.isInfixOf` Ollama.response_ res )
+            assertBool
+              "Response should contain JSON with key \"age\""
+              ("age" `T.isInfixOf` Ollama.response_ res)
           Left err ->
             assertFailure $ "Generation failed with error: " ++ show err
     , testCase "Generate with JsonFormat and options" $ do
@@ -95,7 +101,7 @@ generateFormatTest =
               }
         case eRes of
           Right res ->
-            assertBool "Response should start with '{'" ( "{" `T.isPrefixOf` Ollama.response_ res )
+            assertBool "Response should start with '{'" ("{" `T.isPrefixOf` Ollama.response_ res)
           Left err ->
             assertFailure $ "Generation failed with error: " ++ show err
     ]
@@ -113,7 +119,14 @@ chatTest =
               defaultChatOps
                 { Chat.chatModelName = "llama3.2"
                 , Chat.messages = msg :| []
-                , Chat.stream = Just (T.putStr . Chat.content . fromMaybe defaultMsg . Chat.message, pure ())
+                , Chat.stream =
+                    Just
+                      ( T.putStr
+                          . Chat.content
+                          . fromMaybe defaultMsg
+                          . Chat.message
+                      , pure ()
+                      )
                 }
         assertBool "Checking if chat function is printing anything" (length output > 0)
     , testCase "Chat non-stream" $ do
@@ -140,13 +153,20 @@ chatTest =
 
 chatFormatTest :: TestTree
 chatFormatTest =
-  testGroup "Chat tests with format and options"
+  testGroup
+    "Chat tests with format and options"
     [ testCase "Chat with SchemaFormat and options" $ do
-        let schema = object
-              [ "type" .= ("object" :: String)
-              , "properties" .= object [ "age" .= object ["type" .= ("integer" :: String)] ]
-              ]
-            msg = Ollama.Message User "Ollama is 22 years old and is busy saving the world. Respond using JSON" Nothing Nothing
+        let schema =
+              object
+                [ "type" .= ("object" :: String)
+                , "properties" .= object ["age" .= object ["type" .= ("integer" :: String)]]
+                ]
+            msg =
+              Ollama.Message
+                User
+                "Ollama is 22 years old and is busy saving the world. Respond using JSON"
+                Nothing
+                Nothing
         eRes <-
           Ollama.chat
             defaultChatOps
@@ -184,7 +204,7 @@ psTest =
     "PS test"
     [ testCase "check ps" $ do
         mRes <- Ollama.ps
-        assertBool "Check if ps returns anything" (isJust mRes)
+        assertBool "Check if ps returns anything" (isRight mRes)
     ]
 
 showTest :: TestTree
@@ -193,7 +213,7 @@ showTest =
     "Show test"
     [ testCase "check show" $ do
         mRes <- Ollama.showModel "llama3.2"
-        assertBool "Check if model exists or not" (isJust mRes)
+        assertBool "Check if model exists or not" (isRight mRes)
     ]
 
 embeddingTest :: TestTree
@@ -209,5 +229,7 @@ main :: IO ()
 main = do
   mRes <- Ollama.list
   case mRes of
-    Nothing -> pure () -- Ollama is likely not running. Not running tests.
-    Just _ -> defaultMain tests
+    Left err -> do
+      putStrLn $ "ollama list failed: " <> err
+      pure () -- Ollama is likely not running. Not running tests.
+    Right _ -> defaultMain tests

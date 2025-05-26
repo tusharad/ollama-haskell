@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -10,14 +11,12 @@ module Data.Ollama.Push
   ) where
 
 import Data.Aeson
-import Data.ByteString.Lazy.Char8 qualified as BSL
-import Data.Maybe (fromMaybe)
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
-import Data.Text qualified as T
 import GHC.Generics
 import GHC.Int (Int64)
-import Network.HTTP.Client
+import Control.Monad (void)
+import Data.Ollama.Common.Types (HasDone (getDone))
 
 -- TODO: Add Options parameter
 data PushOps = PushOps
@@ -34,6 +33,9 @@ data PushResp = PushResp
   }
   deriving (Show, Eq, Generic, FromJSON)
 
+instance HasDone PushResp where
+  getDone PushResp {..} = status /= "success"
+
 -- | Push a model with options
 pushOps ::
   -- | Ollama URL
@@ -46,36 +48,20 @@ pushOps ::
   Maybe Bool ->
   IO ()
 pushOps hostUrl modelName mInsecure mStream = do
-  let url = fromMaybe defaultOllamaUrl hostUrl
-  manager <- newManager defaultManagerSettings
-  initialRequest <- parseRequest $ T.unpack (url <> "/api/push")
-  let reqBody =
-        PushOps
-          { name = modelName
-          , insecure = mInsecure
-          , stream = mStream
-          }
-      request =
-        initialRequest
-          { method = "POST"
-          , requestBody = RequestBodyLBS $ encode reqBody
-          }
-  withResponse request manager $ \response -> do
-    let go = do
-          bs <- brRead $ responseBody response
-          let eRes = decode (BSL.fromStrict bs) :: Maybe PushResp
-          case eRes of
-            Nothing -> putStrLn "Something went wrong"
-            Just res -> do
-              if status res /= "success"
-                then do
-                  let total' = fromMaybe 0 (total res)
-                  putStrLn $ "Remaining bytes: " <> show total'
-                  go
-                else do
-                  putStrLn "Completed"
-    go
+  void $
+    withOllamaRequest
+      "/api/pull"
+      "POST"
+      (Just $ PushOps {name = modelName, insecure = mInsecure, stream = mStream})
+      hostUrl
+      Nothing
+      (commonStreamHandler onToken onComplete)
+  where
+    onToken :: PushResp -> IO ()
+    onToken _ = putStrLn $ "Pushing... "
 
+    onComplete :: IO ()
+    onComplete = putStrLn "Completed"
 -- Higher level API for Pull
 -- This API is untested. Will test soon!
 

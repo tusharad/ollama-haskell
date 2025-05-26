@@ -44,8 +44,7 @@ deleteModelOps ::
   -- | Model name
   Text ->
   IO ()
-deleteModelOps hostUrl modelName =
-  do
+deleteModelOps hostUrl modelName = do
     let url = fromMaybe CU.defaultOllamaUrl hostUrl
     manager <- newManager defaultManagerSettings
     initialRequest <- parseRequest $ T.unpack (url <> "/api/delete")
