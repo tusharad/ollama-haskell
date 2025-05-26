@@ -230,6 +230,6 @@ main = do
   mRes <- Ollama.list
   case mRes of
     Left err -> do
-      putStrLn $ "ollama list failed: " <> err
+      putStrLn $ "ollama list failed: " <> show err
       pure () -- Ollama is likely not running. Not running tests.
     Right _ -> defaultMain tests

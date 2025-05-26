@@ -21,6 +21,7 @@ import Data.Aeson.KeyMap qualified as HM
 import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.List.NonEmpty as NonEmpty
 import Data.Maybe (isNothing)
+import Data.Ollama.Common.Error (OllamaError (..))
 import Data.Ollama.Common.Types (ChatResponse (..), Format (..), Message (..), Role (..))
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
@@ -134,7 +135,7 @@ To request a structured output with a JSON schema:
 > let ops = defaultChatOps { format = Just (SchemaFormat schema) }
 > result <- chat ops
 -}
-chat :: ChatOps -> IO (Either String ChatResponse)
+chat :: ChatOps -> IO (Either OllamaError ChatResponse)
 chat ops =
   withOllamaRequest
     "/api/chat"
@@ -193,38 +194,28 @@ chatJson ::
   jsonResult ->
   -- | Max retries
   Maybe Int ->
-  IO (Either String jsonResult)
+  IO (Either OllamaError jsonResult)
 chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
   -- For models that support the format parameter, use that directly
   -- let jsonSchema = encode jsonStructure
   let useNativeFormat = False -- Set to True to use the native format parameter when appropriate
   if useNativeFormat
     then do
+      let schemaList = [("schema", Object $ HM.fromList [("type", String "object")])]
       let formattedOps =
-            cOps
-              { format =
-                  Just
-                    ( SchemaFormat
-                        ( Object $
-                            HM.fromList
-                              [
-                                ( "schema"
-                                , Object $ HM.fromList [("type", String "object")]
-                                )
-                              ]
-                        )
-                    )
-              }
+            cOps {format = Just $ SchemaFormat (Object (HM.fromList schemaList))}
       chatResponse <- chat formattedOps
       case chatResponse of
         Left err -> return $ Left err
         Right r -> do
           let mMessage = message r
           case mMessage of
-            Nothing -> return $ Left "Something went wrong"
-            Just res -> case decode (BSL.fromStrict . T.encodeUtf8 $ content res) of
-              Nothing -> return $ Left "Decoding Failed :("
-              Just resultInType -> return $ Right resultInType
+            Nothing -> return $ Left $ ApiError "Something went wrong"
+            Just res -> do
+              let bs = BSL.fromStrict . T.encodeUtf8 $ content res
+              case eitherDecode bs of
+                Left err -> return $ Left $ DecodeError err (show bs)
+                Right resultInType -> return $ Right resultInType
     else do
       -- Fall back to the original implementation using prompts
       let lastMessage = NonEmpty.last messages
@@ -250,19 +241,18 @@ chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
         Right r -> do
           let mMessage = message r
           case mMessage of
-            Nothing -> return $ Left "Something went wrong"
+            Nothing -> return $ Left $ ApiError "Something went wrong"
             Just res -> do
-              case decode (BSL.fromStrict . T.encodeUtf8 $ content res) of
-                Nothing -> do
+              let bs = BSL.fromStrict . T.encodeUtf8 $ content res
+              case eitherDecode bs of
+                Left err -> do
                   case mMaxRetries of
-                    Nothing -> return $ Left "Decoding Failed :("
+                    Nothing -> return $ Left $ DecodeError err (show bs)
                     Just n ->
                       if n < 1
-                        then
-                          return $
-                            Left "Decoding Failed :("
+                        then return $ Left $ DecodeError err (show bs)
                         else chatJson cOps jsonStructure (Just (n - 1))
-                Just resultInType -> return $ Right resultInType
+                Right resultInType -> return $ Right resultInType
 
 -- | Helper function to create a JSON schema from a Haskell type
 schemaFromType :: ToJSON a => a -> BSL.ByteString

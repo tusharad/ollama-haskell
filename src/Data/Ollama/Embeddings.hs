@@ -12,6 +12,7 @@ module Data.Ollama.Embeddings
 import Data.Aeson
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
+import Data.Ollama.Common.Error (OllamaError)
 
 -- TODO: Add Options parameter
 data EmbeddingOps = EmbeddingOps
@@ -57,7 +58,7 @@ embeddingOps ::
   Maybe Bool ->
   -- | Keep Alive
   Maybe Text ->
-  IO (Either String EmbeddingResp)
+  IO (Either OllamaError EmbeddingResp)
 embeddingOps hostUrl modelName input_ mTruncate mKeepAlive = do
   withOllamaRequest
     "/api/embed"
@@ -81,6 +82,6 @@ embedding ::
   Text ->
   -- | Input
   Text ->
-  IO (Either String EmbeddingResp)
+  IO (Either OllamaError EmbeddingResp)
 embedding modelName input_ =
   embeddingOps Nothing modelName input_ Nothing Nothing

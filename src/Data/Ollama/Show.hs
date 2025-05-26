@@ -18,6 +18,7 @@ import Data.Text (Text)
 import GHC.Generics
 import GHC.Int (Int64)
 import Data.Ollama.Common.Utils (withOllamaRequest, commonNonStreamingHandler)
+import Data.Ollama.Common.Error (OllamaError)
 
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
@@ -125,7 +126,7 @@ showModelOps ::
   Text ->
   -- | verbose
   Maybe Bool ->
-  IO (Either String ShowModelResponse)
+  IO (Either OllamaError ShowModelResponse)
 showModelOps hostUrl modelName verbose_ = do
   withOllamaRequest
     "/api/show"
@@ -146,6 +147,6 @@ Higher level API for show.
 showModel ::
   -- | model name
   Text ->
-  IO (Either String ShowModelResponse)
+  IO (Either OllamaError ShowModelResponse)
 showModel modelName =
   showModelOps Nothing modelName Nothing

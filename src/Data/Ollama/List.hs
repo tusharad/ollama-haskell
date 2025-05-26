@@ -15,6 +15,7 @@ import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Time
 import GHC.Int (Int64)
+import Data.Ollama.Common.Error (OllamaError)
 
 newtype Models = Models [ModelInfo]
   deriving (Eq, Show)
@@ -42,13 +43,13 @@ instance FromJSON ModelInfo where
       <*> v .: "details"
 
 -- | List all models from local
-list :: IO (Either String Models)
+list :: IO (Either OllamaError Models)
 list = listOps Nothing
 
 listOps ::
   -- | Ollama URL
   Maybe Text ->
-  IO (Either String Models)
+  IO (Either OllamaError Models)
 listOps hostUrl = do
   withOllamaRequest
     "/api/tags"

@@ -19,6 +19,7 @@ import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
+import Data.Ollama.Common.Error (OllamaError (DecodeError))
 
 -- TODO: Add Context parameter
 
@@ -211,7 +212,7 @@ each chunk of response by printing it,
 and the second function is a simple no-op
 flush.generate :: GenerateOps -> IO (Either String GenerateResponse)
 -}
-generate :: GenerateOps -> IO (Either String GenerateResponse)
+generate :: GenerateOps -> IO (Either OllamaError GenerateResponse)
 generate ops =
   withOllamaRequest
     "/api/generate"
@@ -266,7 +267,7 @@ generateJson ::
   jsonResult ->
   -- | Max retries
   Maybe Int ->
-  IO (Either String jsonResult)
+  IO (Either OllamaError jsonResult)
 generateJson genOps@GenerateOps {..} jsonStructure mMaxRetries = do
   let jsonHelperPrompt =
         "You are an AI that returns only JSON object. \n"
@@ -282,15 +283,16 @@ generateJson genOps@GenerateOps {..} jsonStructure mMaxRetries = do
   case generatedResponse of
     Left err -> return $ Left err
     Right r -> do
-      case decode (BSL.fromStrict . T.encodeUtf8 $ response_ r) of
-        Nothing -> do
+      let bs = BSL.fromStrict . T.encodeUtf8 $ response_ r
+      case eitherDecode bs of
+        Left err -> do
           case mMaxRetries of
-            Nothing -> return $ Left "Decoding Failed :("
+            Nothing -> return $ Left $ DecodeError err (show bs)
             Just n ->
               if n < 1
-                then return $ Left "Decoding failed :("
+                then return $ Left $ DecodeError err (show bs)
                 else generateJson genOps jsonStructure (Just (n - 1))
-        Just resultInType -> return $ Right resultInType
+        Right resultInType -> return $ Right resultInType
 
 {- |
    Example usage of 'Ollama.generate' with a JSON schema format and options field.

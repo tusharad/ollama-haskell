@@ -68,11 +68,13 @@ module Ollama
   , RunningModel (..)
   , Message (..)
   , Format (..)
+  , OllamaError (..)
   )
 where
 
 import Data.Ollama.Chat
 import Data.Ollama.Common.Types 
+import Data.Ollama.Common.Error
 import Data.Ollama.Copy 
 import Data.Ollama.Create 
 import Data.Ollama.Delete 

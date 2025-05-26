@@ -10,19 +10,21 @@ module Data.Ollama.Common.Utils
   , commonStreamHandler
   ) where
 
-import Control.Exception (IOException, SomeException, try)
+import Control.Exception (IOException, try)
 import Data.Aeson
 import Data.ByteString qualified as BS
-import Data.ByteString.Lazy qualified as BSL
 import Data.ByteString.Base64 qualified as Base64
+import Data.ByteString.Lazy qualified as BSL
 import Data.Char (toLower)
 import Data.Maybe
+import Data.Ollama.Common.Error
+import Data.Ollama.Common.Error qualified as Error
 import Data.Ollama.Common.Types
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
-import Network.HTTP.Client.TLS
 import Network.HTTP.Client
+import Network.HTTP.Client.TLS
 import System.Directory
 import System.FilePath
 
@@ -73,8 +75,8 @@ withOllamaRequest ::
   -- | Optional timeout in minutes (default: 15)
   Maybe Int ->
   -- | Response handler
-  (FromJSON response => Response BodyReader -> IO (Either String response)) ->
-  IO (Either String response)
+  (FromJSON response => Response BodyReader -> IO (Either OllamaError response)) ->
+  IO (Either OllamaError response)
 withOllamaRequest endpoint reqMethod mbPayload hostUrl mTimeout handler = do
   let url = fromMaybe defaultOllamaUrl hostUrl
       fullUrl = T.unpack $ url <> endpoint
@@ -87,7 +89,7 @@ withOllamaRequest endpoint reqMethod mbPayload hostUrl mTimeout handler = do
         }
   eRequest <- try $ parseRequest fullUrl :: IO (Either HttpException Request)
   case eRequest of
-    Left ex -> return $ Left $ "Failed to parse request URL: " <> show ex
+    Left ex -> return $ Left $ Error.HttpError ex
     Right req -> do
       let request =
             req
@@ -96,19 +98,19 @@ withOllamaRequest endpoint reqMethod mbPayload hostUrl mTimeout handler = do
               }
       eResponse <- try $ withResponse request manager handler
       case eResponse of
-        Left ex -> return $ Left $ "HTTP error occurred: " <> show (ex :: SomeException)
+        Left ex -> return $ Left $ Error.HttpError ex
         Right result -> return result
 
 commonNonStreamingHandler ::
   FromJSON a =>
   Response BodyReader ->
-  IO (Either String a)
+  IO (Either OllamaError a)
 commonNonStreamingHandler resp = do
   let bodyReader = responseBody resp
   -- Accumulate all chunks until EOF
   finalBs <- go BS.empty bodyReader
   case eitherDecode (BSL.fromStrict finalBs) of
-    Left err -> pure $ Left ("Failed to decode JSON response: " <> err <> show finalBs)
+    Left err -> pure $ Left $ Error.DecodeError err (show finalBs)
     Right decoded -> pure $ Right decoded
   where
     go :: BS.ByteString -> BodyReader -> IO BS.ByteString
@@ -123,7 +125,7 @@ commonStreamHandler ::
   (a -> IO ()) ->
   IO () ->
   Response BodyReader ->
-  IO (Either String a)
+  IO (Either OllamaError a)
 commonStreamHandler sendChunk flush resp = go mempty
   where
     go acc = do
@@ -131,13 +133,13 @@ commonStreamHandler sendChunk flush resp = go mempty
       if BS.null bs
         then do
           case eitherDecode (BSL.fromStrict acc) of
-            Left err -> pure $ Left $ "Empty or invalid response " <> err <> show acc
+            Left err -> pure $ Left $ Error.DecodeError err (show acc)
             Right decoded -> pure $ Right decoded
         else do
           let chunk = BSL.fromStrict bs
-          case decode chunk of
-            Nothing -> return $ Left ("Failed to decode chunk: " <> show bs)
-            Just res -> do
+          case eitherDecode chunk of
+            Left err -> return $ Left $ Error.DecodeError err (show acc)
+            Right res -> do
               sendChunk res
               flush
               if getDone res then return (Right res) else go (acc <> bs)
