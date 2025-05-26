@@ -16,6 +16,7 @@ import Data.Text (Text)
 import Data.Time
 import GHC.Int (Int64)
 import Data.Ollama.Common.Error (OllamaError)
+import Data.Ollama.Common.Config (OllamaConfig)
 
 newtype Models = Models [ModelInfo]
   deriving (Eq, Show)
@@ -47,14 +48,13 @@ list :: IO (Either OllamaError Models)
 list = listOps Nothing
 
 listOps ::
-  -- | Ollama URL
-  Maybe Text ->
+  -- | Ollama Config
+  Maybe OllamaConfig ->
   IO (Either OllamaError Models)
-listOps hostUrl = do
+listOps mbConfig = do
   withOllamaRequest
     "/api/tags"
     "GET"
     (Nothing :: Maybe Value)
-    hostUrl
-    Nothing
+    mbConfig
     commonNonStreamingHandler

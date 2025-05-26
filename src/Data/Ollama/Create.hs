@@ -10,6 +10,7 @@ module Data.Ollama.Create
 
 import Control.Monad (void)
 import Data.Aeson
+import Data.Ollama.Common.Config (OllamaConfig)
 import Data.Ollama.Common.Types (HasDone (getDone))
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
@@ -63,12 +64,15 @@ createModelOps ::
   Maybe Bool ->
   -- | Path
   Maybe FilePath ->
+  -- | Ollama config
+  Maybe OllamaConfig ->
   IO ()
 createModelOps
   modelName
   modelFile_
   stream_
-  path_ =
+  path_
+  mbConfig =
     void $
       withOllamaRequest
         "/api/pull"
@@ -81,8 +85,7 @@ createModelOps
               , path = path_
               }
         )
-        Nothing
-        Nothing
+        mbConfig
         (commonStreamHandler onToken onComplete)
     where
       onToken :: CreateModelResp -> IO ()
@@ -103,8 +106,10 @@ createModel ::
   -- | Path
   Maybe FilePath ->
   IO ()
-createModel modelName modelFile_ =
+createModel modelName modelFile_ fp =
   createModelOps
     modelName
     modelFile_
+    Nothing
+    fp
     Nothing

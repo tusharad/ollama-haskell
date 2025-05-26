@@ -18,6 +18,7 @@ import Data.Maybe (fromMaybe)
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS
 import Network.HTTP.Types.Status (status404)
+import Data.Ollama.Common.Config (OllamaConfig(..))
 
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
@@ -35,19 +36,21 @@ instance ToJSON DeleteModelReq where
 
 
 deleteModel :: Text -> IO ()
-deleteModel = deleteModelOps Nothing
+deleteModel t = deleteModelOps t Nothing
 
 
 -- | Delete a model
 deleteModelOps ::
-  -- | Ollama URL
-  Maybe Text ->
   -- | Model name
   Text ->
+  -- | Ollama config
+  Maybe OllamaConfig ->
   IO ()
-deleteModelOps hostUrl modelName = do
-    let url = fromMaybe CU.defaultOllamaUrl hostUrl
+deleteModelOps modelName mbOllamaConfig = do
+    let url = fromMaybe CU.defaultOllamaUrl (hostUrl <$> mbOllamaConfig)
+        timeoutMicros = let t = maybe 15 timeout mbOllamaConfig in t * 60 * 1000000
     manager <- newTlsManagerWith defaultManagerSettings
+                { managerResponseTimeout = responseTimeoutMicro timeoutMicros}
     initialRequest <- parseRequest $ T.unpack (url <> "/api/delete")
     let reqBody =
           DeleteModelReq {name = modelName}
@@ -56,7 +59,11 @@ deleteModelOps hostUrl modelName = do
             { method = "DELETE"
             , requestBody = RequestBodyLBS $ encode reqBody
             }
+    maybe (pure ()) (mapM_ id . onModelStart) mbOllamaConfig
     response <- httpLbs request manager
+    maybe (pure ()) (mapM_ id . onModelFinish) mbOllamaConfig
     when
       (responseStatus response == status404)
-      (putStrLn "Model does not exist")
+      (do 
+        maybe (pure ()) (mapM_ id . onModelError) mbOllamaConfig 
+        putStrLn "Model does not exist")

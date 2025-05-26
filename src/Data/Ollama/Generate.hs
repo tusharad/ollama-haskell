@@ -20,6 +20,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
 import Data.Ollama.Common.Error (OllamaError (DecodeError))
+import Data.Ollama.Common.Config (OllamaConfig)
 
 -- TODO: Add Context parameter
 
@@ -64,10 +65,6 @@ data GenerateOps = GenerateOps
   , raw :: !(Maybe Bool)
   -- ^ An optional flag to return the raw response.
   , keepAlive :: !(Maybe Text)
-  -- ^ Optional text to specify keep-alive behavior.
-  , hostUrl :: !(Maybe Text)
-  -- ^ Override default Ollama host url. Default url = "http://127.0.0.1:11434"
-  , responseTimeOut :: !(Maybe Int)
   -- ^ Override default response timeout in minutes. Default = 15 minutes
   , options :: !(Maybe Value)
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
@@ -126,8 +123,6 @@ instance ToJSON GenerateOps where
         stream
         raw
         keepAlive
-        _ -- Host url
-        _ -- Response timeout
         options
       ) =
       object
@@ -167,8 +162,6 @@ defaultGenerateOps =
     , stream = Nothing
     , raw = Nothing
     , keepAlive = Nothing
-    , hostUrl = Nothing
-    , responseTimeOut = Nothing
     , options = Nothing
     }
 
@@ -212,14 +205,13 @@ each chunk of response by printing it,
 and the second function is a simple no-op
 flush.generate :: GenerateOps -> IO (Either String GenerateResponse)
 -}
-generate :: GenerateOps -> IO (Either OllamaError GenerateResponse)
-generate ops =
+generate :: GenerateOps -> Maybe OllamaConfig -> IO (Either OllamaError GenerateResponse)
+generate ops mbConfig =
   withOllamaRequest
     "/api/generate"
     "POST"
     (Just ops)
-    (hostUrl ops)
-    (responseTimeOut ops)
+    mbConfig
     handler
   where
     handler = case stream ops of
@@ -264,11 +256,13 @@ generateJson ::
   (ToJSON jsonResult, FromJSON jsonResult) =>
   GenerateOps ->
   -- | Haskell type that you want your result in
+  Maybe OllamaConfig -> 
+  -- | Ollama Config
   jsonResult ->
   -- | Max retries
   Maybe Int ->
   IO (Either OllamaError jsonResult)
-generateJson genOps@GenerateOps {..} jsonStructure mMaxRetries = do
+generateJson genOps@GenerateOps {..} mbConfig jsonStructure mMaxRetries = do
   let jsonHelperPrompt =
         "You are an AI that returns only JSON object. \n"
           <> "* Your output should be a JSON object that matches the following schema: \n"
@@ -279,7 +273,7 @@ generateJson genOps@GenerateOps {..} jsonStructure mMaxRetries = do
           <> "* Stricly follow the schema for the output.\n"
           <> "* Never return anything other than a JSON object.\n"
           <> "* Do not talk to the user.\n"
-  generatedResponse <- generate genOps {prompt = jsonHelperPrompt}
+  generatedResponse <- generate genOps {prompt = jsonHelperPrompt} mbConfig
   case generatedResponse of
     Left err -> return $ Left err
     Right r -> do
@@ -291,7 +285,7 @@ generateJson genOps@GenerateOps {..} jsonStructure mMaxRetries = do
             Just n ->
               if n < 1
                 then return $ Left $ DecodeError err (show bs)
-                else generateJson genOps jsonStructure (Just (n - 1))
+                else generateJson genOps mbConfig jsonStructure (Just (n - 1))
         Right resultInType -> return $ Right resultInType
 
 {- |

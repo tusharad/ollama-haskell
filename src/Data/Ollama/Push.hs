@@ -17,6 +17,7 @@ import GHC.Generics
 import GHC.Int (Int64)
 import Control.Monad (void)
 import Data.Ollama.Common.Types (HasDone (getDone))
+import Data.Ollama.Common.Config (OllamaConfig)
 
 -- TODO: Add Options parameter
 data PushOps = PushOps
@@ -38,23 +39,22 @@ instance HasDone PushResp where
 
 -- | Push a model with options
 pushOps ::
-  -- | Ollama URL
-  Maybe Text ->
   -- | Model name
   Text ->
   -- | Insecure
   Maybe Bool ->
   -- | Stream
   Maybe Bool ->
+  -- | Ollama config
+  Maybe OllamaConfig ->
   IO ()
-pushOps hostUrl modelName mInsecure mStream = do
+pushOps modelName mInsecure mStream mbConfig = do
   void $
     withOllamaRequest
       "/api/pull"
       "POST"
       (Just $ PushOps {name = modelName, insecure = mInsecure, stream = mStream})
-      hostUrl
-      Nothing
+      mbConfig
       (commonStreamHandler onToken onComplete)
   where
     onToken :: PushResp -> IO ()
@@ -70,4 +70,4 @@ push ::
   -- | Model name
   Text ->
   IO ()
-push modelName = pushOps Nothing modelName Nothing Nothing
+push modelName = pushOps modelName Nothing Nothing Nothing 

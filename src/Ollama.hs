@@ -58,6 +58,14 @@ module Ollama
   , showModel
   , showModelOps
 
+    -- * Ollama config
+  , defaultOllamaConfig
+  , setNContext
+  , insert
+  , withOnModelStart
+  , withOnModelFinish
+  , withOnModelError
+
     -- * Types
   , ShowModelResponse (..)
   , Models (..)
@@ -69,19 +77,21 @@ module Ollama
   , Message (..)
   , Format (..)
   , OllamaError (..)
+  , OllamaConfig (..)
   )
 where
 
 import Data.Ollama.Chat
-import Data.Ollama.Common.Types 
+import Data.Ollama.Common.Config
 import Data.Ollama.Common.Error
-import Data.Ollama.Copy 
-import Data.Ollama.Create 
-import Data.Ollama.Delete 
-import Data.Ollama.Embeddings 
+import Data.Ollama.Common.Types
+import Data.Ollama.Copy
+import Data.Ollama.Create
+import Data.Ollama.Delete
+import Data.Ollama.Embeddings
 import Data.Ollama.Generate
-import Data.Ollama.List 
-import Data.Ollama.Ps 
-import Data.Ollama.Pull 
-import Data.Ollama.Push 
-import Data.Ollama.Show 
+import Data.Ollama.List
+import Data.Ollama.Ps
+import Data.Ollama.Pull
+import Data.Ollama.Push
+import Data.Ollama.Show

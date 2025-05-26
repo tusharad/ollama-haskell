@@ -18,6 +18,7 @@ import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import GHC.Generics
 import GHC.Int (Int64)
+import Data.Ollama.Common.Config (OllamaConfig)
 
 -- TODO: Add Options parameter
 
@@ -61,23 +62,22 @@ Example:
 This will attempt to pull "myModel" with insecure connections allowed and enable streaming.
 -}
 pullOps ::
-  -- | Ollama URL
-  Maybe Text ->
   -- | Model Name
   Text ->
   -- | Insecure
   Maybe Bool ->
   -- | Stream
   Maybe Bool ->
+  -- | Ollama Config
+  Maybe OllamaConfig ->
   IO ()
-pullOps hostUrl modelName mInsecure mStream = do
+pullOps modelName mInsecure mStream mbConfig = do
   void $
     withOllamaRequest
       "/api/pull"
       "POST"
       (Just $ PullOps {name = modelName, insecure = mInsecure, stream = mStream})
-      hostUrl
-      Nothing
+      mbConfig
       (commonStreamHandler onToken onComplete)
   where
     onToken :: PullResp -> IO ()
@@ -103,4 +103,4 @@ pull ::
   -- | Model Name
   Text ->
   IO ()
-pull modelName = pullOps Nothing modelName Nothing Nothing
+pull modelName = pullOps modelName Nothing Nothing Nothing

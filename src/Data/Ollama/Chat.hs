@@ -22,6 +22,7 @@ import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.List.NonEmpty as NonEmpty
 import Data.Maybe (isNothing)
 import Data.Ollama.Common.Error (OllamaError (..))
+import Data.Ollama.Common.Config
 import Data.Ollama.Common.Types (ChatResponse (..), Format (..), Message (..), Role (..))
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
@@ -41,10 +42,6 @@ data ChatOps = ChatOps
   , stream :: !(Maybe (ChatResponse -> IO (), IO ()))
   -- ^ Optional streaming functions where the first handles each chunk of the response, and the second flushes the stream.
   , keepAlive :: !(Maybe Text)
-  -- ^ Optional text to specify keep-alive behavior.
-  , hostUrl :: !(Maybe Text)
-  -- ^ Override default Ollama host url. Default url = "http://127.0.0.1:11434"
-  , responseTimeOut :: !(Maybe Int)
   -- ^ Override default response timeout in minutes. Default = 15 minutes
   , options :: !(Maybe Value)
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
@@ -76,7 +73,7 @@ instance Eq ChatOps where
       && keepAlive a == keepAlive b
 
 instance ToJSON ChatOps where
-  toJSON (ChatOps model_ messages_ tools_ format_ stream_ keepAlive_ _ _ options) =
+  toJSON (ChatOps model_ messages_ tools_ format_ stream_ keepAlive_ options) =
     object
       [ "model" .= model_
       , "messages" .= messages_
@@ -105,8 +102,6 @@ defaultChatOps =
     , format = Nothing
     , stream = Nothing
     , keepAlive = Nothing
-    , hostUrl = Nothing
-    , responseTimeOut = Nothing
     , options = Nothing
     }
 
@@ -135,14 +130,13 @@ To request a structured output with a JSON schema:
 > let ops = defaultChatOps { format = Just (SchemaFormat schema) }
 > result <- chat ops
 -}
-chat :: ChatOps -> IO (Either OllamaError ChatResponse)
-chat ops =
+chat :: ChatOps -> Maybe OllamaConfig -> IO (Either OllamaError ChatResponse)
+chat ops mbConfig =
   withOllamaRequest
     "/api/chat"
     "POST"
     (Just ops)
-    (hostUrl ops)
-    (responseTimeOut ops)
+    mbConfig
     handler
   where
     handler = case stream ops of
@@ -191,11 +185,13 @@ chatJson ::
   (FromJSON jsonResult, ToJSON jsonResult) =>
   ChatOps ->
   -- | Haskell type that you want your result in
+  Maybe OllamaConfig ->
+  -- | Ollama configuration
   jsonResult ->
   -- | Max retries
   Maybe Int ->
   IO (Either OllamaError jsonResult)
-chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
+chatJson cOps@ChatOps {..} mbConfig jsonStructure mMaxRetries = do
   -- For models that support the format parameter, use that directly
   -- let jsonSchema = encode jsonStructure
   let useNativeFormat = False -- Set to True to use the native format parameter when appropriate
@@ -204,7 +200,7 @@ chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
       let schemaList = [("schema", Object $ HM.fromList [("type", String "object")])]
       let formattedOps =
             cOps {format = Just $ SchemaFormat (Object (HM.fromList schemaList))}
-      chatResponse <- chat formattedOps
+      chatResponse <- chat formattedOps mbConfig
       case chatResponse of
         Left err -> return $ Left err
         Right r -> do
@@ -236,6 +232,7 @@ chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
                 NonEmpty.fromList $
                   lastMessage {content = jsonHelperPrompt} : NonEmpty.init messages
             }
+         mbConfig
       case chatResponse of
         Left err -> return $ Left err
         Right r -> do
@@ -251,7 +248,7 @@ chatJson cOps@ChatOps {..} jsonStructure mMaxRetries = do
                     Just n ->
                       if n < 1
                         then return $ Left $ DecodeError err (show bs)
-                        else chatJson cOps jsonStructure (Just (n - 1))
+                        else chatJson cOps mbConfig jsonStructure (Just (n - 1))
                 Right resultInType -> return $ Right resultInType
 
 -- | Helper function to create a JSON schema from a Haskell type

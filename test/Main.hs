@@ -9,7 +9,7 @@ import Data.Maybe
 import Data.Ollama.Chat qualified as Chat
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
-import Ollama (GenerateOps (..), Role (..), defaultChatOps, defaultGenerateOps)
+import Ollama (GenerateOps (..), Role (..), defaultChatOps, defaultGenerateOps, OllamaConfig(..), defaultOllamaConfig)
 import Ollama qualified
 import System.IO.Silently (capture)
 import Test.Tasty
@@ -42,6 +42,7 @@ generateTest =
                 , stream = Just (T.putStr . Ollama.response_, pure ())
                 , suffix = Just " [End]"
                 }
+              (Just defaultOllamaConfig)
         assertBool "Checking if generate function is printing anything" (length output > 0)
     , testCase "Generate non-stream" $ do
         eRes <-
@@ -50,6 +51,7 @@ generateTest =
               { modelName = "llama3.2"
               , prompt = "what is 4 + 2?"
               }
+            (Just defaultOllamaConfig)
         assertBool "Checking if generate function returns a valid value" (isRight eRes)
     , testCase "Generate with invalid host" $ do
         eRes <-
@@ -57,13 +59,14 @@ generateTest =
             defaultGenerateOps
               { modelName = "llama3.2"
               , prompt = "what is 23 + 9?"
-              , hostUrl = pure "http://some-site"
-              , responseTimeOut = pure 2
               }
+            (Just $ defaultOllamaConfig { hostUrl = "http://some-site" })
         print ("got response" :: String, eRes)
         assertBool "Expecting Left" (isLeft eRes)
     , testCase "Generate with invalid model" $ do
-        eRes <- Ollama.generate defaultGenerateOps {modelName = "invalid-model"}
+        eRes <- Ollama.generate
+                    defaultGenerateOps {modelName = "invalid-model"}
+                    (Just defaultOllamaConfig)
         assertBool "Expecting generation to fail with invalid model" (isLeft eRes)
     ]
 
@@ -81,9 +84,11 @@ generateFormatTest =
           Ollama.generate
             defaultGenerateOps
               { modelName = "llama3.2"
-              , prompt = "Ollama is 22 years old and is busy saving the world. Respond using JSON"
+              , prompt = "Ollama is 22 years old and is busy "
+                        <> "saving the world. Respond using JSON"
               , format = Just (Ollama.SchemaFormat schema)
               }
+            (Just defaultOllamaConfig)
         case eRes of
           Right res ->
             assertBool
@@ -99,9 +104,11 @@ generateFormatTest =
               , prompt = "Provide a simple JSON response describing Ollama."
               , format = Just Ollama.JsonFormat
               }
+            (Just defaultOllamaConfig)
         case eRes of
           Right res ->
-            assertBool "Response should start with '{'" ("{" `T.isPrefixOf` Ollama.response_ res)
+            assertBool "Response should start with '{'"
+                ("{" `T.isPrefixOf` Ollama.response_ res)
           Left err ->
             assertFailure $ "Generation failed with error: " ++ show err
     ]
@@ -128,6 +135,7 @@ chatTest =
                       , pure ()
                       )
                 }
+              (Just defaultOllamaConfig)
         assertBool "Checking if chat function is printing anything" (length output > 0)
     , testCase "Chat non-stream" $ do
         let msg = Ollama.Message User "What is 29 + 3?" Nothing Nothing
@@ -137,6 +145,7 @@ chatTest =
               { Chat.chatModelName = "llama3.2"
               , Chat.messages = msg :| []
               }
+            (Just defaultOllamaConfig)
         assertBool "Checking if chat function returns a valid value" (isRight eRes)
     , testCase "Chat invalid host url" $ do
         let msg = Ollama.Message User "What is 29 + 3?" Nothing Nothing
@@ -145,9 +154,10 @@ chatTest =
             defaultChatOps
               { Chat.chatModelName = "llama3.2"
               , Chat.messages = msg :| []
-              , Chat.hostUrl = pure "some random value"
-              , Chat.responseTimeOut = pure 2
               }
+            (Just defaultOllamaConfig {
+                hostUrl = "some random value"
+            })
         assertBool "It should return Left" (isLeft eRes)
     ]
 
@@ -175,6 +185,7 @@ chatFormatTest =
               , Chat.format = Just (Ollama.SchemaFormat schema)
               , Chat.options = Just $ object ["penalize_newline" .= Bool True]
               }
+            (Just defaultOllamaConfig)
         case eRes of
           Right res ->
             assertBool "Chat response should contain key \"age\"" $
@@ -190,6 +201,7 @@ chatFormatTest =
               , Chat.messages = msg :| []
               , Chat.format = Just Ollama.JsonFormat
               }
+            (Just defaultOllamaConfig)
         case eRes of
           Right res ->
             assertBool "Chat response should start with '{'" $

@@ -13,6 +13,7 @@ import Data.Aeson
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Ollama.Common.Error (OllamaError)
+import Data.Ollama.Common.Config (OllamaConfig)
 
 -- TODO: Add Options parameter
 data EmbeddingOps = EmbeddingOps
@@ -48,8 +49,6 @@ instance ToJSON EmbeddingOps where
 
 -- | Embedding API
 embeddingOps ::
-  -- | Ollama URL
-  Maybe Text ->
   -- | Model
   Text ->
   -- | Input
@@ -58,8 +57,10 @@ embeddingOps ::
   Maybe Bool ->
   -- | Keep Alive
   Maybe Text ->
+  -- | Ollama Config
+  Maybe OllamaConfig ->
   IO (Either OllamaError EmbeddingResp)
-embeddingOps hostUrl modelName input_ mTruncate mKeepAlive = do
+embeddingOps modelName input_ mTruncate mKeepAlive mbConfig = do
   withOllamaRequest
     "/api/embed"
     "POST"
@@ -71,8 +72,7 @@ embeddingOps hostUrl modelName input_ mTruncate mKeepAlive = do
           , keepAlive = mKeepAlive
           }
     )
-    hostUrl
-    Nothing
+    mbConfig
     commonNonStreamingHandler
 
 -- Higher level binding that only takes important params
@@ -84,4 +84,4 @@ embedding ::
   Text ->
   IO (Either OllamaError EmbeddingResp)
 embedding modelName input_ =
-  embeddingOps Nothing modelName input_ Nothing Nothing
+  embeddingOps modelName input_ Nothing Nothing Nothing

@@ -16,7 +16,7 @@ import Data.ByteString qualified as BS
 import Data.ByteString.Base64 qualified as Base64
 import Data.ByteString.Lazy qualified as BSL
 import Data.Char (toLower)
-import Data.Maybe
+import Data.Ollama.Common.Config
 import Data.Ollama.Common.Error
 import Data.Ollama.Common.Error qualified as Error
 import Data.Ollama.Common.Types
@@ -70,17 +70,15 @@ withOllamaRequest ::
   BS.ByteString ->
   -- | Request body
   (Maybe payload) ->
-  -- | Optional override for Ollama host URL
-  Maybe Text ->
-  -- | Optional timeout in minutes (default: 15)
-  Maybe Int ->
+  -- | Optional config (default: defaultConfig)
+  Maybe OllamaConfig ->
   -- | Response handler
   (FromJSON response => Response BodyReader -> IO (Either OllamaError response)) ->
   IO (Either OllamaError response)
-withOllamaRequest endpoint reqMethod mbPayload hostUrl mTimeout handler = do
-  let url = fromMaybe defaultOllamaUrl hostUrl
+withOllamaRequest endpoint reqMethod mbPayload mbOllamaConfig handler = do
+  let url = maybe defaultOllamaUrl hostUrl mbOllamaConfig
       fullUrl = T.unpack $ url <> endpoint
-      timeoutMicros = fromMaybe (15 * 60 * 1000000) (fmap (\x -> x * 60 * 1000000) mTimeout)
+      timeoutMicros = let t = maybe 15 timeout mbOllamaConfig in t * 60 * 1000000
 
   manager <-
     newTlsManagerWith
@@ -96,10 +94,15 @@ withOllamaRequest endpoint reqMethod mbPayload hostUrl mTimeout handler = do
               { method = reqMethod
               , requestBody = maybe mempty (\x -> RequestBodyLBS $ encode x) mbPayload
               }
+      maybe (pure ()) (mapM_ id . onModelStart) mbOllamaConfig
       eResponse <- try $ withResponse request manager handler
       case eResponse of
-        Left ex -> return $ Left $ Error.HttpError ex
-        Right result -> return result
+        Left ex -> do 
+          maybe (pure ()) (mapM_ id . onModelError) mbOllamaConfig
+          return $ Left $ Error.HttpError ex
+        Right result -> do 
+          maybe (pure ()) (mapM_ id . onModelFinish) mbOllamaConfig
+          return result
 
 commonNonStreamingHandler ::
   FromJSON a =>

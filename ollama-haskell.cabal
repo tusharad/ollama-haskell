@@ -28,6 +28,7 @@ source-repository head
 library
   exposed-modules:
       Data.Ollama.Chat
+      Data.Ollama.Common.Config
       Data.Ollama.Common.Error
       Data.Ollama.Common.Types
       Data.Ollama.Common.Utils

@@ -19,6 +19,7 @@ import GHC.Generics
 import Network.HTTP.Client.TLS
 import Network.HTTP.Client
 import Network.HTTP.Types.Status (status404)
+import Data.Ollama.Common.Config (OllamaConfig (..))
 
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
@@ -30,25 +31,27 @@ data CopyModelOps = CopyModelOps
 
 
 copyModel :: Text -> Text -> IO ()
-copyModel = copyModelOps Nothing
+copyModel src dest = copyModelOps src dest Nothing
 
 
 -- | Copy model from source to destination
 copyModelOps ::
-  -- | Ollama URL
-  Maybe Text ->
   -- | Source model
   Text ->
   -- | Destination model
   Text ->
+  -- | Ollama config
+  Maybe OllamaConfig ->
   IO ()
 copyModelOps
-  hostUrl
   source_
-  destination_ =
+  destination_ 
+  mbOllamaConfig =
     do
-      let url = fromMaybe CU.defaultOllamaUrl hostUrl
+      let url = fromMaybe CU.defaultOllamaUrl (hostUrl <$> mbOllamaConfig)
+          timeoutMicros = let t = maybe 15 timeout mbOllamaConfig in t * 60 * 1000000
       manager <- newTlsManagerWith defaultManagerSettings
+                { managerResponseTimeout = responseTimeoutMicro timeoutMicros}
       initialRequest <- parseRequest $ T.unpack (url <> "/api/copy")
       let reqBody =
             CopyModelOps
@@ -60,7 +63,12 @@ copyModelOps
               { method = "POST"
               , requestBody = RequestBodyLBS $ encode reqBody
               }
+      maybe (pure ()) (mapM_ id . onModelStart) mbOllamaConfig
       response <- httpLbs request manager
+      maybe (pure ()) (mapM_ id . onModelFinish) mbOllamaConfig
       when
         (responseStatus response == status404)
-        (putStrLn "Source Model does not exist")
+        (do 
+          maybe (pure ()) (mapM_ id . onModelError) mbOllamaConfig 
+          putStrLn "Source Model does not exist"
+        )

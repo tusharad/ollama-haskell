@@ -14,6 +14,7 @@ import Data.Text (Text)
 import Data.Time
 import GHC.Int (Int64)
 import Data.Ollama.Common.Error (OllamaError)
+import Data.Ollama.Common.Config (OllamaConfig)
 
 -- Types for Ps API
 newtype RunningModels = RunningModels [RunningModel]
@@ -49,12 +50,11 @@ ps :: IO (Either OllamaError RunningModels)
 ps = psOps Nothing
 
 -- | List running models
-psOps :: Maybe Text -> IO (Either OllamaError RunningModels)
-psOps hostUrl = do
+psOps :: Maybe OllamaConfig -> IO (Either OllamaError RunningModels)
+psOps mbConfig = do
   withOllamaRequest
     "/api/ps"
     "GET"
     (Nothing :: Maybe Value)
-    hostUrl 
-    Nothing
+    mbConfig 
     commonNonStreamingHandler

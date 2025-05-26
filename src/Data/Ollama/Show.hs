@@ -19,6 +19,7 @@ import GHC.Generics
 import GHC.Int (Int64)
 import Data.Ollama.Common.Utils (withOllamaRequest, commonNonStreamingHandler)
 import Data.Ollama.Common.Error (OllamaError)
+import Data.Ollama.Common.Config (OllamaConfig)
 
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
@@ -120,14 +121,14 @@ instance FromJSON ShowModelInfo where
 @since 1.0.0.0
 -}
 showModelOps ::
-  -- | Ollama URL
-  Maybe Text ->
   -- | model name
   Text ->
   -- | verbose
   Maybe Bool ->
+  -- | Ollama config
+  Maybe OllamaConfig ->
   IO (Either OllamaError ShowModelResponse)
-showModelOps hostUrl modelName verbose_ = do
+showModelOps modelName verbose_ mbConfig = do
   withOllamaRequest
     "/api/show"
     "POST"
@@ -135,8 +136,7 @@ showModelOps hostUrl modelName verbose_ = do
         name = modelName
       , verbose = verbose_
     })
-    hostUrl 
-    Nothing
+    mbConfig
     commonNonStreamingHandler
 
 {- | Show given model's information.
@@ -149,4 +149,4 @@ showModel ::
   Text ->
   IO (Either OllamaError ShowModelResponse)
 showModel modelName =
-  showModelOps Nothing modelName Nothing
+  showModelOps modelName Nothing Nothing
