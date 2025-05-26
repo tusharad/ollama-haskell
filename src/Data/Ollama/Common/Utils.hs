@@ -13,6 +13,7 @@ module Data.Ollama.Common.Utils
 import Control.Exception (IOException, SomeException, try)
 import Data.Aeson
 import Data.ByteString qualified as BS
+import Data.ByteString.Lazy qualified as BSL
 import Data.ByteString.Base64 qualified as Base64
 import Data.Char (toLower)
 import Data.Maybe
@@ -106,7 +107,7 @@ commonNonStreamingHandler resp = do
   let bodyReader = responseBody resp
   -- Accumulate all chunks until EOF
   finalBs <- go BS.empty bodyReader
-  case eitherDecode (BS.fromStrict finalBs) of
+  case eitherDecode (BSL.fromStrict finalBs) of
     Left err -> pure $ Left ("Failed to decode JSON response: " <> err <> show finalBs)
     Right decoded -> pure $ Right decoded
   where
@@ -129,11 +130,11 @@ commonStreamHandler sendChunk flush resp = go mempty
       bs <- brRead $ responseBody resp
       if BS.null bs
         then do
-          case eitherDecode (BS.fromStrict acc) of
+          case eitherDecode (BSL.fromStrict acc) of
             Left err -> pure $ Left $ "Empty or invalid response " <> err <> show acc
             Right decoded -> pure $ Right decoded
         else do
-          let chunk = BS.fromStrict bs
+          let chunk = BSL.fromStrict bs
           case decode chunk of
             Nothing -> return $ Left ("Failed to decode chunk: " <> show bs)
             Just res -> do
