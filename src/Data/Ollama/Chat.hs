@@ -22,6 +22,10 @@ module Data.Ollama.Chat
   , ChatResponse (..)
   , Format (..)
   , schemaFromType
+  , systemMessage
+  , userMessage
+  , assistantMessage
+  , toolMessage
   ) where
 
 import Data.Aeson
@@ -36,6 +40,22 @@ import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
+
+-- | Creates a 'Message' with role set to 'System'.
+systemMessage :: Text -> Message
+systemMessage c = Message {role = System, content = c, images = Nothing, tool_calls = Nothing}
+
+-- | Creates a 'Message' with role set to 'User'.
+userMessage :: Text -> Message
+userMessage c = Message {role = User, content = c, images = Nothing, tool_calls = Nothing}
+
+-- | Creates a 'Message' with role set to 'Assistant'.
+assistantMessage :: Text -> Message
+assistantMessage c = Message {role = Assistant, content = c, images = Nothing, tool_calls = Nothing}
+
+-- | Creates a 'Message' with role set to 'Tool'.
+toolMessage :: Text -> Message
+toolMessage c = Message {role = Tool, content = c, images = Nothing, tool_calls = Nothing}
 
 -- | Validates ChatOps to ensure essential fields are not empty
 validateChatOps :: ChatOps -> Either OllamaError ChatOps
@@ -113,7 +133,7 @@ defaultChatOps :: ChatOps
 defaultChatOps =
   ChatOps
     { chatModelName = "llama3.2"
-    , messages = Message User "What is 2+2?" Nothing Nothing :| []
+    , messages = userMessage "What is 2+2?" :| []
     , tools = Nothing
     , format = Nothing
     , stream = Nothing

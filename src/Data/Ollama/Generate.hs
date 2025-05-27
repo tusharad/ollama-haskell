@@ -2,6 +2,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
+{- |
+Module:      Data.Ollama.Generate
+Copyright:   (c) 2025 Tushar Adhatrao
+License:     MIT
+Description: Generate functionality for Ollama client
+Maintainer:  Tushar Adhatrao <tusharadhatrao@gmail.com>
+Stability:   experimental
+-}
 module Data.Ollama.Generate
   ( -- * Generate Texts
     generate
