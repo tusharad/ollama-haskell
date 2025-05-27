@@ -14,13 +14,19 @@ module Data.Ollama.Generate
 import Data.Aeson
 import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.Maybe
+import Data.Ollama.Common.Config (OllamaConfig (..))
+import Data.Ollama.Common.Error (OllamaError (..))
 import Data.Ollama.Common.Types (Format (..), GenerateResponse (..))
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
-import Data.Ollama.Common.Error (OllamaError (DecodeError))
-import Data.Ollama.Common.Config (OllamaConfig)
+
+validateGenerateOps :: GenerateOps -> Either OllamaError GenerateOps
+validateGenerateOps ops
+  | T.null (modelName ops) = Left $ InvalidRequest "Model name cannot be empty"
+  | T.null (prompt ops) = Left $ InvalidRequest "Prompt cannot be empty"
+  | otherwise = Right ops
 
 -- TODO: Add Context parameter
 
@@ -207,12 +213,9 @@ flush.generate :: GenerateOps -> IO (Either String GenerateResponse)
 -}
 generate :: GenerateOps -> Maybe OllamaConfig -> IO (Either OllamaError GenerateResponse)
 generate ops mbConfig =
-  withOllamaRequest
-    "/api/generate"
-    "POST"
-    (Just ops)
-    mbConfig
-    handler
+  case validateGenerateOps ops of
+    Left err -> pure $ Left err
+    Right _ -> withOllamaRequest "/api/generate" "POST" (Just ops) mbConfig handler
   where
     handler = case stream ops of
       Nothing -> commonNonStreamingHandler
@@ -256,7 +259,7 @@ generateJson ::
   (ToJSON jsonResult, FromJSON jsonResult) =>
   GenerateOps ->
   -- | Haskell type that you want your result in
-  Maybe OllamaConfig -> 
+  Maybe OllamaConfig ->
   -- | Ollama Config
   jsonResult ->
   -- | Max retries

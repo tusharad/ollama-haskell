@@ -97,10 +97,10 @@ withOllamaRequest endpoint reqMethod mbPayload mbOllamaConfig handler = do
       maybe (pure ()) (mapM_ id . onModelStart) mbOllamaConfig
       eResponse <- try $ withResponse request manager handler
       case eResponse of
-        Left ex -> do 
+        Left ex -> do
           maybe (pure ()) (mapM_ id . onModelError) mbOllamaConfig
           return $ Left $ Error.HttpError ex
-        Right result -> do 
+        Right result -> do
           maybe (pure ()) (mapM_ id . onModelFinish) mbOllamaConfig
           return result
 

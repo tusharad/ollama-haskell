@@ -3,6 +3,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
+{- |
+Module:      Data.Ollama.Chat
+Copyright:   (c) 2025 Tushar Adhatrao
+License:     MIT
+Description: Chat functionality for Ollama client
+Maintainer:  Tushar Adhatrao <tusharadhatrao@gmail.com>
+Stability:   experimental
+-}
 module Data.Ollama.Chat
   ( -- * Chat APIs
     chat
@@ -21,13 +29,21 @@ import Data.Aeson.KeyMap qualified as HM
 import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.List.NonEmpty as NonEmpty
 import Data.Maybe (isNothing)
-import Data.Ollama.Common.Error (OllamaError (..))
 import Data.Ollama.Common.Config
+import Data.Ollama.Common.Error (OllamaError (..))
 import Data.Ollama.Common.Types (ChatResponse (..), Format (..), Message (..), Role (..))
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
+
+-- | Validates ChatOps to ensure essential fields are not empty
+validateChatOps :: ChatOps -> Either OllamaError ChatOps
+validateChatOps ops
+  | T.null (chatModelName ops) = Left $ InvalidRequest "Chat model name cannot be empty"
+  | any (T.null . content) (toList (messages ops)) =
+      Left $ InvalidRequest "Messages cannot have empty content"
+  | otherwise = Right ops
 
 data ChatOps = ChatOps
   { chatModelName :: !Text
@@ -132,12 +148,9 @@ To request a structured output with a JSON schema:
 -}
 chat :: ChatOps -> Maybe OllamaConfig -> IO (Either OllamaError ChatResponse)
 chat ops mbConfig =
-  withOllamaRequest
-    "/api/chat"
-    "POST"
-    (Just ops)
-    mbConfig
-    handler
+  case validateChatOps ops of
+    Left err -> return $ Left err
+    Right _ -> withOllamaRequest "/api/chat" "POST" (Just ops) mbConfig handler
   where
     handler = case stream ops of
       Nothing -> commonNonStreamingHandler
@@ -232,7 +245,7 @@ chatJson cOps@ChatOps {..} mbConfig jsonStructure mMaxRetries = do
                 NonEmpty.fromList $
                   lastMessage {content = jsonHelperPrompt} : NonEmpty.init messages
             }
-         mbConfig
+          mbConfig
       case chatResponse of
         Left err -> return $ Left err
         Right r -> do
@@ -285,5 +298,6 @@ schemaFromType = encode -- This is a simplified version; a real implementation w
    ...   , options = object ["option" .= ("other value" :: String)]
    ...   }
    >>> print (message res2)
-   Just (Message {role = Assistant, content = "{ \"Name\": \"Ollama\", \"Age\": 22, \"Occupation\": \"World Savior\", \"Goals\": [\"Save humanity from alien invasion\", \"Unite warring nations\", \"Protect the environment\"] }", images = Nothing})
+   Just (Message {role = Assistant, content = "{ \"Name\": \"Ollama\", \"Age\": 22, \"Occupation\":
+   \"World Savior\", \"Goals\": [\"Save humanity from alien invasion\", \"Unite warring nations\", \"Protect the environment\"] }", images = Nothing})
 -}
