@@ -24,7 +24,7 @@ import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.Maybe
 import Data.Ollama.Common.Config (OllamaConfig (..))
 import Data.Ollama.Common.Error (OllamaError (..))
-import Data.Ollama.Common.Types (Format (..), GenerateResponse (..))
+import Data.Ollama.Common.Types (Format (..), GenerateResponse (..), ModelOptions)
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -80,7 +80,7 @@ data GenerateOps = GenerateOps
   -- ^ An optional flag to return the raw response.
   , keepAlive :: !(Maybe Text)
   -- ^ Override default response timeout in minutes. Default = 15 minutes
-  , options :: !(Maybe Value)
+  , options :: !(Maybe ModelOptions)
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
   -- ^ Since 0.1.3.0
   , think :: !(Maybe Bool)

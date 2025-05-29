@@ -13,6 +13,7 @@ module Data.Ollama.Common.Types
   , Role (..)
   , ChatResponse (..)
   , HasDone (..)
+  , ModelOptions 
   ) where
 
 import Data.Aeson
@@ -20,6 +21,7 @@ import Data.Text (Text)
 import Data.Time (UTCTime)
 import GHC.Int (Int64)
 import GHC.Generics
+import Data.Maybe (catMaybes)
 
 data ModelDetails = ModelDetails
   { parentModel :: !(Maybe Text)
@@ -197,3 +199,53 @@ instance HasDone GenerateResponse where
 
 instance HasDone ChatResponse where
   getDone ChatResponse{..} = done
+
+data ModelOptions = ModelOptions
+  { numKeep         :: Maybe Int
+  , seed            :: Maybe Int
+  , numPredict      :: Maybe Int
+  , topK            :: Maybe Int
+  , topP            :: Maybe Double
+  , minP            :: Maybe Double
+  , typicalP        :: Maybe Double
+  , repeatLastN     :: Maybe Int
+  , temperature     :: Maybe Double
+  , repeatPenalty   :: Maybe Double
+  , presencePenalty :: Maybe Double
+  , frequencyPenalty:: Maybe Double
+  , penalizeNewline :: Maybe Bool
+  , stop            :: Maybe [Text]
+  , numa            :: Maybe Bool
+  , numCtx          :: Maybe Int
+  , numBatch        :: Maybe Int
+  , numGpu          :: Maybe Int
+  , mainGpu         :: Maybe Int
+  , useMmap         :: Maybe Bool
+  , numThread       :: Maybe Int
+  } deriving (Show, Eq)
+
+-- | Custom ToJSON instance for Options
+instance ToJSON ModelOptions where
+  toJSON opts = object $ catMaybes
+    [ ("num_keep"        .=) <$> numKeep opts
+    , ("seed"            .=) <$> seed opts
+    , ("num_predict"     .=) <$> numPredict opts
+    , ("top_k"           .=) <$> topK opts
+    , ("top_p"           .=) <$> topP opts
+    , ("min_p"           .=) <$> minP opts
+    , ("typical_p"       .=) <$> typicalP opts
+    , ("repeat_last_n"   .=) <$> repeatLastN opts
+    , ("temperature"     .=) <$> temperature opts
+    , ("repeat_penalty"  .=) <$> repeatPenalty opts
+    , ("presence_penalty".=) <$> presencePenalty opts
+    , ("frequency_penalty".=) <$> frequencyPenalty opts
+    , ("penalize_newline".=) <$> penalizeNewline opts
+    , ("stop"            .=) <$> stop opts
+    , ("numa"            .=) <$> numa opts
+    , ("num_ctx"         .=) <$> numCtx opts
+    , ("num_batch"       .=) <$> numBatch opts
+    , ("num_gpu"         .=) <$> numGpu opts
+    , ("main_gpu"        .=) <$> mainGpu opts
+    , ("use_mmap"        .=) <$> useMmap opts
+    , ("num_thread"      .=) <$> numThread opts
+    ]

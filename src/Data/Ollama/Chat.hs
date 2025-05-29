@@ -35,20 +35,27 @@ import Data.List.NonEmpty as NonEmpty
 import Data.Maybe (isNothing)
 import Data.Ollama.Common.Config
 import Data.Ollama.Common.Error (OllamaError (..))
-import Data.Ollama.Common.Types (ChatResponse (..), Format (..), Message (..), Role (..))
+import Data.Ollama.Common.Types
+  ( ChatResponse (..)
+  , Format (..)
+  , Message (..)
+  , ModelOptions
+  , Role (..)
+  )
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
 
 genMessage :: Role -> Text -> Message
-genMessage r c = Message {
-    role = r 
+genMessage r c =
+  Message
+    { role = r
     , content = c
     , images = Nothing
     , tool_calls = Nothing
     , thinking = Nothing
- }
+    }
 
 -- | Creates a 'Message' with role set to 'System'.
 systemMessage :: Text -> Message
@@ -88,33 +95,39 @@ data ChatOps = ChatOps
   -- ^ Optional streaming functions where the first handles each chunk of the response, and the second flushes the stream.
   , keepAlive :: !(Maybe Text)
   -- ^ Override default response timeout in minutes. Default = 15 minutes
-  , options :: !(Maybe Value)
+  , options :: !(Maybe ModelOptions)
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
   -- ^ Since 0.1.3.0
   , think :: !(Maybe Bool)
   }
 
 instance Show ChatOps where
-  show (ChatOps {chatModelName = m
-    , messages = ms, tools = t, format = f, keepAlive = ka
-    , think = th
-    }) =
-    let messagesStr = show (toList ms)
-        toolsStr = show t
-        formatStr = show f
-        keepAliveStr = show ka
-        thinkStr = show th
-     in T.unpack m
-          ++ "\nMessages:\n"
-          ++ messagesStr
-          ++ "\n"
-          ++ toolsStr
-          ++ "\n"
-          ++ formatStr
-          ++ "\n"
-          ++ keepAliveStr
-          ++ "\n"
-          ++ thinkStr
+  show
+    ( ChatOps
+        { chatModelName = m
+        , messages = ms
+        , tools = t
+        , format = f
+        , keepAlive = ka
+        , think = th
+        }
+      ) =
+      let messagesStr = show (toList ms)
+          toolsStr = show t
+          formatStr = show f
+          keepAliveStr = show ka
+          thinkStr = show th
+       in T.unpack m
+            ++ "\nMessages:\n"
+            ++ messagesStr
+            ++ "\n"
+            ++ toolsStr
+            ++ "\n"
+            ++ formatStr
+            ++ "\n"
+            ++ keepAliveStr
+            ++ "\n"
+            ++ thinkStr
 
 instance Eq ChatOps where
   (==) a b =
