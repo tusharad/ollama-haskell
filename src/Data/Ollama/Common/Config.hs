@@ -32,6 +32,8 @@ data OllamaConfig = OllamaConfig
   , onModelStart  :: Maybe (IO ())  -- ^ Called when model starts (model name)
   , onModelError  :: Maybe (IO ())  -- ^ Called on error (error message)
   , onModelFinish :: Maybe (IO ())  -- ^ Called on completion (start, end)
+  , retryCount    :: Maybe Int      -- ^ Retry if any error happened. Default 0
+  , retryDelay    :: Maybe Int      -- ^ How many seconds later retry should happen
   } deriving (Generic)
 
 -- | Default configuration
@@ -42,6 +44,8 @@ defaultOllamaConfig = OllamaConfig
   , onModelStart = Nothing
   , onModelError = Nothing
   , onModelFinish = Nothing
+  , retryCount = Nothing
+  , retryDelay = Nothing
   }
 
 -- | Set context length in model options

@@ -2,6 +2,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Data.Ollama.Delete
   ( -- * Delete downloaded Models
@@ -9,16 +10,18 @@ module Data.Ollama.Delete
   , deleteModelOps
   ) where
 
-import Control.Monad (when)
+import Control.Exception (try)
+import Control.Monad (void)
 import Data.Aeson
-import Data.Ollama.Common.Utils qualified as CU
+import Data.Maybe (fromMaybe)
+import Data.Ollama.Common.Config (OllamaConfig (..), defaultOllamaConfig)
+import Data.Ollama.Common.Error qualified as Error
+import Data.Ollama.Common.Utils (withRetry)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Maybe (fromMaybe)
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS
 import Network.HTTP.Types.Status (status404)
-import Data.Ollama.Common.Config (OllamaConfig(..))
 
 -- TODO: Add Options parameter
 -- TODO: Add Context parameter
@@ -26,18 +29,10 @@ newtype DeleteModelReq = DeleteModelReq {name :: Text}
   deriving newtype (Show, Eq)
 
 instance ToJSON DeleteModelReq where
-  toJSON
-    ( DeleteModelReq
-        name_
-      ) =
-      object
-        [ "name" .= name_
-        ]
-
+  toJSON (DeleteModelReq name_) = object ["name" .= name_]
 
 deleteModel :: Text -> IO ()
 deleteModel t = deleteModelOps t Nothing
-
 
 -- | Delete a model
 deleteModelOps ::
@@ -47,23 +42,29 @@ deleteModelOps ::
   Maybe OllamaConfig ->
   IO ()
 deleteModelOps modelName mbOllamaConfig = do
-    let url = fromMaybe CU.defaultOllamaUrl (hostUrl <$> mbOllamaConfig)
-        timeoutMicros = let t = maybe 15 timeout mbOllamaConfig in t * 60 * 1000000
-    manager <- newTlsManagerWith defaultManagerSettings
-                { managerResponseTimeout = responseTimeoutMicro timeoutMicros}
-    initialRequest <- parseRequest $ T.unpack (url <> "/api/delete")
-    let reqBody =
-          DeleteModelReq {name = modelName}
-        request =
-          initialRequest
-            { method = "DELETE"
-            , requestBody = RequestBodyLBS $ encode reqBody
-            }
-    maybe (pure ()) (mapM_ id . onModelStart) mbOllamaConfig
-    response <- httpLbs request manager
-    maybe (pure ()) (mapM_ id . onModelFinish) mbOllamaConfig
-    when
-      (responseStatus response == status404)
-      (do 
-        maybe (pure ()) (mapM_ id . onModelError) mbOllamaConfig 
-        putStrLn "Model does not exist")
+  let OllamaConfig {..} = fromMaybe defaultOllamaConfig mbOllamaConfig
+      timeoutMicros = timeout * 60 * 1000000
+  manager <-
+    newTlsManagerWith
+      defaultManagerSettings
+        { managerResponseTimeout = responseTimeoutMicro timeoutMicros
+        }
+  initialRequest <- parseRequest $ T.unpack (hostUrl <> "/api/delete")
+  let reqBody = DeleteModelReq {name = modelName}
+      request = initialRequest {method = "POST", requestBody = RequestBodyLBS (encode reqBody)}
+      retryCnt = fromMaybe 0 retryCount
+      retryDelay_ = fromMaybe 1 retryDelay
+  void $ withRetry retryCnt retryDelay_ $ do
+    maybe (pure ()) id onModelStart
+    eResponse <- try $ httpLbs request manager
+    case eResponse of
+      Left ex -> do
+        fromMaybe (pure ()) onModelError
+        return $ Left $ Error.HttpError ex
+      Right response -> do
+        fromMaybe (pure ()) onModelFinish
+        if responseStatus response == status404
+          then pure $ Right ()
+          else do
+            fromMaybe (pure ()) onModelError
+            pure $ Left $ Error.ApiError "Source Model does not exist"

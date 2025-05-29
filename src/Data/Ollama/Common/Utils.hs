@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Data.Ollama.Common.Utils
   ( defaultOllamaUrl
@@ -9,14 +10,17 @@ module Data.Ollama.Common.Utils
   , commonNonStreamingHandler
   , commonStreamHandler
   , defaultModelOptions
+  , withRetry
   ) where
 
+import Control.Concurrent (threadDelay)
 import Control.Exception (IOException, try)
 import Data.Aeson
 import Data.ByteString qualified as BS
 import Data.ByteString.Base64 qualified as Base64
 import Data.ByteString.Lazy qualified as BSL
 import Data.Char (toLower)
+import Data.Maybe (fromMaybe)
 import Data.Ollama.Common.Config
 import Data.Ollama.Common.Error
 import Data.Ollama.Common.Error qualified as Error
@@ -61,6 +65,22 @@ encodeImage filePath = do
       maybeContent <- asPath filePath
       return $ fmap (TE.decodeUtf8 . Base64.encode) maybeContent
 
+withRetry :: Int -> Int -> IO (Either OllamaError a) -> IO (Either OllamaError a)
+withRetry 0 _ action = action
+withRetry retries delaySeconds action = do
+  result <- action
+  case result of
+    Left err | isRetryableError err -> do
+      threadDelay (delaySeconds * 1000000) -- Convert to microseconds
+      withRetry (retries - 1) delaySeconds action
+    _ -> return result
+  where
+    isRetryableError (HttpError _) = True
+    isRetryableError (TimeoutError _) = True
+    isRetryableError (JsonSchemaError _) = True
+    isRetryableError (DecodeError _ _) = True
+    isRetryableError _ = False
+
 -- | Unified function for sending Ollama API requests
 withOllamaRequest ::
   forall payload response.
@@ -93,17 +113,25 @@ withOllamaRequest endpoint reqMethod mbPayload mbOllamaConfig handler = do
       let request =
             req
               { method = reqMethod
-              , requestBody = maybe mempty (\x -> RequestBodyLBS $ encode x) mbPayload
+              , requestBody =
+                  maybe
+                    mempty
+                    (\x -> RequestBodyLBS $ encode x)
+                    mbPayload
               }
-      maybe (pure ()) (mapM_ id . onModelStart) mbOllamaConfig
-      eResponse <- try $ withResponse request manager handler
-      case eResponse of
-        Left ex -> do
-          maybe (pure ()) (mapM_ id . onModelError) mbOllamaConfig
-          return $ Left $ Error.HttpError ex
-        Right result -> do
-          maybe (pure ()) (mapM_ id . onModelFinish) mbOllamaConfig
-          return result
+      let OllamaConfig {..} = fromMaybe defaultOllamaConfig mbOllamaConfig
+          retryCnt = fromMaybe 0 retryCount
+          retryDelay_ = fromMaybe 1 retryDelay
+      withRetry retryCnt retryDelay_ $ do
+        maybe (pure ()) id onModelStart
+        eResponse <- try $ withResponse request manager handler
+        case eResponse of
+          Left ex -> do
+            maybe (pure ()) id onModelError
+            return $ Left $ Error.HttpError ex
+          Right result -> do
+            maybe (pure ()) id onModelFinish
+            return result
 
 commonNonStreamingHandler ::
   FromJSON a =>
@@ -149,26 +177,27 @@ commonStreamHandler sendChunk flush resp = go mempty
               if getDone res then return (Right res) else go (acc <> bs)
 
 defaultModelOptions :: ModelOptions
-defaultModelOptions = ModelOptions
-  { numKeep         = Nothing
-  , seed            = Nothing
-  , numPredict      = Nothing
-  , topK            = Nothing
-  , topP            = Nothing
-  , minP            = Nothing
-  , typicalP        = Nothing
-  , repeatLastN     = Nothing
-  , temperature     = Nothing
-  , repeatPenalty   = Nothing
-  , presencePenalty = Nothing
-  , frequencyPenalty= Nothing
-  , penalizeNewline = Nothing
-  , stop            = Nothing
-  , numa            = Nothing
-  , numCtx          = Nothing
-  , numBatch        = Nothing
-  , numGpu          = Nothing
-  , mainGpu         = Nothing
-  , useMmap         = Nothing
-  , numThread       = Nothing
-  }
+defaultModelOptions =
+  ModelOptions
+    { numKeep = Nothing
+    , seed = Nothing
+    , numPredict = Nothing
+    , topK = Nothing
+    , topP = Nothing
+    , minP = Nothing
+    , typicalP = Nothing
+    , repeatLastN = Nothing
+    , temperature = Nothing
+    , repeatPenalty = Nothing
+    , presencePenalty = Nothing
+    , frequencyPenalty = Nothing
+    , penalizeNewline = Nothing
+    , stop = Nothing
+    , numa = Nothing
+    , numCtx = Nothing
+    , numBatch = Nothing
+    , numGpu = Nothing
+    , mainGpu = Nothing
+    , useMmap = Nothing
+    , numThread = Nothing
+    }
