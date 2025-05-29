@@ -243,7 +243,7 @@ embeddingTest =
   testGroup
     "Embedding test"
     [ testCase "check embedding" $ do
-        eRes <- Ollama.embedding "llama3.2" "Why is sky blue?"
+        eRes <- Ollama.embedding "llama3.2" ["Why is sky blue?"]
         assertBool "Check if embedding returns anything" (isRight eRes)
     ]
 

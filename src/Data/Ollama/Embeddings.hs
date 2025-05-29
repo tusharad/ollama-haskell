@@ -20,7 +20,7 @@ defaultEmbeddingOps :: EmbeddingOps
 defaultEmbeddingOps =
   EmbeddingOps
     { model = "llama3.2"
-    , input = ""
+    , input = []
     , truncateInput = Nothing
     , keepAlive = Nothing
     , modelOptions = Nothing
@@ -29,7 +29,7 @@ defaultEmbeddingOps =
 -- TODO: Add Options parameter
 data EmbeddingOps = EmbeddingOps
   { model :: !Text
-  , input :: !Text
+  , input :: ![Text]
   , truncateInput :: !(Maybe Bool)
   , keepAlive :: !(Maybe Int)
   , modelOptions :: !(Maybe ModelOptions)
@@ -65,7 +65,7 @@ embeddingOps ::
   -- | Model
   Text ->
   -- | Input
-  Text ->
+  [Text] ->
   -- | Truncate
   Maybe Bool ->
   -- | Keep Alive
@@ -98,7 +98,7 @@ embedding ::
   -- | Model
   Text ->
   -- | Input
-  Text ->
+  [Text] ->
   IO (Either OllamaError EmbeddingResp)
 embedding modelName input_ =
   embeddingOps modelName input_ Nothing Nothing Nothing Nothing
