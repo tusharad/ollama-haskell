@@ -57,7 +57,7 @@ data GenerateOps = GenerateOps
   -- each chunk of response, and the second flushes the stream.
   , raw :: !(Maybe Bool)
   -- ^ An optional flag to return the raw response.
-  , keepAlive :: !(Maybe Text)
+  , keepAlive :: !(Maybe Int)
   -- ^ Override default response timeout in minutes. Default = 15 minutes
   , options :: !(Maybe ModelOptions)
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
@@ -142,7 +142,7 @@ defaultGenerateOps :: GenerateOps
 defaultGenerateOps =
   GenerateOps
     { modelName = "llama3.2"
-    , prompt = "what is 2+2"
+    , prompt = ""
     , suffix = Nothing
     , images = Nothing
     , format = Nothing

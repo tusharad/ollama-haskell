@@ -93,7 +93,7 @@ data ChatOps = ChatOps
   -- ^ Since 0.1.3.0
   , stream :: !(Maybe (ChatResponse -> IO (), IO ()))
   -- ^ Optional streaming functions where the first handles each chunk of the response, and the second flushes the stream.
-  , keepAlive :: !(Maybe Text)
+  , keepAlive :: !(Maybe Int)
   -- ^ Override default response timeout in minutes. Default = 15 minutes
   , options :: !(Maybe ModelOptions)
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature

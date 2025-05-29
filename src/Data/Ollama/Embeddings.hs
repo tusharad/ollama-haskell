@@ -1,10 +1,10 @@
-{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Ollama.Embeddings
   ( -- * Embedding API
     embedding
   , embeddingOps
+  , defaultEmbeddingOps
   , EmbeddingOps (..)
   , EmbeddingResp (..)
   ) where
@@ -15,17 +15,25 @@ import Data.Text (Text)
 import Data.Ollama.Common.Error (OllamaError)
 import Data.Ollama.Common.Config (OllamaConfig)
 
+defaultEmbeddingOps :: EmbeddingOps 
+defaultEmbeddingOps = EmbeddingOps {
+    model = "llama3.2"
+ , input = ""
+ , truncateInput = Nothing
+ , keepAlive = Nothing
+}
+
 -- TODO: Add Options parameter
 data EmbeddingOps = EmbeddingOps
   { model :: !Text
   , input :: !Text
-  , truncate :: !(Maybe Bool)
-  , keepAlive :: !(Maybe Text)
+  , truncateInput :: !(Maybe Bool)
+  , keepAlive :: !(Maybe Int)
   }
   deriving (Show, Eq)
 
 data EmbeddingResp = EmbeddingResp
-  { model :: !Text
+  { respondedModeel :: !Text
   , embedding_ :: ![[Float]]
   }
   deriving (Show, Eq)
@@ -56,7 +64,7 @@ embeddingOps ::
   -- | Truncate
   Maybe Bool ->
   -- | Keep Alive
-  Maybe Text ->
+  Maybe Int ->
   -- | Ollama Config
   Maybe OllamaConfig ->
   IO (Either OllamaError EmbeddingResp)
@@ -68,7 +76,7 @@ embeddingOps modelName input_ mTruncate mKeepAlive mbConfig = do
         EmbeddingOps
           { model = modelName
           , input = input_
-          , truncate = mTruncate
+          , truncateInput = mTruncate
           , keepAlive = mKeepAlive
           }
     )

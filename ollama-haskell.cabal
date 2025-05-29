@@ -38,6 +38,7 @@ library
       Data.Ollama.Embeddings
       Data.Ollama.Generate
       Data.Ollama.List
+      Data.Ollama.Load
       Data.Ollama.Ps
       Data.Ollama.Pull
       Data.Ollama.Push
