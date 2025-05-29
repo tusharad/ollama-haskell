@@ -13,7 +13,7 @@ module Data.Ollama.Common.Types
   , Role (..)
   , ChatResponse (..)
   , HasDone (..)
-  , ModelOptions 
+  , ModelOptions (..)
   ) where
 
 import Data.Aeson

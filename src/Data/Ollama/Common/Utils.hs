@@ -8,6 +8,7 @@ module Data.Ollama.Common.Utils
   , withOllamaRequest
   , commonNonStreamingHandler
   , commonStreamHandler
+  , defaultModelOptions
   ) where
 
 import Control.Exception (IOException, try)
@@ -146,3 +147,28 @@ commonStreamHandler sendChunk flush resp = go mempty
               sendChunk res
               flush
               if getDone res then return (Right res) else go (acc <> bs)
+
+defaultModelOptions :: ModelOptions
+defaultModelOptions = ModelOptions
+  { numKeep         = Nothing
+  , seed            = Nothing
+  , numPredict      = Nothing
+  , topK            = Nothing
+  , topP            = Nothing
+  , minP            = Nothing
+  , typicalP        = Nothing
+  , repeatLastN     = Nothing
+  , temperature     = Nothing
+  , repeatPenalty   = Nothing
+  , presencePenalty = Nothing
+  , frequencyPenalty= Nothing
+  , penalizeNewline = Nothing
+  , stop            = Nothing
+  , numa            = Nothing
+  , numCtx          = Nothing
+  , numBatch        = Nothing
+  , numGpu          = Nothing
+  , mainGpu         = Nothing
+  , useMmap         = Nothing
+  , numThread       = Nothing
+  }

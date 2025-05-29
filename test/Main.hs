@@ -9,7 +9,15 @@ import Data.Maybe
 import Data.Ollama.Chat qualified as Chat
 import Data.Text qualified as T
 import Data.Text.IO qualified as T
-import Ollama (GenerateOps (..), Role (..), defaultChatOps, defaultGenerateOps, OllamaConfig(..), defaultOllamaConfig)
+import Ollama (GenerateOps (..)
+    , Role (..)
+    , ModelOptions (..)
+    , defaultChatOps
+    , defaultGenerateOps
+    , defaultModelOptions
+    , OllamaConfig(..)
+    , defaultOllamaConfig
+    )
 import Ollama qualified
 import System.IO.Silently (capture)
 import Test.Tasty
@@ -184,7 +192,7 @@ chatFormatTest =
               { Chat.chatModelName = "llama3.2"
               , Chat.messages = msg :| []
               , Chat.format = Just (Ollama.SchemaFormat schema)
-              , Chat.options = Just $ object ["penalize_newline" .= Bool True]
+              , Chat.options = Just $ defaultModelOptions { penalizeNewline = Just True }
               }
             (Just defaultOllamaConfig)
         case eRes of

@@ -66,6 +66,12 @@ module Ollama
   , withOnModelFinish
   , withOnModelError
 
+  -- * Utils
+  , defaultModelOptions
+  , ModelOptions (..)
+  , encodeImage
+  , withOllamaRequest
+
     -- * Types
   , ShowModelResponse (..)
   , Models (..)
@@ -95,3 +101,4 @@ import Data.Ollama.Ps
 import Data.Ollama.Pull
 import Data.Ollama.Push
 import Data.Ollama.Show
+import Data.Ollama.Common.Utils
