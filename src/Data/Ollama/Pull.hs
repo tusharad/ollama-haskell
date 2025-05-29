@@ -51,16 +51,6 @@ data PullResp = PullResp
 instance HasDone PullResp where
   getDone PullResp {..} = status /= "success"
 
-{- |
-Pull a model with additional options for insecure connections and streaming.
-This function interacts directly with the Ollama API to download the specified model.
-
-Example:
-
-> pullOps "myModel" (Just True) (Just True)
-
-This will attempt to pull "myModel" with insecure connections allowed and enable streaming.
--}
 pullOps ::
   -- | Model Name
   Text ->
@@ -89,16 +79,6 @@ pullOps modelName mInsecure mStream mbConfig = do
     onComplete :: IO ()
     onComplete = putStrLn "Completed"
 
-{- |
-Pull a model using default options. This simplifies the pull operation by
-not requiring additional options.
-
-Example:
-
-> pull "myModel"
-
-This will pull "myModel" using default settings (no insecure connections and no streaming).
--}
 pull ::
   -- | Model Name
   Text ->

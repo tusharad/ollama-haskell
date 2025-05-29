@@ -172,31 +172,6 @@ defaultChatOps =
     , think = Nothing
     }
 
-{- |
-Initiates a chat session with the specified 'ChatOps' configuration and returns either
-a 'ChatResponse' or an error message.
-
-This function sends a request to the Ollama chat API with the given options.
-
-Example:
-
-> let ops = defaultChatOps
-> result <- chat ops
-> case result of
->   Left errorMsg -> putStrLn ("Error: " ++ errorMsg)
->   Right response -> print response
-
-To request a JSON format response:
-
-> let ops = defaultChatOps { format = Just JsonFormat }
-> result <- chat ops
-
-To request a structured output with a JSON schema:
-
-> import Data.Aeson (object, (.=))
-> let ops = defaultChatOps { format = Just (SchemaFormat schema) }
-> result <- chat ops
--}
 chat :: ChatOps -> Maybe OllamaConfig -> IO (Either OllamaError ChatResponse)
 chat ops mbConfig =
   case validateChatOps ops of
@@ -207,44 +182,7 @@ chat ops mbConfig =
       Nothing -> commonNonStreamingHandler
       Just (sc, fl) -> commonStreamHandler sc fl
 
-{- |
- chatJson is a higher level function that takes ChatOps (similar to chat) and also takes
- a Haskell type (that has To and From JSON instance) and returns the response in provided type.
 
- This function simply calls chat with extra prompt appended to it, telling LLM to return the
- response in certain JSON format and serializes the response. This function will be helpful when you
- want to use the LLM to do something programmatic.
-
- Note: This function predates the format parameter in the API. For new code, consider using
- the `format` parameter with a SchemaFormat instead, which leverages the model's native
- JSON output capabilities.
-
- For Example:
-  > let expectedJsonStrucutre = Example {
-  >   sortedList = ["sorted List here"]
-  > , wasListAlreadSorted = False
-  > }
-  > let msg0 = Ollama.Message User "Sort given list: [4, 2 , 3, 67].
-                        Also tell whether list was already sorted or not." Nothing
-  > eRes3 <-
-  >  chatJson
-  >   defaultChatOps
-  >    { Chat.chatModelName = "llama3.2"
-  >      , Chat.messages = msg0 :| []
-  >   }
-  >      expectedJsonStrucutre
-  >      (Just 2)
-  > print eRes3
- Output:
-  > Example {sortedList = ["1","2","3","4"], wasListAlreadSorted = False}
-
-Note: While Passing the type, construct the type that will help LLM understand the field better.
- For example, in the above example, the sortedList's value is written as "Sorted List here". This
- will help LLM understand context better.
-
- You can also provide number of retries in case the LLM field to return the response in correct JSON
- in first attempt.
--}
 chatJson ::
   (FromJSON jsonResult, ToJSON jsonResult) =>
   ChatOps ->
@@ -318,37 +256,3 @@ chatJson cOps@ChatOps {..} mbConfig jsonStructure mMaxRetries = do
 -- | Helper function to create a JSON schema from a Haskell type
 schemaFromType :: ToJSON a => a -> BSL.ByteString
 schemaFromType = encode -- This is a simplified version; a real implementation would generate a JSON Schema
-
-{- |
-   Example usage of 'Ollama.chat' with a JSON schema format and options field.
-
-   The first example sends a message requesting a JSON response conforming to a given schema.
-   The second example uses an alternative JSON format (here, @JsonFormat@).
-
-   >>> import Data.Aeson (Value, object, (.=))
-   >>> import Data.List.NonEmpty (NonEmpty(..))
-   >>> import Ollama (defaultChatOps, Message(..), SchemaFormat, JsonFormat)
-   >>> let x :: Value
-   ...     x = object [ "type" .= ("object" :: String)
-   ...                , "properties" .= object [ "age" .= object ["type" .= ("integer" :: String)] ]
-   ...                ]
-   >>> let msg = Message User "Ollama is 22 years old and is busy saving the world. Respond using JSON" Nothing
-   >>> let opts = object ["option" .= ("some value" :: String)]
-   >>> res <- chat defaultChatOps
-   ...   { chatModelName = "llama3.2"
-   ...   , messages = msg :| []
-   ...   , format = Just (SchemaFormat x)
-   ...   , options = opts
-   ...   }
-   >>> print (message res)
-   Just (Message {role = Assistant, content = "{\n    \"age\": 22\n}", images = Nothing})
-   >>> res2 <- chat defaultChatOps
-   ...   { chatModelName = "llama3.2"
-   ...   , messages = msg :| []
-   ...   , format = Just JsonFormat
-   ...   , options = object ["option" .= ("other value" :: String)]
-   ...   }
-   >>> print (message res2)
-   Just (Message {role = Assistant, content = "{ \"Name\": \"Ollama\", \"Age\": 22, \"Occupation\":
-   \"World Savior\", \"Goals\": [\"Save humanity from alien invasion\", \"Unite warring nations\", \"Protect the environment\"] }", images = Nothing})
--}

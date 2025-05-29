@@ -25,7 +25,6 @@ import Control.Monad (void)
 import Data.Ollama.Common.Error qualified as Error
 
 -- TODO: Add Options parameter
--- TODO: Add Context parameter
 data CopyModelOps = CopyModelOps
   { source :: !Text
   , destination :: !Text

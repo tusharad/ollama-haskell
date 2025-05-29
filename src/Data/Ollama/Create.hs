@@ -16,7 +16,6 @@ import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 
 -- TODO: Add Options parameter
--- TODO: Add Context parameter
 data CreateModelOps = CreateModelOps
   { name :: !Text
   , modelFile :: !(Maybe Text)

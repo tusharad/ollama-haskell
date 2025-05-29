@@ -22,8 +22,6 @@ import Data.Ollama.Common.Error (OllamaError)
 import Data.Ollama.Common.Config (OllamaConfig)
 
 -- TODO: Add Options parameter
--- TODO: Add Context parameter
-
 {- |
  #ShowModelOps#
  Input parameters for show model information.

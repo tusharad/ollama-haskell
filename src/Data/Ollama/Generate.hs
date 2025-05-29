@@ -36,27 +36,6 @@ validateGenerateOps ops
   | T.null (prompt ops) = Left $ InvalidRequest "Prompt cannot be empty"
   | otherwise = Right ops
 
--- TODO: Add Context parameter
-
-{- |
-  Input type for generate functions. This data type represents all possible configurations
-  that you can pass to the Ollama generate API.
-
-  Example:
-
-  > let ops = GenerateOps
-  >         { modelName = "llama3.2"
-  >         , prompt = "What is the meaning of life?"
-  >         , suffix = Nothing
-  >         , images = Nothing
-  >         , format = Just "text"
-  >         , system = Nothing
-  >         , template = Nothing
-  >         , stream = Nothing
-  >         , raw = Just False
-  >         , keepAlive = Just "yes"
-  >         }
--}
 data GenerateOps = GenerateOps
   { modelName :: !Text
   -- ^ The name of the model to be used for generation.
@@ -159,16 +138,6 @@ instance ToJSON GenerateOps where
         , "think" .= think
         ]
 
-{- |
-A function to create a default 'GenerateOps' type with preset values.
-
-Example:
-
-> let ops = defaultGenerateOps
-> generate ops
-
-This will generate a response using the default configuration.
--}
 defaultGenerateOps :: GenerateOps
 defaultGenerateOps =
   GenerateOps
@@ -186,46 +155,6 @@ defaultGenerateOps =
     , think = Nothing
     }
 
-{- |
-Generate function that returns either a 'GenerateResponse' type or an error message.
-It takes a 'GenerateOps' configuration and performs a request to the Ollama generate API.
-
-Examples:
-
-Basic usage without streaming:
-
-> let ops = GenerateOps
->         { modelName = "llama3.2"
->         , prompt = "Tell me a joke."
->         , suffix = Nothing
->         , images = Nothing
->         , format = Nothing
->         , system = Nothing
->         , template = Nothing
->         , stream = Nothing
->         , raw = Nothing
->         , keepAlive = Nothing
->         }
-> result <- generate ops
-> case result of
->   Left errorMsg -> putStrLn ("Error: " ++ errorMsg)
->   Right response -> print response
-
-Usage with streaming to print responses to the console:
-
-> void $
->   generate
->     defaultGenerateOps
->       { modelName = "llama3.2"
->       , prompt = "what is functional programming?"
->       , stream = Just (T.putStr . response_, pure ())
->       }
-
-In this example, the first function in the 'stream' tuple processes
-each chunk of response by printing it,
-and the second function is a simple no-op
-flush.generate :: GenerateOps -> IO (Either String GenerateResponse)
--}
 generate :: GenerateOps -> Maybe OllamaConfig -> IO (Either OllamaError GenerateResponse)
 generate ops mbConfig =
   case validateGenerateOps ops of
@@ -236,40 +165,6 @@ generate ops mbConfig =
       Nothing -> commonNonStreamingHandler
       Just (sc, fl) -> commonStreamHandler sc fl
 
-{- |
- generateJson is a higher level function that takes generateOps (similar to generate) and also takes
- a Haskell type (that has To and From JSON instance) and returns the response in provided type.
-
- This function simply calls generate with extra prompt appended to it, telling LLM to return the
- response in certain JSON format and serializes the response. This function will be helpful when you
- want to use the LLM to do something programmatic.
-
- For Example:
-  > let expectedJsonStrucutre = Example {
-  >   sortedList = ["sorted List here"]
-  > , wasListAlreadSorted = False
-  > }
-  > eRes2 <- generateJson
-  >     defaultGenerateOps
-  >      { modelName = "llama3.2"
-  >     , prompt = "Sort given list: [4, 2 , 3, 67]. Also tell whether list was already sorted or not."
-  >       }
-  >     expectedJsonStrucutre
-  >     Nothing
-  > case eRes2 of
-  >   Left e -> putStrLn e
-  >   Right r -> print ("JSON response: " :: String, r)
-
-Output:
-  > ("JSON response: ",Example {sortedList = ["1","2","3","4"], wasListAlreadSorted = False})
-
-Note: While Passing the type, construct the type that will help LLM understand the field better.
- For example, in the above example, the sortedList's value is written as "Sorted List here". This
- will help LLM understand context better.
-
- You can also provide number of retries in case the LLM field to return the response in correct JSON
- in first attempt.
--}
 generateJson ::
   (ToJSON jsonResult, FromJSON jsonResult) =>
   GenerateOps ->
@@ -305,30 +200,3 @@ generateJson genOps@GenerateOps {..} mbConfig jsonStructure mMaxRetries = do
                 then return $ Left $ DecodeError err (show bs)
                 else generateJson genOps mbConfig jsonStructure (Just (n - 1))
         Right resultInType -> return $ Right resultInType
-
-{- |
-   Example usage of 'Ollama.generate' with a JSON schema format and options field.
-
-   In this example we pass a JSON schema that expects an object with an integer field @age@.
-   The options field is supplied as a JSON value.
-
-   >>> import Data.Aeson (Value, object, (.=))
-   >>> import Ollama (GenerateOps, defaultGenerateOps, SchemaFormat)
-   >>> let x :: Value
-   ...     x = object [ "type" .= ("object" :: String)
-   ...                , "properties" .= object [ "age" .= object ["type" .= ("integer" :: String)] ]
-   ...                ]
-   >>> let opts :: Value
-   ...     opts = object ["option" .= ("some value" :: String)]
-   >>> generate defaultGenerateOps
-   ...   { modelName = "llama3.2"
-   ...   , prompt = "Ollama is 22 years old and is busy saving the world. Respond using JSON"
-   ...   , format = Just (SchemaFormat x)
-   ...   , options = opts
-   ...   }
-   Right (GenerateResponse {model = "llama3.2", createdAt = 2025-03-25 09:34:15.853417157 UTC,
-                            response_ = "{\n    \"age\": 22\n}", done = True,
-                            totalDuration = Just 6625631744, loadDuration = Just 2578791966,
-                            promptEvalCount = Just 43, promptEvalDuration = Just 2983000000,
-                            evalCount = Just 10, evalDuration = Just 1061000000})
--}
