@@ -14,6 +14,7 @@ module Data.Ollama.Common.Types
   , ChatResponse (..)
   , HasDone (..)
   , ModelOptions (..)
+  , Version (..)
   ) where
 
 import Data.Aeson
@@ -249,3 +250,11 @@ instance ToJSON ModelOptions where
     , ("use_mmap"        .=) <$> useMmap opts
     , ("num_thread"      .=) <$> numThread opts
     ]
+
+
+newtype Version = Version Text
+    deriving (Eq, Show)
+
+instance FromJSON Version where
+  parseJSON = withObject "version" $ \v -> do 
+    Version <$> v .: "version"

@@ -11,6 +11,7 @@ module Data.Ollama.Common.Utils
   , commonStreamHandler
   , defaultModelOptions
   , withRetry
+  , getVersion
   ) where
 
 import Control.Concurrent (threadDelay)
@@ -201,3 +202,7 @@ defaultModelOptions =
     , useMmap = Nothing
     , numThread = Nothing
     }
+
+getVersion :: IO (Either OllamaError Version)
+getVersion = do 
+  withOllamaRequest "/api/version" "GET" (Nothing :: Maybe Value) Nothing commonNonStreamingHandler

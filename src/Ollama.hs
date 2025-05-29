@@ -71,6 +71,7 @@ module Ollama
   , ModelOptions (..)
   , encodeImage
   , withOllamaRequest
+  , getVersion
 
     -- * Types
   , ShowModelResponse (..)
