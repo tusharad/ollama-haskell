@@ -24,6 +24,7 @@ import Data.Text (Text)
 import GHC.Generics
 import qualified Data.Aeson.KeyMap as KM
 import Data.Aeson.Key (fromText)
+import Network.HTTP.Client
 
 -- | Configuration for Ollama client
 data OllamaConfig = OllamaConfig
@@ -34,6 +35,7 @@ data OllamaConfig = OllamaConfig
   , onModelFinish :: Maybe (IO ())  -- ^ Called on completion (start, end)
   , retryCount    :: Maybe Int      -- ^ Retry if any error happened. Default 0
   , retryDelay    :: Maybe Int      -- ^ How many seconds later retry should happen
+  , commonManager       :: Maybe Manager
   } deriving (Generic)
 
 -- | Default configuration
@@ -46,6 +48,7 @@ defaultOllamaConfig = OllamaConfig
   , onModelFinish = Nothing
   , retryCount = Nothing
   , retryDelay = Nothing
+  , commonManager = Nothing
   }
 
 -- | Set context length in model options

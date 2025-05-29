@@ -98,15 +98,17 @@ withOllamaRequest ::
   (FromJSON response => Response BodyReader -> IO (Either OllamaError response)) ->
   IO (Either OllamaError response)
 withOllamaRequest endpoint reqMethod mbPayload mbOllamaConfig handler = do
-  let url = maybe defaultOllamaUrl hostUrl mbOllamaConfig
-      fullUrl = T.unpack $ url <> endpoint
-      timeoutMicros = let t = maybe 15 timeout mbOllamaConfig in t * 60 * 1000000
+  let OllamaConfig {..} = fromMaybe defaultOllamaConfig mbOllamaConfig
+      fullUrl = T.unpack $ hostUrl <> endpoint
+      timeoutMicros = timeout * 60 * 1000000
 
-  manager <-
-    newTlsManagerWith
-      tlsManagerSettings
-        { managerResponseTimeout = responseTimeoutMicro timeoutMicros
-        }
+  manager <- case commonManager of
+    Nothing ->
+      newTlsManagerWith
+        tlsManagerSettings
+          { managerResponseTimeout = responseTimeoutMicro timeoutMicros
+          }
+    Just m -> pure m
   eRequest <- try $ parseRequest fullUrl :: IO (Either HttpException Request)
   case eRequest of
     Left ex -> return $ Left $ Error.HttpError ex
@@ -120,7 +122,6 @@ withOllamaRequest endpoint reqMethod mbPayload mbOllamaConfig handler = do
                     (\x -> RequestBodyLBS $ encode x)
                     mbPayload
               }
-      let OllamaConfig {..} = fromMaybe defaultOllamaConfig mbOllamaConfig
           retryCnt = fromMaybe 0 retryCount
           retryDelay_ = fromMaybe 1 retryDelay
       withRetry retryCnt retryDelay_ $ do
@@ -204,5 +205,10 @@ defaultModelOptions =
     }
 
 getVersion :: IO (Either OllamaError Version)
-getVersion = do 
-  withOllamaRequest "/api/version" "GET" (Nothing :: Maybe Value) Nothing commonNonStreamingHandler
+getVersion = do
+  withOllamaRequest
+    "/api/version"
+    "GET"
+    (Nothing :: Maybe Value)
+    Nothing
+    commonNonStreamingHandler
