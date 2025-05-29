@@ -32,6 +32,7 @@ library
       Data.Ollama.Common.Error
       Data.Ollama.Common.Types
       Data.Ollama.Common.Utils
+      Data.Ollama.Conversation
       Data.Ollama.Copy
       Data.Ollama.Create
       Data.Ollama.Delete
@@ -62,6 +63,8 @@ library
     , http-client
     , http-client-tls
     , http-types
+    , mtl
+    , stm
     , text
     , time
   default-language: Haskell2010
@@ -87,8 +90,10 @@ test-suite ollama-haskell-test
     , http-client
     , http-client-tls
     , http-types
+    , mtl
     , ollama-haskell
     , silently
+    , stm
     , tasty
     , tasty-hunit
     , text

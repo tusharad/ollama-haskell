@@ -27,6 +27,8 @@ dependencies:
 - filepath
 - directory
 - containers
+- stm
+- mtl
 
 ghc-options:
 - -Wall
