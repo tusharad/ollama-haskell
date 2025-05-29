@@ -83,6 +83,7 @@ data GenerateOps = GenerateOps
   , options :: !(Maybe Value)
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
   -- ^ Since 0.1.3.0
+  , think :: !(Maybe Bool)
   }
 
 instance Show GenerateOps where
@@ -110,6 +111,8 @@ instance Show GenerateOps where
       <> show keepAlive
       <> ", options : "
       <> show options
+      <> ", think: "
+      <> show think
 
 instance Eq GenerateOps where
   (==) a b =
@@ -123,6 +126,7 @@ instance Eq GenerateOps where
       && raw a == raw b
       && keepAlive a == keepAlive b
       && options a == options b
+      && think a == think b
 
 instance ToJSON GenerateOps where
   toJSON
@@ -138,6 +142,7 @@ instance ToJSON GenerateOps where
         raw
         keepAlive
         options
+        think
       ) =
       object
         [ "model" .= model
@@ -151,6 +156,7 @@ instance ToJSON GenerateOps where
         , "raw" .= raw
         , "keep_alive" .= keepAlive
         , "options" .= options
+        , "think" .= think
         ]
 
 {- |
@@ -177,6 +183,7 @@ defaultGenerateOps =
     , raw = Nothing
     , keepAlive = Nothing
     , options = Nothing
+    , think = Nothing
     }
 
 {- |

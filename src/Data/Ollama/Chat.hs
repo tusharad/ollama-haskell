@@ -41,21 +41,30 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
 
+genMessage :: Role -> Text -> Message
+genMessage r c = Message {
+    role = r 
+    , content = c
+    , images = Nothing
+    , tool_calls = Nothing
+    , thinking = Nothing
+ }
+
 -- | Creates a 'Message' with role set to 'System'.
 systemMessage :: Text -> Message
-systemMessage c = Message {role = System, content = c, images = Nothing, tool_calls = Nothing}
+systemMessage c = genMessage System c
 
 -- | Creates a 'Message' with role set to 'User'.
 userMessage :: Text -> Message
-userMessage c = Message {role = User, content = c, images = Nothing, tool_calls = Nothing}
+userMessage c = genMessage User c
 
 -- | Creates a 'Message' with role set to 'Assistant'.
 assistantMessage :: Text -> Message
-assistantMessage c = Message {role = Assistant, content = c, images = Nothing, tool_calls = Nothing}
+assistantMessage c = genMessage Assistant c
 
 -- | Creates a 'Message' with role set to 'Tool'.
 toolMessage :: Text -> Message
-toolMessage c = Message {role = Tool, content = c, images = Nothing, tool_calls = Nothing}
+toolMessage c = genMessage Tool c
 
 -- | Validates ChatOps to ensure essential fields are not empty
 validateChatOps :: ChatOps -> Either OllamaError ChatOps
@@ -82,14 +91,19 @@ data ChatOps = ChatOps
   , options :: !(Maybe Value)
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
   -- ^ Since 0.1.3.0
+  , think :: !(Maybe Bool)
   }
 
 instance Show ChatOps where
-  show (ChatOps {chatModelName = m, messages = ms, tools = t, format = f, keepAlive = ka}) =
+  show (ChatOps {chatModelName = m
+    , messages = ms, tools = t, format = f, keepAlive = ka
+    , think = th
+    }) =
     let messagesStr = show (toList ms)
         toolsStr = show t
         formatStr = show f
         keepAliveStr = show ka
+        thinkStr = show th
      in T.unpack m
           ++ "\nMessages:\n"
           ++ messagesStr
@@ -99,6 +113,8 @@ instance Show ChatOps where
           ++ formatStr
           ++ "\n"
           ++ keepAliveStr
+          ++ "\n"
+          ++ thinkStr
 
 instance Eq ChatOps where
   (==) a b =
@@ -109,7 +125,7 @@ instance Eq ChatOps where
       && keepAlive a == keepAlive b
 
 instance ToJSON ChatOps where
-  toJSON (ChatOps model_ messages_ tools_ format_ stream_ keepAlive_ options) =
+  toJSON (ChatOps model_ messages_ tools_ format_ stream_ keepAlive_ options think_) =
     object
       [ "model" .= model_
       , "messages" .= messages_
@@ -118,6 +134,7 @@ instance ToJSON ChatOps where
       , "stream" .= if isNothing stream_ then Just False else Just True
       , "keep_alive" .= keepAlive_
       , "options" .= options
+      , "think" .= think_
       ]
 
 {- |
@@ -139,6 +156,7 @@ defaultChatOps =
     , stream = Nothing
     , keepAlive = Nothing
     , options = Nothing
+    , think = Nothing
     }
 
 {- |

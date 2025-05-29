@@ -146,6 +146,7 @@ data Message = Message
   , tool_calls :: !(Maybe [Value])
   -- ^ a list of tools in JSON that the model wants to use
   -- ^ Since 0.1.3.0
+  , thinking :: !(Maybe Text)
   }
   deriving (Show, Eq, Generic, ToJSON, FromJSON)
 

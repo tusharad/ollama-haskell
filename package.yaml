@@ -10,7 +10,7 @@ extra-source-files:
 - README.md
 - CHANGELOG.md
 
-synopsis:            Haskell bindings for ollama.
+synopsis:            Haskell client for ollama.
 category:            Web
 description:         Ollama client for Haskell
 
