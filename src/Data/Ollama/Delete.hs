@@ -7,11 +7,12 @@
 module Data.Ollama.Delete
   ( -- * Delete downloaded Models
     deleteModel
-  , deleteModelOps
+  , deleteModelM
   ) where
 
 import Control.Exception (try)
 import Control.Monad (void)
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
 import Data.Maybe (fromMaybe)
 import Data.Ollama.Common.Config (OllamaConfig (..), defaultOllamaConfig)
@@ -31,17 +32,14 @@ newtype DeleteModelReq = DeleteModelReq {name :: Text}
 instance ToJSON DeleteModelReq where
   toJSON (DeleteModelReq name_) = object ["name" .= name_]
 
-deleteModel :: Text -> IO ()
-deleteModel t = deleteModelOps t Nothing
-
 -- | Delete a model
-deleteModelOps ::
+deleteModel ::
   -- | Model name
   Text ->
   -- | Ollama config
   Maybe OllamaConfig ->
   IO ()
-deleteModelOps modelName mbOllamaConfig = do
+deleteModel modelName mbOllamaConfig = do
   let OllamaConfig {..} = fromMaybe defaultOllamaConfig mbOllamaConfig
       timeoutMicros = timeout * 60 * 1000000
   manager <-
@@ -68,3 +66,6 @@ deleteModelOps modelName mbOllamaConfig = do
           else do
             fromMaybe (pure ()) onModelError
             pure $ Left $ Error.ApiError "Source Model does not exist"
+
+deleteModelM :: MonadIO m => Text -> Maybe OllamaConfig -> m ()
+deleteModelM t mbCfg = liftIO $ deleteModel t mbCfg

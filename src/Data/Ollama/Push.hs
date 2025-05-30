@@ -1,23 +1,24 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Data.Ollama.Push
   ( -- * Push API
     push
-  , pushOps
+  , pushM
   ) where
 
+import Control.Monad (void)
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
+import Data.Ollama.Common.Config (OllamaConfig)
+import Data.Ollama.Common.Types (HasDone (getDone))
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import GHC.Generics
 import GHC.Int (Int64)
-import Control.Monad (void)
-import Data.Ollama.Common.Types (HasDone (getDone))
-import Data.Ollama.Common.Config (OllamaConfig)
 
 -- TODO: Add Options parameter
 data PushOps = PushOps
@@ -38,7 +39,7 @@ instance HasDone PushResp where
   getDone PushResp {..} = status /= "success"
 
 -- | Push a model with options
-pushOps ::
+push ::
   -- | Model name
   Text ->
   -- | Insecure
@@ -48,7 +49,7 @@ pushOps ::
   -- | Ollama config
   Maybe OllamaConfig ->
   IO ()
-pushOps modelName mInsecure mStream mbConfig = do
+push modelName mInsecure mStream mbConfig = do
   void $
     withOllamaRequest
       "/api/pull"
@@ -62,12 +63,6 @@ pushOps modelName mInsecure mStream mbConfig = do
 
     onComplete :: IO ()
     onComplete = putStrLn "Completed"
--- Higher level API for Pull
--- This API is untested. Will test soon!
 
--- | Push a model
-push ::
-  -- | Model name
-  Text ->
-  IO ()
-push modelName = pushOps modelName Nothing Nothing Nothing 
+pushM :: MonadIO m => Text -> Maybe Bool -> Maybe Bool -> Maybe OllamaConfig -> m ()
+pushM t insec s mbCfg = liftIO $ push t insec s mbCfg

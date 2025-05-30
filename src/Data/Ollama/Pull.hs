@@ -8,19 +8,20 @@ module Data.Ollama.Pull
   ( -- * Downloaded Models
     pull
   , pullOps
+  , pullM
+  , pullOpsM
   ) where
 
 import Control.Monad (void)
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
 import Data.Maybe (fromMaybe)
+import Data.Ollama.Common.Config (OllamaConfig)
 import Data.Ollama.Common.Types (HasDone (..))
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import GHC.Generics
 import GHC.Int (Int64)
-import Data.Ollama.Common.Config (OllamaConfig)
-
--- TODO: Add Options parameter
 
 -- | Configuration options for pulling a model.
 data PullOps = PullOps
@@ -84,3 +85,9 @@ pull ::
   Text ->
   IO ()
 pull modelName = pullOps modelName Nothing Nothing Nothing
+
+pullM :: MonadIO m => Text -> m ()
+pullM t = liftIO $ pull t
+
+pullOpsM :: MonadIO m => Text -> Maybe Bool -> Maybe Bool -> Maybe OllamaConfig -> m ()
+pullOpsM t mbInsecure mbStream mbCfg = liftIO $ pullOps t mbInsecure mbStream mbCfg

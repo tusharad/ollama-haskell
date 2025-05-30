@@ -14,7 +14,9 @@ Stability:   experimental
 module Data.Ollama.Chat
   ( -- * Chat APIs
     chat
+  , chatM
   , chatJson
+  , chatJsonM
   , Message (..)
   , Role (..)
   , defaultChatOps
@@ -28,6 +30,7 @@ module Data.Ollama.Chat
   , toolMessage
   ) where
 
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
 import Data.Aeson.KeyMap qualified as HM
 import Data.ByteString.Lazy.Char8 qualified as BSL
@@ -38,10 +41,10 @@ import Data.Ollama.Common.Error (OllamaError (..))
 import Data.Ollama.Common.Types
   ( ChatResponse (..)
   , Format (..)
+  , InputTool (..)
   , Message (..)
   , ModelOptions
   , Role (..)
-  , InputTool (..)
   )
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
@@ -183,6 +186,8 @@ chat ops mbConfig =
       Nothing -> commonNonStreamingHandler
       Just (sc, fl) -> commonStreamHandler sc fl
 
+chatM :: MonadIO m => ChatOps -> Maybe OllamaConfig -> m (Either OllamaError ChatResponse)
+chatM ops mbCfg = liftIO $ chat ops mbCfg
 
 chatJson ::
   (FromJSON jsonResult, ToJSON jsonResult) =>
@@ -257,3 +262,15 @@ chatJson cOps@ChatOps {..} mbConfig jsonStructure mMaxRetries = do
 -- | Helper function to create a JSON schema from a Haskell type
 schemaFromType :: ToJSON a => a -> BSL.ByteString
 schemaFromType = encode -- This is a simplified version; a real implementation would generate a JSON Schema
+
+chatJsonM ::
+  (MonadIO m, FromJSON jsonResult, ToJSON jsonResult) =>
+  ChatOps ->
+  -- | Haskell type that you want your result in
+  Maybe OllamaConfig ->
+  -- | Ollama configuration
+  jsonResult ->
+  -- | Max retries
+  Maybe Int ->
+  m (Either OllamaError jsonResult)
+chatJsonM ops mbCfg js mbRetry = liftIO $ chatJson ops mbCfg js mbRetry

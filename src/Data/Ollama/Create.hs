@@ -5,10 +5,11 @@
 module Data.Ollama.Create
   ( -- * Create Model API
     createModel
-  , createModelOps
+  , createModelM
   ) where
 
 import Control.Monad (void)
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
 import Data.Ollama.Common.Config (OllamaConfig)
 import Data.Ollama.Common.Types (HasDone (getDone))
@@ -54,7 +55,7 @@ instance FromJSON CreateModelResp where
 {- | Create a new model either from ModelFile or Path
 Please note, if you specify both ModelFile and Path, ModelFile will be used.
 -}
-createModelOps ::
+createModel ::
   -- | Model Name
   Text ->
   -- | Model File
@@ -66,7 +67,7 @@ createModelOps ::
   -- | Ollama config
   Maybe OllamaConfig ->
   IO ()
-createModelOps
+createModel
   modelName
   modelFile_
   stream_
@@ -94,21 +95,12 @@ createModelOps
       onComplete :: IO ()
       onComplete = putStrLn "Completed"
 
-{- | Create a new model
-| Please note, if you specify both ModelFile and Path, ModelFile will be used.
--}
-createModel ::
-  -- | Model Name
+createModelM ::
+  MonadIO m =>
   Text ->
-  -- | Model File
   Maybe Text ->
-  -- | Path
+  Maybe Bool ->
   Maybe FilePath ->
-  IO ()
-createModel modelName modelFile_ fp =
-  createModelOps
-    modelName
-    modelFile_
-    Nothing
-    fp
-    Nothing
+  Maybe OllamaConfig ->
+  m ()
+createModelM m mf s p mbCfg = liftIO $ createModel m mf s p mbCfg

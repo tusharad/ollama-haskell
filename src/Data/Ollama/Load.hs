@@ -11,8 +11,11 @@ Stability:   experimental
 module Data.Ollama.Load
   ( loadGenModel
   , unloadGenModel
+  , loadGenModelM
+  , unloadGenModelM
   ) where
 
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Ollama.Common.Error
 import Data.Ollama.Common.Utils (commonNonStreamingHandler, withOllamaRequest)
 import Data.Ollama.Generate qualified as Gen
@@ -29,3 +32,9 @@ unloadGenModel :: Text -> IO (Either OllamaError ())
 unloadGenModel m = do
   let ops = Gen.defaultGenerateOps {Gen.modelName = m, Gen.keepAlive = Just 0}
   withOllamaRequest "/api/generate" "POST" (Just ops) Nothing commonNonStreamingHandler
+
+loadGenModelM :: MonadIO m => Text -> m (Either OllamaError ())
+loadGenModelM t = liftIO $ loadGenModel t
+
+unloadGenModelM :: MonadIO m => Text -> m (Either OllamaError ())
+unloadGenModelM t = liftIO $ unloadGenModel t

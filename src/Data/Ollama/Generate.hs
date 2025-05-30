@@ -13,12 +13,15 @@ Stability:   experimental
 module Data.Ollama.Generate
   ( -- * Generate Texts
     generate
+  , generateM
   , defaultGenerateOps
   , generateJson
+  , generateJsonM
   , GenerateOps (..)
   , GenerateResponse (..)
   ) where
 
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
 import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.Maybe
@@ -165,6 +168,11 @@ generate ops mbConfig =
       Nothing -> commonNonStreamingHandler
       Just (sc, fl) -> commonStreamHandler sc fl
 
+generateM ::
+  MonadIO m =>
+  GenerateOps -> Maybe OllamaConfig -> m (Either OllamaError GenerateResponse)
+generateM ops mbCfg = liftIO $ generate ops mbCfg
+
 generateJson ::
   (ToJSON jsonResult, FromJSON jsonResult) =>
   GenerateOps ->
@@ -200,3 +208,12 @@ generateJson genOps@GenerateOps {..} mbConfig jsonStructure mMaxRetries = do
                 then return $ Left $ DecodeError err (show bs)
                 else generateJson genOps mbConfig jsonStructure (Just (n - 1))
         Right resultInType -> return $ Right resultInType
+
+generateJsonM ::
+  (MonadIO m, ToJSON jsonResult, FromJSON jsonResult) =>
+  GenerateOps ->
+  Maybe OllamaConfig ->
+  jsonResult ->
+  Maybe Int ->
+  m (Either OllamaError jsonResult)
+generateJsonM ops mbCfg js mRetry = liftIO $ generateJson ops mbCfg js mRetry

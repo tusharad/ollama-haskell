@@ -6,14 +6,17 @@
 
 module Data.Ollama.Copy
   ( -- * Copy Model API
-    copyModelOps
-  , copyModel
+    copyModel
+  , copyModelM
   ) where
 
 import Control.Exception (try)
+import Control.Monad (void)
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
 import Data.Maybe (fromMaybe)
 import Data.Ollama.Common.Config (OllamaConfig (..), defaultOllamaConfig)
+import Data.Ollama.Common.Error qualified as Error
 import Data.Ollama.Common.Utils (withRetry)
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -21,8 +24,6 @@ import GHC.Generics
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS
 import Network.HTTP.Types.Status (status404)
-import Control.Monad (void)
-import Data.Ollama.Common.Error qualified as Error
 
 -- TODO: Add Options parameter
 data CopyModelOps = CopyModelOps
@@ -31,11 +32,8 @@ data CopyModelOps = CopyModelOps
   }
   deriving (Show, Eq, Generic, ToJSON)
 
-copyModel :: Text -> Text -> IO ()
-copyModel src dest = copyModelOps src dest Nothing
-
 -- | Copy model from source to destination
-copyModelOps ::
+copyModel ::
   -- | Source model
   Text ->
   -- | Destination model
@@ -43,7 +41,7 @@ copyModelOps ::
   -- | Ollama config
   Maybe OllamaConfig ->
   IO ()
-copyModelOps
+copyModel
   source_
   destination_
   mbOllamaConfig = do
@@ -73,3 +71,6 @@ copyModelOps
             else do
               fromMaybe (pure ()) onModelError
               pure $ Left $ Error.ApiError "Source Model does not exist"
+
+copyModelM :: MonadIO m => Text -> Text -> Maybe OllamaConfig -> m ()
+copyModelM s d mbCfg = liftIO $ copyModel s d mbCfg

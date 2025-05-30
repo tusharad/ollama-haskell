@@ -6,22 +6,26 @@
 module Data.Ollama.Show
   ( -- * Show Model Info API
     showModel
+  , showModelM
+  , showModelOpsM
   , showModelOps
   , ShowModelResponse (..)
   , ShowModelInfo (..)
   , CT.ModelDetails (..)
   ) where
 
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
+import Data.Ollama.Common.Config (OllamaConfig)
+import Data.Ollama.Common.Error (OllamaError)
 import Data.Ollama.Common.Types qualified as CT
+import Data.Ollama.Common.Utils (commonNonStreamingHandler, withOllamaRequest)
 import Data.Text (Text)
 import GHC.Generics
 import GHC.Int (Int64)
-import Data.Ollama.Common.Utils (withOllamaRequest, commonNonStreamingHandler)
-import Data.Ollama.Common.Error (OllamaError)
-import Data.Ollama.Common.Config (OllamaConfig)
 
 -- TODO: Add Options parameter
+
 {- |
  #ShowModelOps#
  Input parameters for show model information.
@@ -47,8 +51,6 @@ data ShowModelResponse = ShowModelResponse
   , capabilities :: Maybe [Text]
   }
   deriving (Show, Eq)
-
-
 
 data ShowModelInfo = ShowModelInfo
   { generalArchitecture :: !(Maybe Text)
@@ -130,10 +132,12 @@ showModelOps modelName verbose_ mbConfig = do
   withOllamaRequest
     "/api/show"
     "POST"
-    (Just $ ShowModelOps {
-        name = modelName
-      , verbose = verbose_
-    })
+    ( Just $
+        ShowModelOps
+          { name = modelName
+          , verbose = verbose_
+          }
+    )
     mbConfig
     commonNonStreamingHandler
 
@@ -148,3 +152,14 @@ showModel ::
   IO (Either OllamaError ShowModelResponse)
 showModel modelName =
   showModelOps modelName Nothing Nothing
+
+showModelM :: MonadIO m => Text -> m (Either OllamaError ShowModelResponse)
+showModelM t = liftIO $ showModel t
+
+showModelOpsM ::
+  MonadIO m =>
+  Text ->
+  Maybe Bool ->
+  Maybe OllamaConfig ->
+  m (Either OllamaError ShowModelResponse)
+showModelOpsM t v mbCfg = liftIO $ showModelOps t v mbCfg

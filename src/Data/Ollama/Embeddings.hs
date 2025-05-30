@@ -4,17 +4,20 @@ module Data.Ollama.Embeddings
   ( -- * Embedding API
     embedding
   , embeddingOps
+  , embeddingM
+  , embeddingOpsM
   , defaultEmbeddingOps
   , EmbeddingOps (..)
   , EmbeddingResp (..)
   ) where
 
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
 import Data.Ollama.Common.Config (OllamaConfig)
 import Data.Ollama.Common.Error (OllamaError)
+import Data.Ollama.Common.Types (ModelOptions)
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
-import Data.Ollama.Common.Types (ModelOptions)
 
 defaultEmbeddingOps :: EmbeddingOps
 defaultEmbeddingOps =
@@ -57,8 +60,6 @@ instance ToJSON EmbeddingOps where
       , "options" .= ops
       ]
 
--- TODO: Add Options parameter
-
 -- | Embedding API
 embeddingOps ::
   -- | Model
@@ -69,10 +70,11 @@ embeddingOps ::
   Maybe Bool ->
   -- | Keep Alive
   Maybe Int ->
-  -- | Ollama Config
-  Maybe ModelOptions ->
   -- | Model options
-  Maybe OllamaConfig ->
+  Maybe ModelOptions ->
+  -- \| Ollama Config
+  Maybe
+    OllamaConfig ->
   IO (Either OllamaError EmbeddingResp)
 embeddingOps modelName input_ mTruncate mKeepAlive mbOptions mbConfig = do
   withOllamaRequest
@@ -101,3 +103,18 @@ embedding ::
   IO (Either OllamaError EmbeddingResp)
 embedding modelName input_ =
   embeddingOps modelName input_ Nothing Nothing Nothing Nothing
+
+embeddingM :: MonadIO m => Text -> [Text] -> m (Either OllamaError EmbeddingResp)
+embeddingM m ip = liftIO $ embedding m ip
+
+embeddingOpsM ::
+  MonadIO m =>
+  Text ->
+  [Text] ->
+  Maybe Bool ->
+  Maybe Int ->
+  Maybe ModelOptions ->
+  Maybe OllamaConfig ->
+  m (Either OllamaError EmbeddingResp)
+embeddingOpsM m ip mbTruncate mbKeepAlive mbOptions mbCfg =
+  liftIO $ embeddingOps m ip mbTruncate mbKeepAlive mbOptions mbCfg

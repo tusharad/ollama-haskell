@@ -225,7 +225,7 @@ psTest =
   testGroup
     "PS test"
     [ testCase "check ps" $ do
-        mRes <- Ollama.ps
+        mRes <- Ollama.ps Nothing
         assertBool "Check if ps returns anything" (isRight mRes)
     ]
 
@@ -249,7 +249,7 @@ embeddingTest =
 
 main :: IO ()
 main = do
-  mRes <- Ollama.list
+  mRes <- Ollama.list Nothing
   case mRes of
     Left err -> do
       putStrLn $ "ollama list failed: " <> show err
