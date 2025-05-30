@@ -31,6 +31,7 @@ import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS
+import Network.HTTP.Types (Status (statusCode))
 import System.Directory
 import System.FilePath
 
@@ -125,14 +126,14 @@ withOllamaRequest endpoint reqMethod mbPayload mbOllamaConfig handler = do
           retryCnt = fromMaybe 0 retryCount
           retryDelay_ = fromMaybe 1 retryDelay
       withRetry retryCnt retryDelay_ $ do
-        maybe (pure ()) id onModelStart
+        fromMaybe (pure ()) onModelStart
         eResponse <- try $ withResponse request manager handler
         case eResponse of
           Left ex -> do
-            maybe (pure ()) id onModelError
+            fromMaybe (pure ()) onModelError
             return $ Left $ Error.HttpError ex
           Right result -> do
-            maybe (pure ()) id onModelFinish
+            fromMaybe (pure ()) onModelFinish
             return result
 
 commonNonStreamingHandler ::
@@ -141,11 +142,15 @@ commonNonStreamingHandler ::
   IO (Either OllamaError a)
 commonNonStreamingHandler resp = do
   let bodyReader = responseBody resp
-  -- Accumulate all chunks until EOF
-  finalBs <- go BS.empty bodyReader
-  case eitherDecode (BSL.fromStrict finalBs) of
-    Left err -> pure $ Left $ Error.DecodeError err (show finalBs)
-    Right decoded -> pure $ Right decoded
+      respStatus = statusCode $ responseStatus resp
+  if respStatus >= 200 && respStatus < 300
+    then do
+      -- Accumulate all chunks until EOF
+      finalBs <- go BS.empty bodyReader
+      case eitherDecode (BSL.fromStrict finalBs) of
+        Left err -> pure . Left $ Error.DecodeError err (show finalBs)
+        Right decoded -> pure . Right $ decoded
+    else (brRead bodyReader) >>= (pure . Left . ApiError . TE.decodeUtf8)
   where
     go :: BS.ByteString -> BodyReader -> IO BS.ByteString
     go acc reader = do
