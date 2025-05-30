@@ -12,6 +12,7 @@ module Data.Ollama.Common.Utils
   , defaultModelOptions
   , withRetry
   , getVersion
+  , nonJsonHandler
   ) where
 
 import Control.Concurrent (threadDelay)
@@ -86,7 +87,7 @@ withRetry retries delaySeconds action = do
 -- | Unified function for sending Ollama API requests
 withOllamaRequest ::
   forall payload response.
-  (ToJSON payload, FromJSON response) =>
+  (ToJSON payload) =>
   -- | API endpoint (e.g., "/api/chat")
   Text ->
   -- | API method "POST" , "GET"
@@ -96,7 +97,7 @@ withOllamaRequest ::
   -- | Optional config (default: defaultConfig)
   Maybe OllamaConfig ->
   -- | Response handler
-  (FromJSON response => Response BodyReader -> IO (Either OllamaError response)) ->
+  (Response BodyReader -> IO (Either OllamaError response)) ->
   IO (Either OllamaError response)
 withOllamaRequest endpoint reqMethod mbPayload mbOllamaConfig handler = do
   let OllamaConfig {..} = fromMaybe defaultOllamaConfig mbOllamaConfig
@@ -146,18 +147,18 @@ commonNonStreamingHandler resp = do
   if respStatus >= 200 && respStatus < 300
     then do
       -- Accumulate all chunks until EOF
-      finalBs <- go BS.empty bodyReader
+      finalBs <- readFullBuff BS.empty bodyReader
       case eitherDecode (BSL.fromStrict finalBs) of
         Left err -> pure . Left $ Error.DecodeError err (show finalBs)
         Right decoded -> pure . Right $ decoded
     else (brRead bodyReader) >>= (pure . Left . ApiError . TE.decodeUtf8)
-  where
-    go :: BS.ByteString -> BodyReader -> IO BS.ByteString
-    go acc reader = do
+
+readFullBuff :: BS.ByteString -> BodyReader -> IO BS.ByteString
+readFullBuff acc reader = do
       chunk <- brRead reader
       if BS.null chunk
         then pure acc
-        else go (acc `BS.append` chunk) reader
+        else readFullBuff (acc `BS.append` chunk) reader
 
 commonStreamHandler ::
   (HasDone a, FromJSON a) =>
@@ -182,6 +183,14 @@ commonStreamHandler sendChunk flush resp = go mempty
               sendChunk res
               flush
               if getDone res then return (Right res) else go (acc <> bs)
+
+nonJsonHandler :: Response BodyReader -> IO (Either OllamaError BS.ByteString)
+nonJsonHandler resp = do 
+  let bodyReader = responseBody resp
+      respStatus = statusCode $ responseStatus resp
+  if respStatus >= 200 && respStatus < 300
+    then readFullBuff BS.empty bodyReader >>= pure . Right
+  else (brRead bodyReader) >>= (pure . Left . ApiError . TE.decodeUtf8)
 
 defaultModelOptions :: ModelOptions
 defaultModelOptions =

@@ -10,22 +10,13 @@ module Data.Ollama.Delete
   , deleteModelM
   ) where
 
-import Control.Exception (try)
-import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
-import Data.Maybe (fromMaybe)
-import Data.Ollama.Common.Config (OllamaConfig (..), defaultOllamaConfig)
-import Data.Ollama.Common.Error qualified as Error
-import Data.Ollama.Common.Utils (withRetry)
+import Data.Ollama.Common.Config (OllamaConfig (..))
+import Data.Ollama.Common.Error (OllamaError)
+import Data.Ollama.Common.Utils (nonJsonHandler, withOllamaRequest)
 import Data.Text (Text)
-import Data.Text qualified as T
-import Network.HTTP.Client
-import Network.HTTP.Client.TLS
-import Network.HTTP.Types.Status (status404)
 
--- TODO: Add Options parameter
--- TODO: Add Context parameter
 newtype DeleteModelReq = DeleteModelReq {name :: Text}
   deriving newtype (Show, Eq)
 
@@ -38,34 +29,15 @@ deleteModel ::
   Text ->
   -- | Ollama config
   Maybe OllamaConfig ->
-  IO ()
-deleteModel modelName mbOllamaConfig = do
-  let OllamaConfig {..} = fromMaybe defaultOllamaConfig mbOllamaConfig
-      timeoutMicros = timeout * 60 * 1000000
-  manager <-
-    newTlsManagerWith
-      defaultManagerSettings
-        { managerResponseTimeout = responseTimeoutMicro timeoutMicros
-        }
-  initialRequest <- parseRequest $ T.unpack (hostUrl <> "/api/delete")
+  IO (Either OllamaError ())
+deleteModel modelName mbConfig = do
   let reqBody = DeleteModelReq {name = modelName}
-      request = initialRequest {method = "POST", requestBody = RequestBodyLBS (encode reqBody)}
-      retryCnt = fromMaybe 0 retryCount
-      retryDelay_ = fromMaybe 1 retryDelay
-  void $ withRetry retryCnt retryDelay_ $ do
-    maybe (pure ()) id onModelStart
-    eResponse <- try $ httpLbs request manager
-    case eResponse of
-      Left ex -> do
-        fromMaybe (pure ()) onModelError
-        return $ Left $ Error.HttpError ex
-      Right response -> do
-        fromMaybe (pure ()) onModelFinish
-        if responseStatus response == status404
-          then pure $ Right ()
-          else do
-            fromMaybe (pure ()) onModelError
-            pure $ Left $ Error.ApiError "Source Model does not exist"
+  withOllamaRequest
+    "/api/delete"
+    "DELETE"
+    (Just reqBody)
+    mbConfig
+    (fmap ((const ()) <$>) . nonJsonHandler)
 
-deleteModelM :: MonadIO m => Text -> Maybe OllamaConfig -> m ()
+deleteModelM :: MonadIO m => Text -> Maybe OllamaConfig -> m (Either OllamaError ())
 deleteModelM t mbCfg = liftIO $ deleteModel t mbCfg

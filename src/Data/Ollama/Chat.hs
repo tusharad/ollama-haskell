@@ -196,14 +196,12 @@ chatJson ::
   Maybe OllamaConfig ->
   -- | Ollama configuration
   jsonResult ->
-  -- | Max retries
+  -- | JSON structure
   Maybe Int ->
+  -- | Max retries
   IO (Either OllamaError jsonResult)
 chatJson cOps@ChatOps {..} mbConfig jsonStructure mMaxRetries = do
-  -- For models that support the format parameter, use that directly
-  -- let jsonSchema = encode jsonStructure
-  let useNativeFormat = False -- Set to True to use the native format parameter when appropriate
-  if useNativeFormat
+  if isNothing format
     then do
       let schemaList = [("schema", Object $ HM.fromList [("type", String "object")])]
       let formattedOps =
@@ -214,14 +212,13 @@ chatJson cOps@ChatOps {..} mbConfig jsonStructure mMaxRetries = do
         Right r -> do
           let mMessage = message r
           case mMessage of
-            Nothing -> return $ Left $ ApiError "Something went wrong"
+            Nothing -> return $ Left $ ApiError "Message not found"
             Just res -> do
               let bs = BSL.fromStrict . T.encodeUtf8 $ content res
               case eitherDecode bs of
                 Left err -> return $ Left $ DecodeError err (show bs)
                 Right resultInType -> return $ Right resultInType
     else do
-      -- Fall back to the original implementation using prompts
       let lastMessage = NonEmpty.last messages
           jsonHelperPrompt =
             "You are an AI that returns only JSON object. \n"

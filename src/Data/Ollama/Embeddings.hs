@@ -39,7 +39,7 @@ data EmbeddingOps = EmbeddingOps
   deriving (Show, Eq)
 
 data EmbeddingResp = EmbeddingResp
-  { respondedModeel :: !Text
+  { respondedModel :: !Text
   , embedding_ :: ![[Float]]
   }
   deriving (Show, Eq)

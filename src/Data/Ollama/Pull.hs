@@ -12,11 +12,11 @@ module Data.Ollama.Pull
   , pullOpsM
   ) where
 
-import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
 import Data.Maybe (fromMaybe)
 import Data.Ollama.Common.Config (OllamaConfig)
+import Data.Ollama.Common.Error (OllamaError)
 import Data.Ollama.Common.Types (HasDone (..))
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
@@ -61,15 +61,14 @@ pullOps ::
   Maybe Bool ->
   -- | Ollama Config
   Maybe OllamaConfig ->
-  IO ()
+  IO (Either OllamaError PullResp)
 pullOps modelName mInsecure mStream mbConfig = do
-  void $
-    withOllamaRequest
-      "/api/pull"
-      "POST"
-      (Just $ PullOps {name = modelName, insecure = mInsecure, stream = mStream})
-      mbConfig
-      (commonStreamHandler onToken onComplete)
+  withOllamaRequest
+    "/api/pull"
+    "POST"
+    (Just $ PullOps {name = modelName, insecure = mInsecure, stream = mStream})
+    mbConfig
+    (commonStreamHandler onToken onComplete)
   where
     onToken :: PullResp -> IO ()
     onToken res = do
@@ -83,11 +82,17 @@ pullOps modelName mInsecure mStream mbConfig = do
 pull ::
   -- | Model Name
   Text ->
-  IO ()
+  IO (Either OllamaError PullResp)
 pull modelName = pullOps modelName Nothing Nothing Nothing
 
-pullM :: MonadIO m => Text -> m ()
+pullM :: MonadIO m => Text -> m (Either OllamaError PullResp)
 pullM t = liftIO $ pull t
 
-pullOpsM :: MonadIO m => Text -> Maybe Bool -> Maybe Bool -> Maybe OllamaConfig -> m ()
+pullOpsM ::
+  MonadIO m =>
+  Text ->
+  Maybe Bool ->
+  Maybe Bool ->
+  Maybe OllamaConfig ->
+  m (Either OllamaError PullResp)
 pullOpsM t mbInsecure mbStream mbCfg = liftIO $ pullOps t mbInsecure mbStream mbCfg
