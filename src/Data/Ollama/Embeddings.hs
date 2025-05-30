@@ -22,16 +22,15 @@ defaultEmbeddingOps =
     { model = "llama3.2"
     , input = []
     , truncateInput = Nothing
-    , keepAlive = Nothing
+    , keepAliveEmbed = Nothing
     , modelOptions = Nothing
     }
 
--- TODO: Add Options parameter
 data EmbeddingOps = EmbeddingOps
   { model :: !Text
   , input :: ![Text]
   , truncateInput :: !(Maybe Bool)
-  , keepAlive :: !(Maybe Int)
+  , keepAliveEmbed :: !(Maybe Int)
   , modelOptions :: !(Maybe ModelOptions)
   }
   deriving (Show, Eq)
@@ -84,7 +83,7 @@ embeddingOps modelName input_ mTruncate mKeepAlive mbOptions mbConfig = do
           { model = modelName
           , input = input_
           , truncateInput = mTruncate
-          , keepAlive = mKeepAlive
+          , keepAliveEmbed = mKeepAlive
           , modelOptions = mbOptions
           }
     )

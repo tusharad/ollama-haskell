@@ -41,6 +41,7 @@ import Data.Ollama.Common.Types
   , Message (..)
   , ModelOptions
   , Role (..)
+  , InputTool (..)
   )
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
@@ -86,7 +87,7 @@ data ChatOps = ChatOps
   -- ^ The name of the chat model to be used.
   , messages :: !(NonEmpty Message)
   -- ^ A non-empty list of messages forming the conversation context.
-  , tools :: !(Maybe [Value])
+  , tools :: !(Maybe [InputTool])
   -- ^ Optional tools that may be used in the chat.
   , format :: !(Maybe Format)
   -- ^ An optional format for the chat response (json or JSON schema).

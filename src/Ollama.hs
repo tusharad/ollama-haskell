@@ -21,6 +21,11 @@ module Ollama
   , defaultChatOps
   , ChatResponse (..)
   , ChatOps (..)
+  , InputTool (..)
+  , Function (..)
+  , FunctionParameters (..)
+  , ToolCall (..)
+  , OutputFunction (..)
 
     -- ** Embeddings
   , embedding

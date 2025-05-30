@@ -1,8 +1,8 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DeriveAnyClass #-}
 
 module Data.Ollama.Common.Types
   ( ModelDetails (..)
@@ -15,14 +15,19 @@ module Data.Ollama.Common.Types
   , HasDone (..)
   , ModelOptions (..)
   , Version (..)
+  , InputTool (..)
+  , Function (..)
+  , FunctionParameters (..)
+  , ToolCall (..)
+  , OutputFunction (..)
   ) where
 
 import Data.Aeson
+import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import Data.Time (UTCTime)
-import GHC.Int (Int64)
 import GHC.Generics
-import Data.Maybe (catMaybes)
+import GHC.Int (Int64)
 
 data ModelDetails = ModelDetails
   { parentModel :: !(Maybe Text)
@@ -49,8 +54,7 @@ newtype OllamaClient = OllamaClient
   }
   deriving (Eq, Show)
 
-
-{-|
+{- |
 E.g SchemaFormat
 {
     "type": "object",
@@ -67,9 +71,12 @@ E.g SchemaFormat
       "available"
     ]
   }
-|-}
--- | Format specification for the chat output
--- | Since 0.1.3.0
+|
+-}
+
+{- | Format specification for the chat output
+| Since 0.1.3.0
+-}
 data Format = JsonFormat | SchemaFormat Value
   deriving (Show, Eq)
 
@@ -78,6 +85,7 @@ instance ToJSON Format where
   toJSON (SchemaFormat schema) = schema
 
 -- TODO: Add Context Param
+
 {- |
 Result type for generate function containing the model's response and meta-information.
 -}
@@ -146,7 +154,7 @@ data Message = Message
   -- ^ The textual content of the message.
   , images :: !(Maybe [Text])
   -- ^ Optional list of base64 encoded images that accompany the message.
-  , tool_calls :: !(Maybe [Value])
+  , tool_calls :: !(Maybe [ToolCall])
   -- ^ a list of tools in JSON that the model wants to use
   -- ^ Since 0.1.3.0
   , thinking :: !(Maybe Text)
@@ -196,65 +204,175 @@ class HasDone a where
   getDone :: a -> Bool
 
 instance HasDone GenerateResponse where
-  getDone GenerateResponse{..} = done
+  getDone GenerateResponse {..} = done
 
 instance HasDone ChatResponse where
-  getDone ChatResponse{..} = done
+  getDone ChatResponse {..} = done
 
 data ModelOptions = ModelOptions
-  { numKeep         :: Maybe Int
-  , seed            :: Maybe Int
-  , numPredict      :: Maybe Int
-  , topK            :: Maybe Int
-  , topP            :: Maybe Double
-  , minP            :: Maybe Double
-  , typicalP        :: Maybe Double
-  , repeatLastN     :: Maybe Int
-  , temperature     :: Maybe Double
-  , repeatPenalty   :: Maybe Double
+  { numKeep :: Maybe Int
+  , seed :: Maybe Int
+  , numPredict :: Maybe Int
+  , topK :: Maybe Int
+  , topP :: Maybe Double
+  , minP :: Maybe Double
+  , typicalP :: Maybe Double
+  , repeatLastN :: Maybe Int
+  , temperature :: Maybe Double
+  , repeatPenalty :: Maybe Double
   , presencePenalty :: Maybe Double
-  , frequencyPenalty:: Maybe Double
+  , frequencyPenalty :: Maybe Double
   , penalizeNewline :: Maybe Bool
-  , stop            :: Maybe [Text]
-  , numa            :: Maybe Bool
-  , numCtx          :: Maybe Int
-  , numBatch        :: Maybe Int
-  , numGpu          :: Maybe Int
-  , mainGpu         :: Maybe Int
-  , useMmap         :: Maybe Bool
-  , numThread       :: Maybe Int
-  } deriving (Show, Eq)
+  , stop :: Maybe [Text]
+  , numa :: Maybe Bool
+  , numCtx :: Maybe Int
+  , numBatch :: Maybe Int
+  , numGpu :: Maybe Int
+  , mainGpu :: Maybe Int
+  , useMmap :: Maybe Bool
+  , numThread :: Maybe Int
+  }
+  deriving (Show, Eq)
 
 -- | Custom ToJSON instance for Options
 instance ToJSON ModelOptions where
-  toJSON opts = object $ catMaybes
-    [ ("num_keep"        .=) <$> numKeep opts
-    , ("seed"            .=) <$> seed opts
-    , ("num_predict"     .=) <$> numPredict opts
-    , ("top_k"           .=) <$> topK opts
-    , ("top_p"           .=) <$> topP opts
-    , ("min_p"           .=) <$> minP opts
-    , ("typical_p"       .=) <$> typicalP opts
-    , ("repeat_last_n"   .=) <$> repeatLastN opts
-    , ("temperature"     .=) <$> temperature opts
-    , ("repeat_penalty"  .=) <$> repeatPenalty opts
-    , ("presence_penalty".=) <$> presencePenalty opts
-    , ("frequency_penalty".=) <$> frequencyPenalty opts
-    , ("penalize_newline".=) <$> penalizeNewline opts
-    , ("stop"            .=) <$> stop opts
-    , ("numa"            .=) <$> numa opts
-    , ("num_ctx"         .=) <$> numCtx opts
-    , ("num_batch"       .=) <$> numBatch opts
-    , ("num_gpu"         .=) <$> numGpu opts
-    , ("main_gpu"        .=) <$> mainGpu opts
-    , ("use_mmap"        .=) <$> useMmap opts
-    , ("num_thread"      .=) <$> numThread opts
-    ]
-
+  toJSON opts =
+    object $
+      catMaybes
+        [ ("num_keep" .=) <$> numKeep opts
+        , ("seed" .=) <$> seed opts
+        , ("num_predict" .=) <$> numPredict opts
+        , ("top_k" .=) <$> topK opts
+        , ("top_p" .=) <$> topP opts
+        , ("min_p" .=) <$> minP opts
+        , ("typical_p" .=) <$> typicalP opts
+        , ("repeat_last_n" .=) <$> repeatLastN opts
+        , ("temperature" .=) <$> temperature opts
+        , ("repeat_penalty" .=) <$> repeatPenalty opts
+        , ("presence_penalty" .=) <$> presencePenalty opts
+        , ("frequency_penalty" .=) <$> frequencyPenalty opts
+        , ("penalize_newline" .=) <$> penalizeNewline opts
+        , ("stop" .=) <$> stop opts
+        , ("numa" .=) <$> numa opts
+        , ("num_ctx" .=) <$> numCtx opts
+        , ("num_batch" .=) <$> numBatch opts
+        , ("num_gpu" .=) <$> numGpu opts
+        , ("main_gpu" .=) <$> mainGpu opts
+        , ("use_mmap" .=) <$> useMmap opts
+        , ("num_thread" .=) <$> numThread opts
+        ]
 
 newtype Version = Version Text
-    deriving (Eq, Show)
+  deriving (Eq, Show)
 
 instance FromJSON Version where
-  parseJSON = withObject "version" $ \v -> do 
+  parseJSON = withObject "version" $ \v -> do
     Version <$> v .: "version"
+
+-- | Represents a tool that can be used in the conversation.
+data InputTool = InputTool
+  { toolType :: Text
+  -- ^ The type of the tool
+  , function :: Function
+  -- ^ The function associated with the tool
+  }
+  deriving (Show, Eq, Generic)
+
+instance ToJSON InputTool where
+  toJSON InputTool {..} =
+    object
+      [ "type" .= toolType
+      , "function" .= function
+      ]
+
+instance FromJSON InputTool where
+  parseJSON = withObject "Tool" $ \v ->
+    InputTool
+      <$> v .: "type"
+      <*> v .: "function"
+
+-- | Represents a function that can be called by the model.
+data Function = Function
+  { functionName :: Text
+  -- ^ The name of the function
+  , description :: Maybe Text
+  -- ^ Optional description of the function
+  , parameters :: Maybe FunctionParameters
+  -- ^ Optional parameters for the function
+  , strict :: Maybe Bool
+  -- ^ Optional strictness flag
+  }
+  deriving (Show, Eq, Generic)
+
+instance ToJSON Function where
+  toJSON Function {..} =
+    object $
+      [ "name" .= functionName
+      ]
+        ++ maybe [] (\d -> ["description" .= d]) description
+        ++ maybe [] (\p -> ["parameters" .= p]) parameters
+        ++ maybe [] (\s -> ["strict" .= s]) strict
+
+instance FromJSON Function where
+  parseJSON = withObject "Function" $ \v ->
+    Function
+      <$> v .: "name"
+      <*> v .:? "description"
+      <*> v .:? "parameters"
+      <*> v .:? "strict"
+
+data FunctionParameters = FunctionParameters
+  { parameterType :: Text
+  , parameterProperties :: Value
+  , requiredParams :: [Text]
+  , additionalProperties :: Bool
+  }
+  deriving (Show, Eq)
+
+instance ToJSON FunctionParameters where
+  toJSON FunctionParameters {..} =
+    object
+      [ "type" .= parameterType
+      , "properties" .= parameterProperties
+      , "required" .= requiredParams
+      , "additionalProperties" .= additionalProperties
+      ]
+
+instance FromJSON FunctionParameters where
+  parseJSON = withObject "parameters" $ \v ->
+    FunctionParameters
+      <$> v .: "type"
+      <*> v .: "properties"
+      <*> v .: "required"
+      <*> v .: "additionalProperties"
+
+newtype ToolCall = ToolCall
+  { outputFunction :: OutputFunction
+  }
+  deriving (Show, Eq)
+
+data OutputFunction = OutputFunction
+  { outputFunctionName :: Text
+  , arguments :: Value
+  }
+  deriving (Eq, Show)
+
+instance ToJSON OutputFunction where
+  toJSON OutputFunction {..} =
+    object
+      [ "name" .= outputFunctionName
+      , "arguments" .= arguments
+      ]
+
+instance FromJSON OutputFunction where
+  parseJSON = withObject "function" $ \v ->
+    OutputFunction
+      <$> v .: "name"
+      <*> v .: "arguments"
+
+instance ToJSON ToolCall where
+  toJSON ToolCall {..} = object ["function" .= outputFunction]
+
+instance FromJSON ToolCall where
+  parseJSON = withObject "tool_calls" $ \v ->
+    ToolCall <$> v .: "function"
