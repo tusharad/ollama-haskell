@@ -32,7 +32,7 @@ import GHC.Int (Int64)
 data ModelDetails = ModelDetails
   { parentModel :: !(Maybe Text)
   , format :: !Text
-  , familiy :: !Text
+  , family :: !Text
   , families :: ![Text]
   , parameterSize :: !Text
   , quantizationLevel :: Text
@@ -54,9 +54,14 @@ newtype OllamaClient = OllamaClient
   }
   deriving (Eq, Show)
 
-{- |
-E.g SchemaFormat
-{
+
+
+{- | Format specification for the chat output.
+
+For example:
+@
+SchemaFormat
+  {
     "type": "object",
     "properties": {
       "age": {
@@ -71,11 +76,9 @@ E.g SchemaFormat
       "available"
     ]
   }
-|
--}
+@
 
-{- | Format specification for the chat output
-| Since 0.1.3.0
+@since 0.1.3.0
 -}
 data Format = JsonFormat | SchemaFormat Value
   deriving (Show, Eq)
@@ -87,7 +90,7 @@ instance ToJSON Format where
 -- TODO: Add Context Param
 
 {- |
-Result type for generate function containing the model's response and meta-information.
+Result type for 'generate' function containing the model's response and meta-information.
 -}
 data GenerateResponse = GenerateResponse
   { model :: !Text
@@ -138,13 +141,14 @@ instance ToJSON Role where
   toJSON Tool = String "tool"
 
 instance FromJSON Role where
-  parseJSON (String "system") = pure System
-  parseJSON (String "user") = pure User
-  parseJSON (String "assistant") = pure Assistant
-  parseJSON (String "tool") = pure Tool
-  parseJSON _ = fail "Invalid Role value"
+  parseJSON = withText "Role" $ \t ->
+    case t of
+      "system" -> pure System
+      "user" -> pure User
+      "assistant" -> pure Assistant
+      "tool" -> pure Tool
+      _ -> fail $ "Invalid Role value: " <> show t
 
--- TODO : Add tool_calls parameter
 
 -- | Represents a message within a chat, including its role and content.
 data Message = Message
@@ -156,7 +160,8 @@ data Message = Message
   -- ^ Optional list of base64 encoded images that accompany the message.
   , tool_calls :: !(Maybe [ToolCall])
   -- ^ a list of tools in JSON that the model wants to use
-  -- ^ Since 0.1.3.0
+  --
+  -- @since 0.1.3.0
   , thinking :: !(Maybe Text)
   }
   deriving (Show, Eq, Generic, ToJSON, FromJSON)

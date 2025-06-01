@@ -68,7 +68,10 @@ encodeImage filePath = do
       maybeContent <- asPath filePath
       return $ fmap (TE.decodeUtf8 . Base64.encode) maybeContent
 
-withRetry :: Int -> Int -> IO (Either OllamaError a) -> IO (Either OllamaError a)
+withRetry :: Int -- ^ Number of retries
+          -> Int -- ^ Delay between retries in seconds
+          -> IO (Either OllamaError a)
+          -> IO (Either OllamaError a)
 withRetry 0 _ action = action
 withRetry retries delaySeconds action = do
   result <- action
@@ -93,8 +96,8 @@ withOllamaRequest ::
   -- | API method "POST" , "GET"
   BS.ByteString ->
   -- | Request body
-  (Maybe payload) ->
-  -- | Optional config (default: defaultConfig)
+  Maybe payload ->
+  -- | Optional config (default: 'defaultOllamaConfig')
   Maybe OllamaConfig ->
   -- | Response handler
   (Response BodyReader -> IO (Either OllamaError response)) ->
@@ -151,7 +154,7 @@ commonNonStreamingHandler resp = do
       case eitherDecode (BSL.fromStrict finalBs) of
         Left err -> pure . Left $ Error.DecodeError err (show finalBs)
         Right decoded -> pure . Right $ decoded
-    else (brRead bodyReader) >>= (pure . Left . ApiError . TE.decodeUtf8)
+    else Left . ApiError . TE.decodeUtf8 <$> brRead bodyReader
 
 readFullBuff :: BS.ByteString -> BodyReader -> IO BS.ByteString
 readFullBuff acc reader = do
@@ -185,12 +188,12 @@ commonStreamHandler sendChunk flush resp = go mempty
               if getDone res then return (Right res) else go (acc <> bs)
 
 nonJsonHandler :: Response BodyReader -> IO (Either OllamaError BS.ByteString)
-nonJsonHandler resp = do 
+nonJsonHandler resp = do
   let bodyReader = responseBody resp
       respStatus = statusCode $ responseStatus resp
   if respStatus >= 200 && respStatus < 300
-    then readFullBuff BS.empty bodyReader >>= pure . Right
-  else (brRead bodyReader) >>= (pure . Left . ApiError . TE.decodeUtf8)
+    then Right <$> readFullBuff BS.empty bodyReader
+    else Left . ApiError . TE.decodeUtf8 <$> brRead bodyReader
 
 defaultModelOptions :: ModelOptions
 defaultModelOptions =

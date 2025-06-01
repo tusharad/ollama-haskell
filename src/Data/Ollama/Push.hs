@@ -59,7 +59,7 @@ push modelName mInsecure mStream mbConfig = do
       (commonStreamHandler onToken onComplete)
   where
     onToken :: PushResp -> IO ()
-    onToken _ = putStrLn $ "Pushing... "
+    onToken _ = putStrLn "Pushing... "
 
     onComplete :: IO ()
     onComplete = putStrLn "Completed"

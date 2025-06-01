@@ -144,6 +144,7 @@ showModelOps modelName verbose_ mbConfig = do
 {- | Show given model's information.
 
 Higher level API for show.
+
 @since 1.0.0.0
 -}
 showModel ::

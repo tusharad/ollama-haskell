@@ -1,6 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveAnyClass #-}
 {- |
 Module:      Data.Ollama.Common.Config
 Copyright:   (c) 2025 Tushar Adhatrao
@@ -12,14 +11,14 @@ Stability:   experimental
 module Data.Ollama.Common.Config (
     OllamaConfig (..)
   , defaultOllamaConfig
-  , setNContext 
+  , setNContext
   , insert
-  , withOnModelStart 
+  , withOnModelStart
   , withOnModelFinish
   , withOnModelError
  ) where
 
-import Data.Aeson 
+import Data.Aeson
 import Data.Text (Text)
 import GHC.Generics
 import qualified Data.Aeson.KeyMap as KM
@@ -35,7 +34,7 @@ data OllamaConfig = OllamaConfig
   , onModelFinish :: Maybe (IO ())  -- ^ Called on completion (start, end)
   , retryCount    :: Maybe Int      -- ^ Retry if any error happened. Default 0
   , retryDelay    :: Maybe Int      -- ^ How many seconds later retry should happen
-  , commonManager       :: Maybe Manager
+  , commonManager :: Maybe Manager
   } deriving (Generic)
 
 -- | Default configuration
@@ -52,7 +51,7 @@ defaultOllamaConfig = OllamaConfig
   }
 
 -- | Set context length in model options
-setNContext :: Int -> Value -> Value 
+setNContext :: Int -> Value -> Value
 setNContext n val = insert "n_ctx" n val
 
 -- | Helper for inserting into object (simplified)

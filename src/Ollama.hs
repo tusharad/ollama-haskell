@@ -9,7 +9,7 @@ Maintainer:  Tushar Adhatrao <tusharadhatrao@gmail.com>
 Stability:   experimental
 
 #Ollama-Haskell#
-This library lets you run LlMs from within Haskell projects. Inspired by `ollama-python`.
+This library lets you run LlMs from within Haskell projects. Inspired by @ollama-python@.
 -}
 module Ollama
   ( -- * Main APIs
