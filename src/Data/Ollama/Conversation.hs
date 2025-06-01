@@ -1,6 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.Ollama.Conversation (
@@ -8,9 +7,9 @@ module Data.Ollama.Conversation (
   , ConversationStore (..)
   , InMemoryStore (..)
   , ConvoM (..)
-  , validateConversation 
-  , initInMemoryStore 
-  , runInMemoryConvo 
+  , validateConversation
+  , initInMemoryStore
+  , runInMemoryConvo
  ) where
 
 import Control.Concurrent.STM
@@ -43,7 +42,7 @@ class Monad m => ConversationStore m where
   listConversations :: m [Conversation]
   deleteConversation :: Text -> m Bool
 
--- In-memory store with TVar for concurrency
+-- | In-memory store with TVar for concurrency
 newtype InMemoryStore = InMemoryStore (TVar (Map Text Conversation))
 
 newtype ConvoM a = ConvoM { runConvoM :: ReaderT InMemoryStore IO a }
@@ -64,12 +63,12 @@ instance ConversationStore ConvoM where
 
   loadConversation cid = do
     InMemoryStore ref <- ask
-    convs <- liftIO . atomically $ readTVar ref
+    convs <- liftIO $ readTVarIO ref
     return $ Map.lookup cid convs
 
   listConversations = do
     InMemoryStore ref <- ask
-    convs <- liftIO . atomically $ readTVar ref
+    convs <- liftIO $ readTVarIO ref
     return $ Map.elems convs
 
   deleteConversation cid = do

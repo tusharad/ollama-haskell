@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -81,7 +79,7 @@ toolMessage c = genMessage Tool c
 validateChatOps :: ChatOps -> Either OllamaError ChatOps
 validateChatOps ops
   | T.null (chatModelName ops) = Left $ InvalidRequest "Chat model name cannot be empty"
-  | any (T.null . content) (toList (messages ops)) =
+  | any (T.null . content) (messages ops) =
       Left $ InvalidRequest "Messages cannot have empty content"
   | otherwise = Right ops
 
@@ -94,14 +92,16 @@ data ChatOps = ChatOps
   -- ^ Optional tools that may be used in the chat.
   , format :: !(Maybe Format)
   -- ^ An optional format for the chat response (json or JSON schema).
-  -- ^ Since 0.1.3.0
+  --
+  -- @since 0.1.3.0
   , stream :: !(Maybe (ChatResponse -> IO (), IO ()))
   -- ^ Optional streaming functions where the first handles each chunk of the response, and the second flushes the stream.
   , keepAlive :: !(Maybe Int)
   -- ^ Override default response timeout in minutes. Default = 15 minutes
   , options :: !(Maybe ModelOptions)
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
-  -- ^ Since 0.1.3.0
+  --
+  -- @since 0.1.3.0
   , think :: !(Maybe Bool)
   }
 
@@ -192,13 +192,12 @@ chatM ops mbCfg = liftIO $ chat ops mbCfg
 chatJson ::
   (FromJSON jsonResult, ToJSON jsonResult) =>
   ChatOps ->
-  -- | Haskell type that you want your result in
-  Maybe OllamaConfig ->
   -- | Ollama configuration
+  Maybe OllamaConfig ->
+  -- | JSON structure describing desired output format
   jsonResult ->
-  -- | JSON structure
-  Maybe Int ->
   -- | Max retries
+  Maybe Int ->
   IO (Either OllamaError jsonResult)
 chatJson cOps@ChatOps {..} mbConfig jsonStructure mMaxRetries = do
   if isNothing format
@@ -263,9 +262,9 @@ schemaFromType = encode -- This is a simplified version; a real implementation w
 chatJsonM ::
   (MonadIO m, FromJSON jsonResult, ToJSON jsonResult) =>
   ChatOps ->
-  -- | Haskell type that you want your result in
-  Maybe OllamaConfig ->
   -- | Ollama configuration
+  Maybe OllamaConfig ->
+  -- | JSON structure describing desired output format
   jsonResult ->
   -- | Max retries
   Maybe Int ->

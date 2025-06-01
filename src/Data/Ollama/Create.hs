@@ -90,7 +90,7 @@ createModel
     where
       onToken :: CreateModelResp -> IO ()
       onToken _ = do
-        putStrLn $ "Creating model..."
+        putStrLn "Creating model..."
 
       onComplete :: IO ()
       onComplete = putStrLn "Completed"
