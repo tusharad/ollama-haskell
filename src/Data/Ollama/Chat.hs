@@ -28,6 +28,7 @@ module Data.Ollama.Chat
   , userMessage
   , assistantMessage
   , toolMessage
+  , genMessage
   ) where
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
