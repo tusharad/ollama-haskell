@@ -1,0 +1,7 @@
+snapshot: lts-23.14
+
+packages:
+- .
+
+extra-deps:
+  - ../../
