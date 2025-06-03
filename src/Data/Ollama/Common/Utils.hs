@@ -3,9 +3,8 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Data.Ollama.Common.Utils
-  ( defaultOllamaUrl
-  , OllamaClient (..)
-  , encodeImage
+  ( 
+    encodeImage
   , withOllamaRequest
   , commonNonStreamingHandler
   , commonStreamHandler
@@ -35,9 +34,6 @@ import Network.HTTP.Client.TLS
 import Network.HTTP.Types (Status (statusCode))
 import System.Directory
 import System.FilePath
-
-defaultOllamaUrl :: Text
-defaultOllamaUrl = "http://127.0.0.1:11434"
 
 supportedExtensions :: [String]
 supportedExtensions = [".jpg", ".jpeg", ".png"]
@@ -105,16 +101,13 @@ withOllamaRequest ::
 withOllamaRequest endpoint reqMethod mbPayload mbOllamaConfig handler = do
   let OllamaConfig {..} = fromMaybe defaultOllamaConfig mbOllamaConfig
       fullUrl = T.unpack $ hostUrl <> endpoint
-      timeoutMicros = timeout * 60 * 1000000
+      timeoutMicros = timeout * 1000000
 
   manager <- case commonManager of
-    Nothing ->
-      newTlsManagerWith
-        tlsManagerSettings
-          { managerResponseTimeout = responseTimeoutMicro timeoutMicros
-          }
+    Nothing -> newTlsManagerWith 
+        tlsManagerSettings { managerResponseTimeout = responseTimeoutMicro timeoutMicros }
     Just m -> pure m
-  eRequest <- try $ parseRequest fullUrl :: IO (Either HttpException Request)
+  eRequest <- try $ parseRequest fullUrl 
   case eRequest of
     Left ex -> return $ Left $ Error.HttpError ex
     Right req -> do
@@ -122,10 +115,7 @@ withOllamaRequest endpoint reqMethod mbPayload mbOllamaConfig handler = do
             req
               { method = reqMethod
               , requestBody =
-                  maybe
-                    mempty
-                    (\x -> RequestBodyLBS $ encode x)
-                    mbPayload
+                  maybe mempty (\x -> RequestBodyLBS $ encode x) mbPayload
               }
           retryCnt = fromMaybe 0 retryCount
           retryDelay_ = fromMaybe 1 retryDelay
@@ -135,7 +125,10 @@ withOllamaRequest endpoint reqMethod mbPayload mbOllamaConfig handler = do
         case eResponse of
           Left ex -> do
             fromMaybe (pure ()) onModelError
-            return $ Left $ Error.HttpError ex
+            case ex of
+              (HttpExceptionRequest _ ResponseTimeout) 
+                    -> return $ Left $ Error.TimeoutError "No response from LLM yet"
+              _ -> return $ Left $ Error.HttpError ex
           Right result -> do
             fromMaybe (pure ()) onModelFinish
             return result

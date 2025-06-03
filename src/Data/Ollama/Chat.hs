@@ -13,26 +13,26 @@ module Data.Ollama.Chat
   ( -- * Chat APIs
     chat
   , chatM
-  , chatJson
-  , chatJsonM
   , Message (..)
   , Role (..)
   , defaultChatOps
   , ChatOps (..)
   , ChatResponse (..)
   , Format (..)
-  , schemaFromType
   , systemMessage
   , userMessage
   , assistantMessage
   , toolMessage
   , genMessage
+  , OllamaConfig (..)
+  , defaultOllamaConfig
+  , OllamaError (..)
+  , ModelOptions (..)
+  , defaultModelOptions
   ) where
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
-import Data.Aeson.KeyMap qualified as HM
-import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.List.NonEmpty as NonEmpty
 import Data.Maybe (isNothing)
 import Data.Ollama.Common.Config
@@ -42,13 +42,12 @@ import Data.Ollama.Common.Types
   , Format (..)
   , InputTool (..)
   , Message (..)
-  , ModelOptions
+  , ModelOptions (..)
   , Role (..)
   )
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Text.Encoding qualified as T
 
 genMessage :: Role -> Text -> Message
 genMessage r c =
@@ -189,85 +188,3 @@ chat ops mbConfig =
 
 chatM :: MonadIO m => ChatOps -> Maybe OllamaConfig -> m (Either OllamaError ChatResponse)
 chatM ops mbCfg = liftIO $ chat ops mbCfg
-
-chatJson ::
-  (FromJSON jsonResult, ToJSON jsonResult) =>
-  ChatOps ->
-  -- | Ollama configuration
-  Maybe OllamaConfig ->
-  -- | JSON structure describing desired output format
-  jsonResult ->
-  -- | Max retries
-  Maybe Int ->
-  IO (Either OllamaError jsonResult)
-chatJson cOps@ChatOps {..} mbConfig jsonStructure mMaxRetries = do
-  if isNothing format
-    then do
-      let schemaList = [("schema", Object $ HM.fromList [("type", String "object")])]
-      let formattedOps =
-            cOps {format = Just $ SchemaFormat (Object (HM.fromList schemaList))}
-      chatResponse <- chat formattedOps mbConfig
-      case chatResponse of
-        Left err -> return $ Left err
-        Right r -> do
-          let mMessage = message r
-          case mMessage of
-            Nothing -> return $ Left $ ApiError "Message not found"
-            Just res -> do
-              let bs = BSL.fromStrict . T.encodeUtf8 $ content res
-              case eitherDecode bs of
-                Left err -> return $ Left $ DecodeError err (show bs)
-                Right resultInType -> return $ Right resultInType
-    else do
-      let lastMessage = NonEmpty.last messages
-          jsonHelperPrompt =
-            "You are an AI that returns only JSON object. \n"
-              <> "* Your output should be a JSON object that matches the following schema: \n"
-              <> T.decodeUtf8 (BSL.toStrict $ encode jsonStructure)
-              <> content lastMessage
-              <> "\n"
-              <> "# How to treat the task:\n"
-              <> "* Stricly follow the schema for the output.\n"
-              <> "* Never return anything other than a JSON object.\n"
-              <> "* Do not talk to the user.\n"
-      chatResponse <-
-        chat
-          cOps
-            { messages =
-                NonEmpty.fromList $
-                  lastMessage {content = jsonHelperPrompt} : NonEmpty.init messages
-            }
-          mbConfig
-      case chatResponse of
-        Left err -> return $ Left err
-        Right r -> do
-          let mMessage = message r
-          case mMessage of
-            Nothing -> return $ Left $ ApiError "Something went wrong"
-            Just res -> do
-              let bs = BSL.fromStrict . T.encodeUtf8 $ content res
-              case eitherDecode bs of
-                Left err -> do
-                  case mMaxRetries of
-                    Nothing -> return $ Left $ DecodeError err (show bs)
-                    Just n ->
-                      if n < 1
-                        then return $ Left $ DecodeError err (show bs)
-                        else chatJson cOps mbConfig jsonStructure (Just (n - 1))
-                Right resultInType -> return $ Right resultInType
-
--- | Helper function to create a JSON schema from a Haskell type
-schemaFromType :: ToJSON a => a -> BSL.ByteString
-schemaFromType = encode -- This is a simplified version; a real implementation would generate a JSON Schema
-
-chatJsonM ::
-  (MonadIO m, FromJSON jsonResult, ToJSON jsonResult) =>
-  ChatOps ->
-  -- | Ollama configuration
-  Maybe OllamaConfig ->
-  -- | JSON structure describing desired output format
-  jsonResult ->
-  -- | Max retries
-  Maybe Int ->
-  m (Either OllamaError jsonResult)
-chatJsonM ops mbCfg js mbRetry = liftIO $ chatJson ops mbCfg js mbRetry

@@ -31,4 +31,11 @@ data OllamaError
   | InvalidRequest String
   deriving (Show, Generic)
 
+instance Eq OllamaError where
+  (HttpError _) == (HttpError _) = True
+  x == y = eqOllamaError x y
+    where
+      eqOllamaError :: OllamaError -> OllamaError -> Bool
+      eqOllamaError = (==)
+
 instance Exception OllamaError

@@ -15,23 +15,25 @@ module Data.Ollama.Generate
     generate
   , generateM
   , defaultGenerateOps
-  , generateJson
-  , generateJsonM
+  , defaultOllamaConfig
+  , validateGenerateOps
   , GenerateOps (..)
   , GenerateResponse (..)
+  , Format (..)
+  , OllamaConfig (..)
+  , ModelOptions (..)
+  , OllamaError (..)
   ) where
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
-import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.Maybe
-import Data.Ollama.Common.Config (OllamaConfig (..))
+import Data.Ollama.Common.Config (OllamaConfig (..), defaultOllamaConfig)
 import Data.Ollama.Common.Error (OllamaError (..))
-import Data.Ollama.Common.Types (Format (..), GenerateResponse (..), ModelOptions)
+import Data.Ollama.Common.Types (Format (..), GenerateResponse (..), ModelOptions (..))
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
-import Data.Text.Encoding qualified as T
 
 validateGenerateOps :: GenerateOps -> Either OllamaError GenerateOps
 validateGenerateOps ops
@@ -45,7 +47,7 @@ data GenerateOps = GenerateOps
   , prompt :: !Text
   -- ^ The prompt text that will be provided to the model for generating a response.
   , suffix :: Maybe Text
-  -- ^ An optional suffix to append to the generated text.
+  -- ^ An optional suffix to append to the generated text. Not all models supports this.
   , images :: !(Maybe [Text])
   -- ^ Optional list of base64 encoded images to include with the request.
   , format :: !(Maybe Format)
@@ -62,7 +64,7 @@ data GenerateOps = GenerateOps
   , raw :: !(Maybe Bool)
   -- ^ An optional flag to return the raw response.
   , keepAlive :: !(Maybe Int)
-  -- ^ Override default response timeout in minutes. Default = 15 minutes
+  -- ^ controls how long the model will stay loaded into memory following the request (default: 5m)
   , options :: !(Maybe ModelOptions)
   -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
   --
@@ -174,48 +176,3 @@ generateM ::
   MonadIO m =>
   GenerateOps -> Maybe OllamaConfig -> m (Either OllamaError GenerateResponse)
 generateM ops mbCfg = liftIO $ generate ops mbCfg
-
-generateJson ::
-  (ToJSON jsonResult, FromJSON jsonResult) =>
-  GenerateOps ->
-  -- | Haskell type that you want your result in
-  Maybe OllamaConfig ->
-  -- | Ollama Config
-  jsonResult ->
-  -- | Max retries
-  Maybe Int ->
-  IO (Either OllamaError jsonResult)
-generateJson genOps@GenerateOps {..} mbConfig jsonStructure mMaxRetries = do
-  let jsonHelperPrompt =
-        "You are an AI that returns only JSON object. \n"
-          <> "* Your output should be a JSON object that matches the following schema: \n"
-          <> T.decodeUtf8 (BSL.toStrict $ encode jsonStructure)
-          <> prompt
-          <> "\n"
-          <> "# How to treat the task:\n"
-          <> "* Stricly follow the schema for the output.\n"
-          <> "* Never return anything other than a JSON object.\n"
-          <> "* Do not talk to the user.\n"
-  generatedResponse <- generate genOps {prompt = jsonHelperPrompt} mbConfig
-  case generatedResponse of
-    Left err -> return $ Left err
-    Right r -> do
-      let bs = BSL.fromStrict . T.encodeUtf8 $ response_ r
-      case eitherDecode bs of
-        Left err -> do
-          case mMaxRetries of
-            Nothing -> return $ Left $ DecodeError err (show bs)
-            Just n ->
-              if n < 1
-                then return $ Left $ DecodeError err (show bs)
-                else generateJson genOps mbConfig jsonStructure (Just (n - 1))
-        Right resultInType -> return $ Right resultInType
-
-generateJsonM ::
-  (MonadIO m, ToJSON jsonResult, FromJSON jsonResult) =>
-  GenerateOps ->
-  Maybe OllamaConfig ->
-  jsonResult ->
-  Maybe Int ->
-  m (Either OllamaError jsonResult)
-generateJsonM ops mbCfg js mRetry = liftIO $ generateJson ops mbCfg js mRetry

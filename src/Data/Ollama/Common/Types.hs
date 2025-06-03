@@ -6,7 +6,6 @@
 
 module Data.Ollama.Common.Types
   ( ModelDetails (..)
-  , OllamaClient (..)
   , Format (..)
   , GenerateResponse (..)
   , Message (..)
@@ -14,18 +13,19 @@ module Data.Ollama.Common.Types
   , ChatResponse (..)
   , HasDone (..)
   , ModelOptions (..)
-  , Version (..)
   , InputTool (..)
   , Function (..)
   , FunctionParameters (..)
   , ToolCall (..)
   , OutputFunction (..)
+  , Version (..)
   ) where
 
 import Data.Aeson
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import Data.Time (UTCTime)
+import Data.Ollama.Common.SchemaBuilder
 import GHC.Generics
 import GHC.Int (Int64)
 
@@ -49,45 +49,16 @@ instance FromJSON ModelDetails where
       <*> v .: "parameter_size"
       <*> v .: "quantization_level"
 
-newtype OllamaClient = OllamaClient
-  { host :: Text
-  }
-  deriving (Eq, Show)
-
-
-
 {- | Format specification for the chat output.
-
-For example:
-@
-SchemaFormat
-  {
-    "type": "object",
-    "properties": {
-      "age": {
-        "type": "integer"
-      },
-      "available": {
-        "type": "boolean"
-      }
-    },
-    "required": [
-      "age",
-      "available"
-    ]
-  }
-@
 
 @since 0.1.3.0
 -}
-data Format = JsonFormat | SchemaFormat Value
+data Format = JsonFormat | SchemaFormat Schema
   deriving (Show, Eq)
 
 instance ToJSON Format where
   toJSON JsonFormat = String "json"
-  toJSON (SchemaFormat schema) = schema
-
--- TODO: Add Context Param
+  toJSON (SchemaFormat schema) = toJSON schema
 
 {- |
 Result type for 'generate' function containing the model's response and meta-information.
@@ -97,7 +68,7 @@ data GenerateResponse = GenerateResponse
   -- ^ The name of the model that generated the response.
   , createdAt :: !UTCTime
   -- ^ The timestamp when the response was created.
-  , response_ :: !Text
+  , genResponse :: !Text
   -- ^ The generated response from the model.
   , done :: !Bool
   -- ^ A flag indicating whether the generation process is complete.

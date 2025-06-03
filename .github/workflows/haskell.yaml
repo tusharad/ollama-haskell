@@ -38,7 +38,12 @@ jobs:
     - name: Installing ollama
       uses: pydantic/ollama-action@v3
       with:
-        model: llama3.2:latest
+        model: gemma3:latest
+
+    - name: Installing ollama
+      uses: pydantic/ollama-action@v3
+      with:
+        model: qwen3:0.6b
 
     - name: install dependancies, build and test stack project.
       uses: freckle/stack-action@v5

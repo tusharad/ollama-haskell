@@ -58,7 +58,7 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - ollama-haskell
-    - tasty
+    - tasty >= 1.5
     - tasty-hunit
     - text
     - silently

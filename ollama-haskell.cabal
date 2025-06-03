@@ -30,6 +30,7 @@ library
       Data.Ollama.Chat
       Data.Ollama.Common.Config
       Data.Ollama.Common.Error
+      Data.Ollama.Common.SchemaBuilder
       Data.Ollama.Common.Types
       Data.Ollama.Common.Utils
       Data.Ollama.Conversation
@@ -73,6 +74,8 @@ test-suite ollama-haskell-test
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
+      Test.Ollama.Chat
+      Test.Ollama.Generate
       Paths_ollama_haskell
   hs-source-dirs:
       test
@@ -94,7 +97,7 @@ test-suite ollama-haskell-test
     , ollama-haskell
     , silently
     , stm
-    , tasty
+    , tasty >=1.5
     , tasty-hunit
     , text
     , time
