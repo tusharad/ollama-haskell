@@ -29,7 +29,7 @@ module Ollama
   , ChatResponse (..)
   , ChatOps (..)
   , InputTool (..)
-  , Function (..)
+  , FunctionDef (..)
   , FunctionParameters (..)
   , ToolCall (..)
   , OutputFunction (..)

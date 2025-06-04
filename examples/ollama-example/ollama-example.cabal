@@ -45,6 +45,7 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , containers
     , directory
     , filepath
     , ollama-haskell
@@ -66,6 +67,7 @@ executable ollama-example-exe
       aeson
     , base >=4.7 && <5
     , bytestring
+    , containers
     , directory
     , filepath
     , ollama-example
@@ -89,6 +91,7 @@ test-suite ollama-example-test
       aeson
     , base >=4.7 && <5
     , bytestring
+    , containers
     , directory
     , filepath
     , ollama-example

@@ -14,7 +14,7 @@ module Data.Ollama.Common.Types
   , HasDone (..)
   , ModelOptions (..)
   , InputTool (..)
-  , Function (..)
+  , FunctionDef (..)
   , FunctionParameters (..)
   , ToolCall (..)
   , OutputFunction (..)
@@ -22,10 +22,11 @@ module Data.Ollama.Common.Types
   ) where
 
 import Data.Aeson
+import Data.Map qualified as HM
 import Data.Maybe (catMaybes)
+import Data.Ollama.Common.SchemaBuilder
 import Data.Text (Text)
 import Data.Time (UTCTime)
-import Data.Ollama.Common.SchemaBuilder
 import GHC.Generics
 import GHC.Int (Int64)
 
@@ -119,7 +120,6 @@ instance FromJSON Role where
       "assistant" -> pure Assistant
       "tool" -> pure Tool
       _ -> fail $ "Invalid Role value: " <> show t
-
 
 -- | Represents a message within a chat, including its role and content.
 data Message = Message
@@ -249,7 +249,7 @@ instance FromJSON Version where
 data InputTool = InputTool
   { toolType :: Text
   -- ^ The type of the tool
-  , function :: Function
+  , function :: FunctionDef
   -- ^ The function associated with the tool
   }
   deriving (Show, Eq, Generic)
@@ -268,30 +268,30 @@ instance FromJSON InputTool where
       <*> v .: "function"
 
 -- | Represents a function that can be called by the model.
-data Function = Function
+data FunctionDef = FunctionDef
   { functionName :: Text
   -- ^ The name of the function
-  , description :: Maybe Text
+  , functionDescription :: Maybe Text
   -- ^ Optional description of the function
-  , parameters :: Maybe FunctionParameters
+  , functionParameters :: Maybe FunctionParameters
   -- ^ Optional parameters for the function
-  , strict :: Maybe Bool
+  , functionStrict :: Maybe Bool
   -- ^ Optional strictness flag
   }
   deriving (Show, Eq, Generic)
 
-instance ToJSON Function where
-  toJSON Function {..} =
+instance ToJSON FunctionDef where
+  toJSON FunctionDef {..} =
     object $
       [ "name" .= functionName
       ]
-        ++ maybe [] (\d -> ["description" .= d]) description
-        ++ maybe [] (\p -> ["parameters" .= p]) parameters
-        ++ maybe [] (\s -> ["strict" .= s]) strict
+        ++ maybe [] (\d -> ["description" .= d]) functionDescription
+        ++ maybe [] (\p -> ["parameters" .= p]) functionParameters
+        ++ maybe [] (\s -> ["strict" .= s]) functionStrict
 
-instance FromJSON Function where
+instance FromJSON FunctionDef where
   parseJSON = withObject "Function" $ \v ->
-    Function
+    FunctionDef
       <$> v .: "name"
       <*> v .:? "description"
       <*> v .:? "parameters"
@@ -299,9 +299,9 @@ instance FromJSON Function where
 
 data FunctionParameters = FunctionParameters
   { parameterType :: Text
-  , parameterProperties :: Value
-  , requiredParams :: [Text]
-  , additionalProperties :: Bool
+  , parameterProperties :: Maybe (HM.Map Text FunctionParameters)
+  , requiredParams :: Maybe [Text]
+  , additionalProperties :: Maybe Bool
   }
   deriving (Show, Eq)
 
@@ -323,13 +323,12 @@ instance FromJSON FunctionParameters where
       <*> v .: "additionalProperties"
 
 newtype ToolCall = ToolCall
-  { outputFunction :: OutputFunction
-  }
+  {outputFunction :: OutputFunction}
   deriving (Show, Eq)
 
 data OutputFunction = OutputFunction
   { outputFunctionName :: Text
-  , arguments :: Value
+  , arguments :: HM.Map Text Value
   }
   deriving (Eq, Show)
 
