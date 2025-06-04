@@ -55,6 +55,18 @@ jobs:
       with:
           stack-arguments: --stack-yaml ${{ matrix.stack-yaml }}
 
-    - name: build examples
-      working-directory: examples/ollama-example
+  build-examples:
+    needs: tests
+
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./examples/ollama-example
+
+    steps:
+    - name: Copy repo into actions 
+      uses: actions/checkout@v4
+
+    - name: install dependancies, build and test stack project.
       uses: freckle/stack-action@v5
