@@ -17,6 +17,7 @@ module Data.Ollama.Generate
   , defaultGenerateOps
   , defaultOllamaConfig
   , validateGenerateOps
+  , defaultModelOptions
   , GenerateOps (..)
   , GenerateResponse (..)
   , Format (..)

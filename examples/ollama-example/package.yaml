@@ -29,6 +29,7 @@ dependencies:
 - aeson
 - bytestring
 - directory
+- scientific
 
 ghc-options:
 - -Wall

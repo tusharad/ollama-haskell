@@ -25,7 +25,14 @@ source-repository head
 
 library
   exposed-modules:
+      Example.ChatConversation
+      Example.ChatWithToolCall
+      Example.GenerateStream
+      Example.GenerateWithConfig
+      Example.GenerateWithModelOptions
       Example.KnowledgeApp
+      Example.SimpleChat
+      Example.SimpleGenerate
       Lib
   other-modules:
       Paths_ollama_example
@@ -41,6 +48,7 @@ library
     , directory
     , filepath
     , ollama-haskell
+    , scientific
     , text
     , time
   default-language: Haskell2010
@@ -62,6 +70,7 @@ executable ollama-example-exe
     , filepath
     , ollama-example
     , ollama-haskell
+    , scientific
     , text
     , time
   default-language: Haskell2010
@@ -84,6 +93,7 @@ test-suite ollama-example-test
     , filepath
     , ollama-example
     , ollama-haskell
+    , scientific
     , text
     , time
   default-language: Haskell2010

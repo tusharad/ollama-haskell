@@ -28,6 +28,11 @@ module Data.Ollama.Chat
   , defaultOllamaConfig
   , OllamaError (..)
   , ModelOptions (..)
+  , InputTool (..)
+  , Function (..)
+  , FunctionParameters (..)
+  , OutputFunction (..)
+  , ToolCall (..)
   , defaultModelOptions
   ) where
 
@@ -44,6 +49,10 @@ import Data.Ollama.Common.Types
   , Message (..)
   , ModelOptions (..)
   , Role (..)
+  , Function (..)
+  , FunctionParameters (..)
+  , OutputFunction (..)
+  , ToolCall (..)
   )
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
