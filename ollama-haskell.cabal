@@ -75,7 +75,9 @@ test-suite ollama-haskell-test
   main-is: Main.hs
   other-modules:
       Test.Ollama.Chat
+      Test.Ollama.Embedding
       Test.Ollama.Generate
+      Test.Ollama.Show
       Paths_ollama_haskell
   hs-source-dirs:
       test

@@ -24,8 +24,6 @@ import Data.Text (Text)
 import GHC.Generics
 import GHC.Int (Int64)
 
--- TODO: Add Options parameter
-
 {- |
  #ShowModelOps#
  Input parameters for show model information.
@@ -78,7 +76,9 @@ data ShowModelInfo = ShowModelInfo
   deriving (Show, Eq)
 
 -- FromJSON instances
-
+--
+--TODO: Verbose mode not getting parsed
+--
 -- | The instance for show model response
 instance FromJSON ShowModelResponse where
   parseJSON = withObject "ShowModelResponse" $ \v ->

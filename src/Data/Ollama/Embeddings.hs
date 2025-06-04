@@ -7,15 +7,17 @@ module Data.Ollama.Embeddings
   , embeddingM
   , embeddingOpsM
   , defaultEmbeddingOps
+  , defaultModelOptions
   , EmbeddingOps (..)
   , EmbeddingResp (..)
+  , ModelOptions (..)
   ) where
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Aeson
 import Data.Ollama.Common.Config (OllamaConfig)
 import Data.Ollama.Common.Error (OllamaError)
-import Data.Ollama.Common.Types (ModelOptions)
+import Data.Ollama.Common.Types (ModelOptions(..))
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 
