@@ -54,3 +54,7 @@ jobs:
       uses: freckle/stack-action@v5
       with:
           stack-arguments: --stack-yaml ${{ matrix.stack-yaml }}
+
+    - name: build examples
+      working-directory: examples/ollama-example
+      uses: freckle/stack-action@v5

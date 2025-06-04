@@ -10,7 +10,7 @@ import Data.Aeson qualified as Aeson
 import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.IORef (modifyIORef, newIORef, readIORef, writeIORef)
 import Data.Ollama.Common.SchemaBuilder
-import Data.Ollama.Common.Utils (defaultModelOptions, encodeImage)
+import Data.Ollama.Common.Utils (encodeImage)
 import Data.Ollama.Generate
 import Data.Text qualified as T
 import Data.Time (diffUTCTime, getCurrentTime)
