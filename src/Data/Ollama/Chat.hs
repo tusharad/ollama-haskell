@@ -166,7 +166,7 @@ Example:
 defaultChatOps :: ChatOps
 defaultChatOps =
   ChatOps
-    { chatModelName = "llama3.2"
+    { chatModelName = "gemma3"
     , messages = userMessage "What is 2+2?" :| []
     , tools = Nothing
     , format = Nothing

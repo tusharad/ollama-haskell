@@ -146,8 +146,7 @@ jsonFormatTest = testCase "Should return response in JSON format" $ do
         defaultChatOps
           { messages =
               fromList
-                [ userMessage "Return a JSON object with keys 'name' and 'age' for John, 25 years old."
-                ]
+                [userMessage "Return a JSON with keys 'name' and 'age' for John, 25 years old."]
           , format = Just JsonFormat
           }
   eRes <- chat ops Nothing

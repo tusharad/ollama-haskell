@@ -148,7 +148,7 @@ instance ToJSON GenerateOps where
 defaultGenerateOps :: GenerateOps
 defaultGenerateOps =
   GenerateOps
-    { modelName = "llama3.2"
+    { modelName = "gemma3"
     , prompt = ""
     , suffix = Nothing
     , images = Nothing
