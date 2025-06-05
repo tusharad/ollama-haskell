@@ -97,6 +97,7 @@ test-suite ollama-haskell-test
     , http-types >=0.7 && <0.13
     , mtl ==2.*
     , ollama-haskell
+    , scientific
     , silently
     , stm ==2.*
     , tasty >=1.5

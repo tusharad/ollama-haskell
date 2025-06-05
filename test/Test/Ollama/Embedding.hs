@@ -14,8 +14,8 @@ testEmbeddingBasic = testCase "Basic embedding with qwen3" $ do
   case res of
     Left err -> assertFailure $ "Expected success, got error: " ++ show err
     Right EmbeddingResp {..} -> do
-      assertEqual "Should return two embeddings" 2 (length embedding_)
-      assertBool "Embeddings should not be empty" (all (not . null) embedding_)
+      assertEqual "Should return two embeddings" 2 (length respondedEmbeddings)
+      assertBool "Embeddings should not be empty" (all (not . null) respondedEmbeddings)
 
 testEmbeddingWithOptions :: TestTree
 testEmbeddingWithOptions = testCase "Embedding with truncate and keepAlive" $ do
@@ -24,8 +24,10 @@ testEmbeddingWithOptions = testCase "Embedding with truncate and keepAlive" $ do
   case res of
     Left err -> assertFailure $ "Unexpected error: " ++ show err
     Right EmbeddingResp {..} -> do
-      assertEqual "Should return one embedding" 1 (length embedding_)
-      assertBool "Embedding vector should not be empty" (not . null $ listToMaybe embedding_)
+      assertEqual "Should return one embedding" 1 (length respondedEmbeddings)
+      assertBool
+        "Embedding vector should not be empty"
+        (not . null $ listToMaybe respondedEmbeddings)
 
 testEmbeddingInvalidModel :: TestTree
 testEmbeddingInvalidModel = testCase "Embedding with invalid model name" $ do

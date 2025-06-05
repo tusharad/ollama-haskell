@@ -85,6 +85,7 @@ data GenerateResponse = GenerateResponse
   -- ^ Optional count of evaluations during the generation process.
   , evalDuration :: !(Maybe Int64)
   -- ^ Optional duration in milliseconds for evaluations during the generation process.
+  , thinking :: !(Maybe Text)
   }
   deriving (Show, Eq)
 
@@ -101,6 +102,7 @@ instance FromJSON GenerateResponse where
       <*> v .:? "prompt_eval_duration"
       <*> v .:? "eval_count"
       <*> v .:? "eval_duration"
+      <*> v .:? "thinking"
 
 -- | Enumerated roles that can participate in a chat.
 data Role = System | User | Assistant | Tool

@@ -8,8 +8,11 @@ import Data.Aeson qualified as Aeson
 import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.IORef (modifyIORef, newIORef, readIORef, writeIORef)
 import Data.List.NonEmpty (fromList)
+import Data.List.NonEmpty qualified as NE
+import Data.Map qualified as HM
 import Data.Maybe (isJust)
 import Data.Ollama.Chat
+import Data.Scientific
 import Data.Text qualified as T
 import Data.Time (diffUTCTime, getCurrentTime)
 import Network.HTTP.Client
@@ -190,6 +193,71 @@ modelOptionsTest = testCase "Should use custom model options" $ do
     Left err -> assertFailure $ "Expected success, got error: " ++ show err
     Right r -> assertBool "Expected a response message" (isJust (message r))
 
+testToolCall_addTwoNumbers :: TestTree
+testToolCall_addTwoNumbers = testCase "Tool call: addTwoNumbers(23, 46)" $ do
+  let messageList = NE.singleton $ userMessage "What is 23 + 46? (Use tool)"
+      paramProps =
+        HM.fromList
+          [ ("a", FunctionParameters "number" Nothing Nothing Nothing)
+          , ("b", FunctionParameters "number" Nothing Nothing Nothing)
+          ]
+      functionParams =
+        FunctionParameters
+          { parameterType = "object"
+          , requiredParams = Just ["a", "b"]
+          , parameterProperties = Just paramProps
+          , additionalProperties = Just False
+          }
+      functionDef =
+        FunctionDef
+          { functionName = "addTwoNumbers"
+          , functionDescription = Just "Add two numbers"
+          , functionParameters = Just functionParams
+          , functionStrict = Nothing
+          }
+      tool =
+        InputTool
+          { toolType = "function"
+          , function = functionDef
+          }
+      ops =
+        defaultChatOps
+          { chatModelName = "qwen3:0.6b"
+          , messages = messageList
+          , tools = Just [tool]
+          }
+
+  res <- chat ops Nothing
+  case res of
+    Left err -> assertFailure $ "Chat failed: " ++ show err
+    Right ChatResponse {message = Nothing} -> assertFailure "No message in response"
+    Right ChatResponse {message = Just msg} ->
+      case tool_calls msg of
+        Nothing -> assertFailure "No tool calls received"
+        Just [toolCall] -> do
+          result <- captureAddToolCall toolCall
+          assertEqual "Expected result of 23 + 46" 69 result
+        Just other -> assertFailure $ "Unexpected number of tool calls: " ++ show other
+
+-- Helper to evaluate the tool call
+captureAddToolCall :: ToolCall -> IO Int
+captureAddToolCall (ToolCall func)
+  | outputFunctionName func == "addTwoNumbers" =
+      case ( HM.lookup "a" (arguments func) >>= convertToNumber
+           , HM.lookup "b" (arguments func) >>= convertToNumber
+           ) of
+        (Just a, Just b) -> return $ addTwoNumbers a b
+        _ -> assertFailure "Missing parameters a or b" >> return 0
+  | otherwise = assertFailure "Unexpected function name" >> return 0
+
+addTwoNumbers :: Int -> Int -> Int
+addTwoNumbers = (+)
+
+-- Convert Aeson value to Int
+convertToNumber :: Aeson.Value -> Maybe Int
+convertToNumber (Aeson.Number n) = toBoundedInteger n
+convertToNumber _ = Nothing
+
 -- | Group all tests
 tests :: TestTree
 tests =
@@ -206,4 +274,5 @@ tests =
     , jsonFormatTest
     , streamingTest
     , modelOptionsTest
+    , testToolCall_addTwoNumbers
     ]

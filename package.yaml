@@ -63,3 +63,4 @@ tests:
     - text
     - silently
     - aeson
+    - scientific
