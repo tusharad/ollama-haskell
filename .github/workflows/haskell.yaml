@@ -18,13 +18,31 @@ jobs:
         uses: freckle/stack-action/generate-matrix@v5
     outputs:
       stack-yamls: ${{ steps.generate.outputs.stack-yamls }}
-  
-  tests:
+
+  build:
     needs: generate
     strategy:
       matrix:
         stack-yaml: ${{ fromJSON(needs.generate.outputs.stack-yamls) }}
       fail-fast: false
+
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - name: Copy repo into actions 
+      uses: actions/checkout@v4
+
+    - name: install dependancies, build and test stack project.
+      uses: freckle/stack-action@v5
+      with:
+          stack-arguments: --stack-yaml ${{ matrix.stack-yaml }}
+          test: false
+  
+  test:
+    needs: build
 
     runs-on: ubuntu-22.04
     defaults:
@@ -52,8 +70,6 @@ jobs:
 
     - name: install dependancies, build and test stack project.
       uses: freckle/stack-action@v5
-      with:
-          stack-arguments: --stack-yaml ${{ matrix.stack-yaml }}
 
   build-examples:
     needs: tests
@@ -62,7 +78,6 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: ./examples/ollama-example
 
     steps:
     - name: Copy repo into actions 
@@ -70,3 +85,5 @@ jobs:
 
     - name: install dependancies, build and test stack project.
       uses: freckle/stack-action@v5
+      with:
+        working-directory: "./examples/ollama-example"
