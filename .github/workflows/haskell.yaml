@@ -41,7 +41,7 @@ jobs:
           stack-arguments: --stack-yaml ${{ matrix.stack-yaml }}
           test: false
   
-  test:
+  tests:
     needs: build
 
     runs-on: ubuntu-22.04
@@ -87,3 +87,4 @@ jobs:
       uses: freckle/stack-action@v5
       with:
         working-directory: "./examples/ollama-example"
+        test: false
