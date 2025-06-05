@@ -4,8 +4,32 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
+{- |
+Module      : Data.Ollama.Pull
+Copyright   : (c) 2025 Tushar Adhatrao
+License     : MIT
+Maintainer  : Tushar Adhatrao <tusharadhatrao@gmail.com>
+Stability   : experimental
+Description : Functionality for pulling models in the Ollama client.
+
+This module provides functions to pull (download) models from the Ollama server. It includes both
+high-level ('pull', 'pullM') and low-level ('pullOps', 'pullOpsM') APIs for pulling models, with
+support for streaming progress updates and insecure connections. The 'PullOps' type configures the
+pull request, and 'PullResp' represents the response containing the status and progress details.
+
+The pull operation is performed via a POST request to the "/api//pull" endpoint. Streaming mode,
+when enabled, provides real-time progress updates by printing the remaining bytes to the console.
+
+Example:
+
+>>> pull "gemma3"
+Remaining bytes: 123456789
+...
+Completed
+Right (PullResp {status = "success", ...})
+-}
 module Data.Ollama.Pull
-  ( -- * Downloaded Models
+  ( -- * Pull Model API
     pull
   , pullOps
   , pullM
@@ -26,45 +50,50 @@ import GHC.Int (Int64)
 -- | Configuration options for pulling a model.
 data PullOps = PullOps
   { name :: !Text
-  -- ^ The name of the model to pull.
+  -- ^ The name of the model to pull (e.g., "gemma3").
   , insecure :: !(Maybe Bool)
-  -- ^ Option to allow insecure connections.
-  -- If set to 'Just True', the pull operation will allow insecure connections.
+  -- ^ Optional flag to allow insecure connections. If 'Just True', insecure connections are permitted.
   , stream :: !(Maybe Bool)
-  -- ^ Option to enable streaming of the download.
-  -- If set to 'Just True', the download will be streamed.
+  -- ^ Optional flag to enable streaming of the download. If 'Just True', progress updates are streamed.
   }
   deriving (Show, Eq, Generic, ToJSON)
 
 -- | Response data from a pull operation.
 data PullResp = PullResp
   { status :: !Text
-  -- ^ The status of the pull operation, e.g., "success" or "failure".
+  -- ^ The status of the pull operation (e.g., "success" or "failure").
   , digest :: !(Maybe Text)
-  -- ^ The digest of the model, if available.
+  -- ^ The digest (hash) of the model, if available.
   , total :: !(Maybe Int64)
   -- ^ The total size of the model in bytes, if available.
   , completed :: !(Maybe Int64)
-  -- ^ The number of bytes completed, if available.
+  -- ^ The number of bytes downloaded, if available.
   }
   deriving (Show, Eq, Generic, FromJSON)
 
 instance HasDone PullResp where
   getDone PullResp {..} = status /= "success"
 
+{- | Pulls a model with full configuration.
+
+Sends a POST request to the "/api//pull" endpoint to download the specified model. Supports
+streaming progress updates (if 'stream' is 'Just True') and insecure connections (if 'insecure'
+is 'Just True'). Prints remaining bytes during streaming and "Completed" when finished.
+Returns 'Right' with a 'PullResp' on success or 'Left' with an 'OllamaError' on failure.
+-}
 pullOps ::
-  -- | Model Name
+  -- | Model name
   Text ->
-  -- | Insecure
+  -- | Optional insecure connection flag
   Maybe Bool ->
-  -- | Stream
+  -- | Optional streaming flag
   Maybe Bool ->
-  -- | Ollama Config
+  -- | Optional 'OllamaConfig' (defaults to 'defaultOllamaConfig' if 'Nothing')
   Maybe OllamaConfig ->
   IO (Either OllamaError PullResp)
 pullOps modelName mInsecure mStream mbConfig = do
   withOllamaRequest
-    "/api/pull"
+    "/api//pull"
     "POST"
     (Just $ PullOps {name = modelName, insecure = mInsecure, stream = mStream})
     mbConfig
@@ -79,15 +108,44 @@ pullOps modelName mInsecure mStream mbConfig = do
     onComplete :: IO ()
     onComplete = putStrLn "Completed"
 
+{- | Simplified API for pulling a model.
+
+A higher-level function that pulls a model using default settings for insecure connections,
+streaming, and Ollama configuration. Suitable for basic use cases.
+-}
 pull ::
-  -- | Model Name
+  -- | Model name
   Text ->
   IO (Either OllamaError PullResp)
 pull modelName = pullOps modelName Nothing Nothing Nothing
 
+{- | MonadIO version of 'pull' for use in monadic contexts.
+
+Lifts the 'pull' function into a 'MonadIO' context, allowing it to be used in monadic computations.
+
+Example:
+
+>>> import Control.Monad.IO.Class
+>>> runReaderT (pullM "gemma3") someContext
+Right (PullResp {status = "success", ...})
+-}
 pullM :: MonadIO m => Text -> m (Either OllamaError PullResp)
 pullM t = liftIO $ pull t
 
+{- | MonadIO version of 'pullOps' for use in monadic contexts.
+
+Lifts the 'pullOps' function into a 'MonadIO' context, allowing it to be used in monadic computations
+with full configuration options.
+
+Example:
+
+>>> import Control.Monad.IO.Class
+>>> runReaderT (pullOpsM "gemma3" Nothing (Just True) Nothing) someContext
+Remaining bytes: 123456789
+...
+Completed
+Right (PullResp {status = "success", ...})
+-}
 pullOpsM ::
   MonadIO m =>
   Text ->

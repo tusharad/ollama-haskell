@@ -2,6 +2,27 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
+{- |
+Module      : Data.Ollama.Create
+Copyright   : (c) 2025 Tushar Adhatrao
+License     : MIT
+Maintainer  : Tushar Adhatrao <tusharadhatrao@gmail.com>
+Stability   : experimental
+Description : Functionality for creating new models in the Ollama client.
+
+This module provides functions to create a new model in the Ollama API using either a model file
+content or a file path. It includes both an IO-based function ('createModel') and a monadic version
+('createModelM') for use in 'MonadIO' contexts. The create operation is performed via a POST request
+to the "/api//pull" endpoint, with streaming support for progress updates.
+
+Note: If both 'modelFile' and 'path' are provided, 'modelFile' takes precedence.
+
+Example:
+
+>>> createModel "myModel" (Just "FROM llama3\nPARAMETER temperature 0.8") (Just True) Nothing Nothing
+Creating model...
+Completed
+-}
 module Data.Ollama.Create
   ( -- * Create Model API
     createModel
@@ -16,17 +37,23 @@ import Data.Ollama.Common.Types (HasDone (getDone))
 import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 
--- TODO: Add Options parameter
+-- | Configuration for creating a new model.
 data CreateModelOps = CreateModelOps
   { name :: !Text
+  -- ^ The name of the model to create.
   , modelFile :: !(Maybe Text)
+  -- ^ Optional model file content (e.g., Modelfile text). Takes precedence over 'path'.
   , stream :: !(Maybe Bool)
+  -- ^ Optional flag to enable streaming progress updates.
   , path :: !(Maybe FilePath)
+  -- ^ Optional file path to a Modelfile.
   }
   deriving (Show, Eq)
 
--- TODO: Add Context Param
-newtype CreateModelResp = CreateModelResp {status :: Text}
+-- | Response type for model creation.
+newtype CreateModelResp
+  = -- | The status of the create operation (e.g., "success").
+    CreateModelResp {status :: Text}
   deriving (Show, Eq)
 
 instance HasDone CreateModelResp where
@@ -52,19 +79,23 @@ instance FromJSON CreateModelResp where
     CreateModelResp
       <$> v .: "status"
 
-{- | Create a new model either from ModelFile or Path
-Please note, if you specify both ModelFile and Path, ModelFile will be used.
+{- | Creates a new model using either model file content or a file path.
+
+Sends a POST request to the "/api//pull" endpoint to create a model with the specified name.
+The model can be defined either by 'modelFile' (Modelfile content as text) or 'path' (file path to a Modelfile).
+If both are provided, 'modelFile' is used. Supports streaming progress updates if 'stream' is 'Just True'.
+Prints progress messages to the console during creation.
 -}
 createModel ::
-  -- | Model Name
+  -- | Model name
   Text ->
-  -- | Model File
+  -- | Optional model file content
   Maybe Text ->
-  -- | Stream
+  -- | Optional streaming flag
   Maybe Bool ->
-  -- | Path
+  -- | Optional file path to a Modelfile
   Maybe FilePath ->
-  -- | Ollama config
+  -- | Optional 'OllamaConfig' (defaults to 'defaultOllamaConfig' if 'Nothing')
   Maybe OllamaConfig ->
   IO ()
 createModel
@@ -75,7 +106,7 @@ createModel
   mbConfig =
     void $
       withOllamaRequest
-        "/api/pull"
+        "/api//pull"
         "POST"
         ( Just $
             CreateModelOps
@@ -95,6 +126,10 @@ createModel
       onComplete :: IO ()
       onComplete = putStrLn "Completed"
 
+{- | MonadIO version of 'createModel' for use in monadic contexts.
+
+Lifts the 'createModel' function into a 'MonadIO' context, allowing it to be used in monadic computations.
+-}
 createModelM ::
   MonadIO m =>
   Text ->

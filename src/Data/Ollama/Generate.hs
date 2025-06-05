@@ -3,26 +3,47 @@
 {-# LANGUAGE RecordWildCards #-}
 
 {- |
-Module:      Data.Ollama.Generate
-Copyright:   (c) 2025 Tushar Adhatrao
-License:     MIT
-Description: Generate functionality for Ollama client
-Maintainer:  Tushar Adhatrao <tusharadhatrao@gmail.com>
-Stability:   experimental
+Module      : Data.Ollama.Generate
+Copyright   : (c) 2025 Tushar Adhatrao
+License     : MIT
+Maintainer  : Tushar Adhatrao <tusharadhatrao@gmail.com>
+Stability   : experimental
+Description : Text generation functionality for the Ollama client.
+
+This module provides functions and types for generating text using an Ollama model. It includes APIs
+for sending generation requests, both in IO ('generate') and monadic ('generateM') contexts, with
+support for streaming and non-streaming responses. The 'GenerateOps' type configures the generation
+request, allowing customization of the model, prompt, images, format, and other parameters. The
+'defaultGenerateOps' provides a convenient starting point for configuration.
+
+The module supports advanced features like Base64-encoded images, custom templates, and model-specific
+options (e.g., temperature). It also includes validation to ensure required fields are non-empty.
+
+Example:
+
+>>> let ops = defaultGenerateOps { modelName = "gemma3", prompt = "Write a poem." }
+>>> generate ops Nothing
+Right (GenerateResponse ...)
 -}
 module Data.Ollama.Generate
   ( -- * Generate Texts
     generate
   , generateM
+
+    -- * Configuration
   , defaultGenerateOps
-  , defaultOllamaConfig
-  , validateGenerateOps
-  , defaultModelOptions
   , GenerateOps (..)
+  , validateGenerateOps
+
+    -- * Response and Configuration Types
   , GenerateResponse (..)
   , Format (..)
   , OllamaConfig (..)
+  , defaultOllamaConfig
   , ModelOptions (..)
+  , defaultModelOptions
+
+    -- * Error Types
   , OllamaError (..)
   ) where
 
@@ -36,41 +57,52 @@ import Data.Ollama.Common.Utils as CU
 import Data.Text (Text)
 import Data.Text qualified as T
 
+{- | Validates 'GenerateOps' to ensure required fields are non-empty.
+
+Checks that the 'modelName' and 'prompt' fields are not empty. Returns 'Right' with the validated
+'GenerateOps' or 'Left' with an 'OllamaError' if validation fails.
+
+Example:
+
+>>> validateGenerateOps defaultGenerateOps
+Left (InvalidRequest "Prompt cannot be empty")
+-}
 validateGenerateOps :: GenerateOps -> Either OllamaError GenerateOps
 validateGenerateOps ops
   | T.null (modelName ops) = Left $ InvalidRequest "Model name cannot be empty"
   | T.null (prompt ops) = Left $ InvalidRequest "Prompt cannot be empty"
   | otherwise = Right ops
 
+-- | Configuration for a text generation request.
 data GenerateOps = GenerateOps
   { modelName :: !Text
-  -- ^ The name of the model to be used for generation.
+  -- ^ The name of the model to use for generation (e.g., "gemma3").
   , prompt :: !Text
-  -- ^ The prompt text that will be provided to the model for generating a response.
+  -- ^ The prompt text to provide to the model for generating a response.
   , suffix :: Maybe Text
-  -- ^ An optional suffix to append to the generated text. Not all models supports this.
+  -- ^ Optional suffix to append to the generated text (not supported by all models).
   , images :: !(Maybe [Text])
-  -- ^ Optional list of base64 encoded images to include with the request.
+  -- ^ Optional list of Base64-encoded images to include with the request.
   , format :: !(Maybe Format)
-  -- ^ An optional format specifier for the response.
+  -- ^ Optional format specifier for the response (e.g., JSON).
   --
   -- @since 0.1.3.0
   , system :: !(Maybe Text)
-  -- ^ Optional system text that can be included in the generation context.
+  -- ^ Optional system text to include in the generation context.
   , template :: !(Maybe Text)
-  -- ^ An optional template to format the response.
+  -- ^ Optional template to format the response.
   , stream :: !(Maybe (GenerateResponse -> IO (), IO ()))
-  -- ^ An optional streaming function where the first function handles
-  -- each chunk of response, and the second flushes the stream.
+  -- ^ Optional streaming functions: the first handles each response chunk, the second flushes the stream.
   , raw :: !(Maybe Bool)
-  -- ^ An optional flag to return the raw response.
+  -- ^ Optional flag to return the raw response.
   , keepAlive :: !(Maybe Int)
-  -- ^ controls how long the model will stay loaded into memory following the request (default: 5m)
+  -- ^ Optional override for how long (in minutes) the model stays loaded in memory (default: 5 minutes).
   , options :: !(Maybe ModelOptions)
-  -- ^ additional model parameters listed in the documentation for the Modelfile such as temperature
+  -- ^ Optional model parameters (e.g., temperature) as specified in the Modelfile.
   --
   -- @since 0.1.3.0
   , think :: !(Maybe Bool)
+  -- ^ Optional flag to enable thinking mode.
   }
 
 instance Show GenerateOps where
@@ -146,6 +178,16 @@ instance ToJSON GenerateOps where
         , "think" .= think
         ]
 
+{- | Default configuration for text generation.
+
+Provides a default 'GenerateOps' with the "gemma3" model and an empty prompt. Other fields are set
+to 'Nothing' or default values. Can be customized by modifying fields as needed.
+
+Example:
+
+>>> let ops = defaultGenerateOps { modelName = "customModel", prompt = "Hello!" }
+>>> generate ops Nothing
+-}
 defaultGenerateOps :: GenerateOps
 defaultGenerateOps =
   GenerateOps
@@ -163,16 +205,39 @@ defaultGenerateOps =
     , think = Nothing
     }
 
+{- | Generates text using the specified model and configuration.
+
+Validates the 'GenerateOps' configuration and sends a POST request to the "/api//generate" endpoint.
+Supports both streaming and non-streaming responses based on the 'stream' field in 'GenerateOps'.
+Returns 'Right' with a 'GenerateResponse' on success or 'Left' with an 'OllamaError' on failure.
+
+Example:
+
+>>> let ops = defaultGenerateOps { modelName = "gemma3", prompt = "Write a short poem." }
+>>> generate ops Nothing
+Right (GenerateResponse ...)
+-}
 generate :: GenerateOps -> Maybe OllamaConfig -> IO (Either OllamaError GenerateResponse)
 generate ops mbConfig =
   case validateGenerateOps ops of
     Left err -> pure $ Left err
-    Right _ -> withOllamaRequest "/api/generate" "POST" (Just ops) mbConfig handler
+    Right _ -> withOllamaRequest "/api//generate" "POST" (Just ops) mbConfig handler
   where
     handler = case stream ops of
       Nothing -> commonNonStreamingHandler
       Just (sc, fl) -> commonStreamHandler sc fl
 
+{- | MonadIO version of 'generate' for use in monadic contexts.
+
+Lifts the 'generate' function into a 'MonadIO' context, allowing it to be used in monadic computations.
+
+Example:
+
+>>> import Control.Monad.IO.Class
+>>> let ops = defaultGenerateOps { modelName = "gemma3", prompt = "Hello!" }
+>>> runReaderT (generateM ops Nothing) someContext
+Right (GenerateResponse ...)
+-}
 generateM ::
   MonadIO m =>
   GenerateOps -> Maybe OllamaConfig -> m (Either OllamaError GenerateResponse)

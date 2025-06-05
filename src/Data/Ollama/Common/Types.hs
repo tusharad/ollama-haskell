@@ -4,6 +4,39 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
+{- |
+Module      : Data.Ollama.Common.Types
+Copyright   : (c) 2025 Tushar Adhatrao
+License     : MIT
+Maintainer  : Tushar Adhatrao <tusharadhatrao@gmail.com>
+Stability   : experimental
+Description : Shared data types for request and response structures used throughout the Ollama client.
+
+== 📋 Overview
+
+This module defines common types for working with Ollama's API, including:
+
+- Chat messages and roles
+- Text generation responses
+- Structured function/tool calling
+- Model metadata
+- Streaming handling
+- Custom model parameters
+
+These types are consumed and returned by higher-level modules
+like `Data.Ollama.Chat`, `Data.Ollama.Generate`, and others.
+
+== Includes
+
+- Chat message structure and roles
+- Generate and chat response records
+- ModelOptions and advanced config
+- Structured function/tool call interfaces
+- JSON format hints and schema wrapping
+- Helper class 'HasDone' for streaming termination
+
+Most types implement `ToJSON`/`FromJSON` for direct API interaction.
+-}
 module Data.Ollama.Common.Types
   ( ModelDetails (..)
   , Format (..)
@@ -30,13 +63,20 @@ import Data.Time (UTCTime)
 import GHC.Generics
 import GHC.Int (Int64)
 
+-- | Metadata describing a specific model's identity and configuration.
 data ModelDetails = ModelDetails
   { parentModel :: !(Maybe Text)
+  -- ^ The parent model from which this model was derived, if any.
   , format :: !Text
+  -- ^ The format used for the model (e.g., "gguf").
   , family :: !Text
+  -- ^ The family name of the model (e.g., "llama", "mistral").
   , families :: ![Text]
+  -- ^ Alternative or related family identifiers.
   , parameterSize :: !Text
+  -- ^ The size of the model's parameters, typically expressed as a string (e.g., "7B").
   , quantizationLevel :: Text
+  -- ^ The quantization level used (e.g., "Q4", "Q8").
   }
   deriving (Eq, Show)
 
@@ -187,29 +227,52 @@ instance HasDone GenerateResponse where
 instance HasDone ChatResponse where
   getDone ChatResponse {..} = done
 
+-- | Optional model tuning parameters that influence generation behavior.
 data ModelOptions = ModelOptions
   { numKeep :: Maybe Int
-  , seed :: Maybe Int
-  , numPredict :: Maybe Int
-  , topK :: Maybe Int
-  , topP :: Maybe Double
-  , minP :: Maybe Double
-  , typicalP :: Maybe Double
-  , repeatLastN :: Maybe Int
-  , temperature :: Maybe Double
-  , repeatPenalty :: Maybe Double
-  , presencePenalty :: Maybe Double
-  , frequencyPenalty :: Maybe Double
-  , penalizeNewline :: Maybe Bool
-  , stop :: Maybe [Text]
-  , numa :: Maybe Bool
-  , numCtx :: Maybe Int
-  , numBatch :: Maybe Int
-  , numGpu :: Maybe Int
-  , mainGpu :: Maybe Int
-  , useMmap :: Maybe Bool
-  , numThread :: Maybe Int
+  , -- \^ Number of tokens to keep from the previous context.
+    seed :: Maybe Int
+  , -- \^ Random seed for reproducibility.
+    numPredict :: Maybe Int
+  , -- \^ Maximum number of tokens to predict.
+    topK :: Maybe Int
+  , -- \^ Top-K sampling parameter.
+    topP :: Maybe Double
+  , -- \^ Top-P (nucleus) sampling parameter.
+    minP :: Maybe Double
+  , -- \^ Minimum probability for nucleus sampling.
+    typicalP :: Maybe Double
+  , -- \^ Typical sampling probability.
+    repeatLastN :: Maybe Int
+  , -- \^ Number of tokens to consider for repetition penalty.
+    temperature :: Maybe Double
+  , -- \^ Sampling temperature. Higher = more randomness.
+    repeatPenalty :: Maybe Double
+  , -- \^ Penalty for repeating the same tokens.
+    presencePenalty :: Maybe Double
+  , -- \^ Penalty for introducing new tokens.
+    frequencyPenalty :: Maybe Double
+  , -- \^ Penalty for frequent tokens.
+    penalizeNewline :: Maybe Bool
+  , -- \^ Whether to penalize newline tokens.
+    stop :: Maybe [Text]
+  , -- \^ List of stop sequences to end generation.
+    numa :: Maybe Bool
+  , -- \^ Whether to enable NUMA-aware optimizations.
+    numCtx :: Maybe Int
+  , -- \^ Number of context tokens.
+    numBatch :: Maybe Int
+  , -- \^ Batch size used during generation.
+    numGpu :: Maybe Int
+  , -- \^ Number of GPUs to use.
+    mainGpu :: Maybe Int
+  , -- \^ Index of the primary GPU to use.
+    useMmap :: Maybe Bool
+  , -- \^ Whether to memory-map the model.
+    numThread :: Maybe Int
   }
+  -- \^ Number of threads to use for inference.
+
   deriving (Show, Eq)
 
 -- | Custom ToJSON instance for Options
@@ -240,6 +303,7 @@ instance ToJSON ModelOptions where
         , ("num_thread" .=) <$> numThread opts
         ]
 
+-- | A wrapper for the Ollama engine version string.
 newtype Version = Version Text
   deriving (Eq, Show)
 
@@ -299,11 +363,16 @@ instance FromJSON FunctionDef where
       <*> v .:? "parameters"
       <*> v .:? "strict"
 
+-- | Parameters definition for a function call used in structured output or tool calls.
 data FunctionParameters = FunctionParameters
   { parameterType :: Text
+  -- ^ Type of the parameter (usually "object").
   , parameterProperties :: Maybe (HM.Map Text FunctionParameters)
+  -- ^ Optional nested parameters as a property map.
   , requiredParams :: Maybe [Text]
+  -- ^ List of required parameter names.
   , additionalProperties :: Maybe Bool
+  -- ^ Whether additional (unspecified) parameters are allowed.
   }
   deriving (Show, Eq)
 
@@ -324,13 +393,19 @@ instance FromJSON FunctionParameters where
       <*> v .: "required"
       <*> v .: "additionalProperties"
 
+-- | A single tool call returned from the model, containing the function to be invoked.
 newtype ToolCall = ToolCall
-  {outputFunction :: OutputFunction}
+  { outputFunction :: OutputFunction
+  -- ^ The function the model intends to call, with arguments.
+  }
   deriving (Show, Eq)
 
+-- | Output representation of a function to be called, including its name and arguments.
 data OutputFunction = OutputFunction
   { outputFunctionName :: Text
+  -- ^ The name of the function to invoke.
   , arguments :: HM.Map Text Value
+  -- ^ A key-value map of argument names to values (JSON values).
   }
   deriving (Eq, Show)
 
