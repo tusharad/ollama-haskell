@@ -66,6 +66,8 @@ Example:
 
 >>> validateGenerateOps defaultGenerateOps
 Left (InvalidRequest "Prompt cannot be empty")
+--
+-- @since 0.2.0.0
 -}
 validateGenerateOps :: GenerateOps -> Either OllamaError GenerateOps
 validateGenerateOps ops
@@ -103,6 +105,8 @@ data GenerateOps = GenerateOps
   -- @since 0.1.3.0
   , think :: !(Maybe Bool)
   -- ^ Optional flag to enable thinking mode.
+  --
+  -- @since 0.2.0.0
   }
 
 instance Show GenerateOps where

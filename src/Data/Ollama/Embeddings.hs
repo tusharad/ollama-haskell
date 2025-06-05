@@ -75,6 +75,8 @@ data EmbeddingOps = EmbeddingOps
   -- ^ Optional override for the keep-alive timeout in minutes.
   , modelOptions :: !(Maybe ModelOptions)
   -- ^ Optional model parameters (e.g., temperature) as specified in the Modelfile.
+  --
+  -- @since 0.2.0.0
   }
   deriving (Show, Eq)
 

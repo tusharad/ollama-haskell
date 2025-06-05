@@ -126,6 +126,9 @@ data GenerateResponse = GenerateResponse
   , evalDuration :: !(Maybe Int64)
   -- ^ Optional duration in milliseconds for evaluations during the generation process.
   , thinking :: !(Maybe Text)
+  -- ^ Thinking of reasoning models; if think is set to true
+  --
+  -- @since 0.2.0.0
   }
   deriving (Show, Eq)
 
@@ -176,6 +179,8 @@ data Message = Message
   --
   -- @since 0.1.3.0
   , thinking :: !(Maybe Text)
+  --
+  -- @since 0.2.0.0
   }
   deriving (Show, Eq, Generic, ToJSON, FromJSON)
 
@@ -228,6 +233,8 @@ instance HasDone ChatResponse where
   getDone ChatResponse {..} = done
 
 -- | Optional model tuning parameters that influence generation behavior.
+--
+-- @since 0.2.0.0
 data ModelOptions = ModelOptions
   { numKeep :: Maybe Int
   , -- \^ Number of tokens to keep from the previous context.
@@ -312,6 +319,8 @@ instance FromJSON Version where
     Version <$> v .: "version"
 
 -- | Represents a tool that can be used in the conversation.
+--
+-- @since 0.2.0.0
 data InputTool = InputTool
   { toolType :: Text
   -- ^ The type of the tool
@@ -334,6 +343,8 @@ instance FromJSON InputTool where
       <*> v .: "function"
 
 -- | Represents a function that can be called by the model.
+--
+-- @since 0.2.0.0
 data FunctionDef = FunctionDef
   { functionName :: Text
   -- ^ The name of the function
@@ -364,6 +375,8 @@ instance FromJSON FunctionDef where
       <*> v .:? "strict"
 
 -- | Parameters definition for a function call used in structured output or tool calls.
+--
+-- @since 0.2.0.0
 data FunctionParameters = FunctionParameters
   { parameterType :: Text
   -- ^ Type of the parameter (usually "object").
@@ -394,6 +407,8 @@ instance FromJSON FunctionParameters where
       <*> v .: "additionalProperties"
 
 -- | A single tool call returned from the model, containing the function to be invoked.
+--
+-- @since 0.2.0.0
 newtype ToolCall = ToolCall
   { outputFunction :: OutputFunction
   -- ^ The function the model intends to call, with arguments.
@@ -401,6 +416,8 @@ newtype ToolCall = ToolCall
   deriving (Show, Eq)
 
 -- | Output representation of a function to be called, including its name and arguments.
+--
+-- @since 0.2.0.0
 data OutputFunction = OutputFunction
   { outputFunctionName :: Text
   -- ^ The name of the function to invoke.

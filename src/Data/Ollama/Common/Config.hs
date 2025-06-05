@@ -38,6 +38,8 @@ import Network.HTTP.Client
 {- | Configuration for the Ollama client.
 Used across all requests to customize behavior such as timeouts, retries,
 custom HTTP manager, and lifecycle hooks.
+--
+-- @since 0.2.0.0
 -}
 data OllamaConfig = OllamaConfig
   { hostUrl :: Text

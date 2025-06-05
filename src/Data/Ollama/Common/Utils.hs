@@ -293,6 +293,8 @@ as a 'Version' wrapped in an 'Either' 'OllamaError'.
 Example:
 
 >>> getVersion
+--
+-- @since 0.2.0.0
 -}
 getVersion :: IO (Either OllamaError Version)
 getVersion = do

@@ -43,6 +43,8 @@ import Data.Text (Text)
 Sends a POST request to the "/api//generate" endpoint to load the specified model into
 memory, ensuring faster response times for subsequent requests. Returns 'Right ()' on
 success or 'Left' with an 'OllamaError' on failure.
+--
+-- @since 0.2.0.0
 -}
 loadGenModel ::
   -- |  Model name (e.g., "gemma3")
@@ -57,6 +59,8 @@ loadGenModel m = do
 Sends a POST request to the "/api//generate" endpoint with a keep-alive duration of zero
 to unload the specified model from memory, freeing up resources. Returns 'Right ()' on
 success or 'Left' with an 'OllamaError' on failure.
+--
+-- @since 0.2.0.0
 -}
 unloadGenModel ::
   -- | Model name (e.g., "gemma3")
@@ -76,6 +80,8 @@ Example:
 >>> import Control.Monad.IO.Class
 >>> runReaderT (loadGenModelM "gemma3") someContext
 Right ()
+--
+-- @since 0.2.0.0
 -}
 loadGenModelM :: MonadIO m => Text -> m (Either OllamaError ())
 loadGenModelM t = liftIO $ loadGenModel t
@@ -90,6 +96,8 @@ Example:
 >>> import Control.Monad.IO.Class
 >>> runReaderT (unloadGenModelM "gemma3") someContext
 Right ()
+--
+-- @since 0.2.0.0
 -}
 unloadGenModelM :: MonadIO m => Text -> m (Either OllamaError ())
 unloadGenModelM t = liftIO $ unloadGenModel t

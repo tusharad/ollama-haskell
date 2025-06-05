@@ -78,6 +78,8 @@ instance FromJSON Conversation
 {- | Typeclass defining operations for storing and managing conversations.
 
 Provides methods for saving, loading, listing, and deleting conversations in a monadic context.
+--
+-- @since 0.2.0.0
 -}
 class Monad m => ConversationStore m where
   -- | Saves a conversation to the store.

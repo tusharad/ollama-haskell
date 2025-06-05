@@ -35,6 +35,8 @@ type DecodingErrorMessage = String
 type DecodingFailedValue = String
 
 -- | Represents all possible errors that may occur when using the Ollama client.
+--
+-- @since 0.2.0.0
 data OllamaError
   = -- | Low-level HTTP exception (connection failure, etc.)
     HttpError HttpException

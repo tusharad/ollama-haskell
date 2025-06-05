@@ -2,7 +2,26 @@
 
 ## Unreleased
 
+## 0.2.0.0 -- 2025-06-05
+
 * Added stack matrix to ensure lib is buildable from lts-19.33
+* Made parameters & template fields optional in `ShowModelResponse`.
+* Added extra parameters fields in `ModelInfo`.
+* Added strict annotations for all fields.
+* Fixed ToJSON instance for delete model request body.
+* Removed duplicate code by using unified `withOllamaRequest` function for all API calls.
+* Added unified config type `OllamaConfig` to hold common configuration options.
+* Added validation for generate and chat functions to ensure required fields are present.
+* Added convience functions for generating Message and ToolCall types.
+* Added thinking field for chat and generate function.
+* Added ModelOptions type to encapsulate model options.
+* Added get ollama version function.
+* Added Common Manager, Callback functions and retry option in OllamaConfig.
+* Fixed tool_calls.
+* Added MonadIO versions of api functions.
+* Added more comprehensive error handling for API calls.
+* Added more comprehensive test cases for all functions.
+* Added schema builder for passing json format for structured output.
 
 ## 0.1.3.0 -- 2025-03-25
 
