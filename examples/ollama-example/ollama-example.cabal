@@ -26,11 +26,17 @@ source-repository head
 library
   exposed-modules:
       Example.ChatConversation
+      Example.ChatStructuredOutput
+      Example.ChatStructuredOutputImage
+      Example.ChatWithImage
       Example.ChatWithToolCall
+      Example.Embeddings
       Example.GenerateStream
+      Example.GenerateThinking
       Example.GenerateWithConfig
       Example.GenerateWithModelOptions
       Example.KnowledgeApp
+      Example.List
       Example.SimpleChat
       Example.SimpleGenerate
       Lib

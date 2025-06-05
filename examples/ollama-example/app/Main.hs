@@ -1,8 +1,8 @@
 module Main (main) where
 
 -- import qualified Example.KnowledgeApp as KA
-import qualified Example.ChatWithToolCall as ToolCall
+import qualified Example.GenerateThinking as Ex
 
 main :: IO ()
 main = do 
-  ToolCall.runApp
+  Ex.runApp

@@ -6,8 +6,6 @@ import qualified Data.List.NonEmpty as NE
 import Data.Ollama.Chat
 import qualified Data.Text.IO as T
 
--- Pass callback function to define what you wanna do with those chunks
-
 runApp :: IO ()
 runApp = do
   let messageList = NE.singleton (userMessage "What is the meaning of life?")
