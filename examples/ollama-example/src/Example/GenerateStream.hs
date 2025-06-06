@@ -9,7 +9,7 @@ import qualified Data.Text.IO as T
 
 runApp :: IO ()
 runApp = do
-  let streamHandler = (T.putStr . genResponse, pure ())
+  let streamHandler = T.putStr . genResponse
   let ops =
         defaultGenerateOps
           { modelName = "gemma3"
@@ -19,5 +19,4 @@ runApp = do
   eRes <- generate ops Nothing
   case eRes of
     Left err -> putStrLn $ "Something went wrong: " ++ show err
-    Right _ -> do
-      putStrLn "LLM response completed"
+    Right _ -> putStrLn "LLM response completed"

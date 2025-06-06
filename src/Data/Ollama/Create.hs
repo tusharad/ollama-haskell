@@ -117,14 +117,11 @@ createModel
               }
         )
         mbConfig
-        (commonStreamHandler onToken onComplete)
+        (commonStreamHandler onToken)
     where
       onToken :: CreateModelResp -> IO ()
-      onToken _ = do
-        putStrLn "Creating model..."
+      onToken _ = putStrLn "Creating model..."
 
-      onComplete :: IO ()
-      onComplete = putStrLn "Completed"
 
 {- | MonadIO version of 'createModel' for use in monadic contexts.
 

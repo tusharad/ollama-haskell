@@ -174,8 +174,8 @@ data ChatOps = ChatOps
   -- ^ Optional format for the chat response (e.g., JSON or JSON schema).
   --
   -- @since 0.1.3.0
-  , stream :: !(Maybe (ChatResponse -> IO (), IO ()))
-  -- ^ Optional streaming functions: the first handles each response chunk, the second flushes the stream.
+  , stream :: !(Maybe (ChatResponse -> IO ()))
+  -- ^ Optional callback function to be called with each incoming response.
   , keepAlive :: !(Maybe Int)
   -- ^ Optional override for the response timeout in minutes (default: 15 minutes).
   , options :: !(Maybe ModelOptions)
@@ -281,7 +281,7 @@ chat ops mbConfig =
   where
     handler = case stream ops of
       Nothing -> commonNonStreamingHandler
-      Just (sc, fl) -> commonStreamHandler sc fl
+      Just sendChunk -> commonStreamHandler sendChunk
 
 {- | MonadIO version of 'chat' for use in monadic contexts.
 

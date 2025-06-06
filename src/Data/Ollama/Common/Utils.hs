@@ -215,11 +215,9 @@ commonStreamHandler ::
   (HasDone a, FromJSON a) =>
   -- | Function to handle each decoded chunk
   (a -> IO ()) ->
-  -- | Function to flush after each chunk
-  IO () ->
   Response BodyReader ->
   IO (Either OllamaError a)
-commonStreamHandler sendChunk flush resp = go mempty
+commonStreamHandler sendChunk resp = go mempty
   where
     go acc = do
       bs <- brRead $ responseBody resp
@@ -234,7 +232,6 @@ commonStreamHandler sendChunk flush resp = go mempty
             Left err -> return $ Left $ Error.DecodeError err (show acc)
             Right res -> do
               sendChunk res
-              flush
               if getDone res then return (Right res) else go (acc <> bs)
 
 {- | Handles non-JSON API responses.

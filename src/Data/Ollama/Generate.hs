@@ -93,8 +93,8 @@ data GenerateOps = GenerateOps
   -- ^ Optional system text to include in the generation context.
   , template :: !(Maybe Text)
   -- ^ Optional template to format the response.
-  , stream :: !(Maybe (GenerateResponse -> IO (), IO ()))
-  -- ^ Optional streaming functions: the first handles each response chunk, the second flushes the stream.
+  , stream :: !(Maybe (GenerateResponse -> IO ()))
+  -- ^ Optional callback function to be called with each incoming response.
   , raw :: !(Maybe Bool)
   -- ^ Optional flag to return the raw response.
   , keepAlive :: !(Maybe Int)
@@ -229,7 +229,7 @@ generate ops mbConfig =
   where
     handler = case stream ops of
       Nothing -> commonNonStreamingHandler
-      Just (sc, fl) -> commonStreamHandler sc fl
+      Just sendChunk -> commonStreamHandler sendChunk
 
 {- | MonadIO version of 'generate' for use in monadic contexts.
 

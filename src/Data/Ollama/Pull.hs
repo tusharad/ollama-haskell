@@ -97,16 +97,13 @@ pullOps modelName mInsecure mStream mbConfig = do
     "POST"
     (Just $ PullOps {name = modelName, insecure = mInsecure, stream = mStream})
     mbConfig
-    (commonStreamHandler onToken onComplete)
+    (commonStreamHandler onToken)
   where
     onToken :: PullResp -> IO ()
     onToken res = do
       let completed' = fromMaybe 0 (completed res)
       let total' = fromMaybe 0 (total res)
       putStrLn $ "Remaining bytes: " <> show (total' - completed')
-
-    onComplete :: IO ()
-    onComplete = putStrLn "Completed"
 
 {- | Simplified API for pulling a model.
 

@@ -94,13 +94,10 @@ push modelName mInsecure mStream mbConfig = do
       "POST"
       (Just $ PushOps {name = modelName, insecure = mInsecure, stream = mStream})
       mbConfig
-      (commonStreamHandler onToken onComplete)
+      (commonStreamHandler onToken)
   where
     onToken :: PushResp -> IO ()
     onToken _ = putStrLn "Pushing... "
-
-    onComplete :: IO ()
-    onComplete = putStrLn "Completed"
 
 {- | MonadIO version of 'push' for use in monadic contexts.
 
