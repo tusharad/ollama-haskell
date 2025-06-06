@@ -237,48 +237,48 @@ instance HasDone ChatResponse where
 -- @since 0.2.0.0
 data ModelOptions = ModelOptions
   { numKeep :: Maybe Int
-  , -- \^ Number of tokens to keep from the previous context.
+  , -- ^ Number of tokens to keep from the previous context.
     seed :: Maybe Int
-  , -- \^ Random seed for reproducibility.
+  , -- ^ Random seed for reproducibility.
     numPredict :: Maybe Int
-  , -- \^ Maximum number of tokens to predict.
+  , -- ^ Maximum number of tokens to predict.
     topK :: Maybe Int
-  , -- \^ Top-K sampling parameter.
+  , -- ^ Top-K sampling parameter.
     topP :: Maybe Double
-  , -- \^ Top-P (nucleus) sampling parameter.
+  , -- ^ Top-P (nucleus) sampling parameter.
     minP :: Maybe Double
-  , -- \^ Minimum probability for nucleus sampling.
+  , -- ^ Minimum probability for nucleus sampling.
     typicalP :: Maybe Double
-  , -- \^ Typical sampling probability.
+  , -- ^ Typical sampling probability.
     repeatLastN :: Maybe Int
-  , -- \^ Number of tokens to consider for repetition penalty.
+  , -- ^ Number of tokens to consider for repetition penalty.
     temperature :: Maybe Double
-  , -- \^ Sampling temperature. Higher = more randomness.
+  , -- ^ Sampling temperature. Higher = more randomness.
     repeatPenalty :: Maybe Double
-  , -- \^ Penalty for repeating the same tokens.
+  , -- ^ Penalty for repeating the same tokens.
     presencePenalty :: Maybe Double
-  , -- \^ Penalty for introducing new tokens.
+  , -- ^ Penalty for introducing new tokens.
     frequencyPenalty :: Maybe Double
-  , -- \^ Penalty for frequent tokens.
+  , -- ^ Penalty for frequent tokens.
     penalizeNewline :: Maybe Bool
-  , -- \^ Whether to penalize newline tokens.
+  , -- ^ Whether to penalize newline tokens.
     stop :: Maybe [Text]
-  , -- \^ List of stop sequences to end generation.
+  , -- ^ List of stop sequences to end generation.
     numa :: Maybe Bool
-  , -- \^ Whether to enable NUMA-aware optimizations.
+  , -- ^ Whether to enable NUMA-aware optimizations.
     numCtx :: Maybe Int
-  , -- \^ Number of context tokens.
+  , -- ^ Number of context tokens.
     numBatch :: Maybe Int
-  , -- \^ Batch size used during generation.
+  , -- ^ Batch size used during generation.
     numGpu :: Maybe Int
-  , -- \^ Number of GPUs to use.
+  , -- ^ Number of GPUs to use.
     mainGpu :: Maybe Int
-  , -- \^ Index of the primary GPU to use.
+  , -- ^ Index of the primary GPU to use.
     useMmap :: Maybe Bool
-  , -- \^ Whether to memory-map the model.
+  , -- ^ Whether to memory-map the model.
     numThread :: Maybe Int
+  -- ^ Number of threads to use for inference.
   }
-  -- \^ Number of threads to use for inference.
 
   deriving (Show, Eq)
 
