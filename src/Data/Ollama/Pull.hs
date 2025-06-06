@@ -17,7 +17,7 @@ high-level ('pull', 'pullM') and low-level ('pullOps', 'pullOpsM') APIs for pull
 support for streaming progress updates and insecure connections. The 'PullOps' type configures the
 pull request, and 'PullResp' represents the response containing the status and progress details.
 
-The pull operation is performed via a POST request to the "/api//pull" endpoint. Streaming mode,
+The pull operation is performed via a POST request to the @\/api\/pull@ endpoint. Streaming mode,
 when enabled, provides real-time progress updates by printing the remaining bytes to the console.
 
 Example:
@@ -76,7 +76,7 @@ instance HasDone PullResp where
 
 {- | Pulls a model with full configuration.
 
-Sends a POST request to the "/api//pull" endpoint to download the specified model. Supports
+Sends a POST request to the @\/api\/pull@ endpoint to download the specified model. Supports
 streaming progress updates (if 'stream' is 'Just True') and insecure connections (if 'insecure'
 is 'Just True'). Prints remaining bytes during streaming and "Completed" when finished.
 Returns 'Right' with a 'PullResp' on success or 'Left' with an 'OllamaError' on failure.
@@ -93,7 +93,7 @@ pullOps ::
   IO (Either OllamaError PullResp)
 pullOps modelName mInsecure mStream mbConfig = do
   withOllamaRequest
-    "/api//pull"
+    "/api/pull"
     "POST"
     (Just $ PullOps {name = modelName, insecure = mInsecure, stream = mStream})
     mbConfig

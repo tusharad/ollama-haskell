@@ -11,7 +11,7 @@ Description : High-level functions for loading and unloading models in the Ollam
 This module provides functions to load and unload generative models in the Ollama server.
 It includes both IO-based functions ('loadGenModel', 'unloadGenModel') and monadic versions
 ('loadGenModelM', 'unloadGenModelM') for use in 'MonadIO' contexts. The operations are
-performed via POST requests to the "/api//generate" endpoint, leveraging the 'GenerateOps'
+performed via POST requests to the @\/api\/generate@ endpoint, leveraging the 'GenerateOps'
 configuration from the 'Data.Ollama.Generate' module.
 
 Loading a model keeps it in memory for faster subsequent requests, while unloading frees
@@ -40,7 +40,7 @@ import Data.Text (Text)
 
 {- | Loads a generative model into memory.
 
-Sends a POST request to the "/api//generate" endpoint to load the specified model into
+Sends a POST request to the @\/api\/generate@ endpoint to load the specified model into
 memory, ensuring faster response times for subsequent requests. Returns 'Right ()' on
 success or 'Left' with an 'OllamaError' on failure.
 --
@@ -52,11 +52,11 @@ loadGenModel ::
   IO (Either OllamaError ())
 loadGenModel m = do
   let ops = Gen.defaultGenerateOps {Gen.modelName = m}
-  withOllamaRequest "/api//generate" "POST" (Just ops) Nothing commonNonStreamingHandler
+  withOllamaRequest "/api/generate" "POST" (Just ops) Nothing commonNonStreamingHandler
 
 {- | Unloads a generative model from memory.
 
-Sends a POST request to the "/api//generate" endpoint with a keep-alive duration of zero
+Sends a POST request to the @\/api\/generate@ endpoint with a keep-alive duration of zero
 to unload the specified model from memory, freeing up resources. Returns 'Right ()' on
 success or 'Left' with an 'OllamaError' on failure.
 --
@@ -68,7 +68,7 @@ unloadGenModel ::
   IO (Either OllamaError ())
 unloadGenModel m = do
   let ops = Gen.defaultGenerateOps {Gen.modelName = m, Gen.keepAlive = Just 0}
-  withOllamaRequest "/api//generate" "POST" (Just ops) Nothing commonNonStreamingHandler
+  withOllamaRequest "/api/generate" "POST" (Just ops) Nothing commonNonStreamingHandler
 
 {- | MonadIO version of 'loadGenModel' for use in monadic contexts.
 

@@ -37,8 +37,9 @@ timeoutTest = testCase "Setting timeout" $ do
   let config = Just $ defaultOllamaConfig {timeout = 1}
   eRes <- chat defaultChatOps config
   case eRes of
+    Right _ -> assertFailure "The model responded before timeout"
     Left (TimeoutError _) -> pure ()
-    _ -> assertFailure "Expected timeout error"
+    Left other -> assertFailure $ "Expected timeout error, got " ++ show other
 
 -- | Test model lifecycle hooks on failure
 hooksFailTest :: TestTree

@@ -13,7 +13,7 @@ Description : Functionality for copying models in the Ollama client.
 
 This module provides functions to copy a model from a source name to a destination name using the Ollama API.
 It includes both an IO-based function ('copyModel') and a monadic version ('copyModelM') for use in
-'MonadIO' contexts. The copy operation is performed via a POST request to the "/api//copy" endpoint.
+'MonadIO' contexts. The copy operation is performed via a POST request to the @\/api\/copy@ endpoint.
 
 Example:
 
@@ -45,7 +45,7 @@ data CopyModelOps = CopyModelOps
 
 {- | Copies a model from a source name to a destination name.
 
-Sends a POST request to the "/api//copy" endpoint with the source and destination model names.
+Sends a POST request to the @\/api\/copy@ endpoint with the source and destination model names.
 Returns 'Right ()' on success or 'Left' with an 'OllamaError' on failure.
 Example:
 
@@ -66,7 +66,7 @@ copyModel
   mbConfig = do
     let reqBody = CopyModelOps {source = source_, destination = destination_}
     withOllamaRequest
-      "/api//copy"
+      "/api/copy"
       "POST"
       (Just reqBody)
       mbConfig

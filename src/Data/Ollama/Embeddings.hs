@@ -107,7 +107,7 @@ instance ToJSON EmbeddingOps where
 
 {- | Generates embeddings for a list of input texts with full configuration.
 
-Sends a POST request to the "/api//embed" endpoint to generate embeddings for the provided inputs.
+Sends a POST request to the @\/api\/embed@ endpoint to generate embeddings for the provided inputs.
 Allows customization of truncation, keep-alive settings, model options, and Ollama configuration.
 Returns 'Right' with an 'EmbeddingResp' on success or 'Left' with an 'OllamaError' on failure.
 -}
@@ -127,7 +127,7 @@ embeddingOps ::
   IO (Either OllamaError EmbeddingResp)
 embeddingOps modelName input_ mTruncate mKeepAlive mbOptions mbConfig = do
   withOllamaRequest
-    "/api//embed"
+    "/api/embed"
     "POST"
     ( Just $
         EmbeddingOps
