@@ -10,7 +10,7 @@ Description : Functionality for listing running models in the Ollama client.
 
 This module provides functions to retrieve a list of models currently running on the Ollama server.
 It includes both an IO-based function ('ps') and a monadic version ('psM') for use in 'MonadIO'
-contexts. The operation is performed via a GET request to the "/api//ps" endpoint, returning a
+contexts. The operation is performed via a GET request to the @\/api\/ps@ endpoint, returning a
 'RunningModels' type containing a list of 'RunningModel' records with details about each running model.
 
 Example:
@@ -81,7 +81,7 @@ instance FromJSON RunningModel where
 
 {- | Retrieves a list of currently running models from the Ollama server.
 
-Sends a GET request to the "/api//ps" endpoint to fetch the list of running models.
+Sends a GET request to the @\/api\/ps@ endpoint to fetch the list of running models.
 Returns 'Right' with a 'RunningModels' containing the list of 'RunningModel' on success,
 or 'Left' with an 'OllamaError' on failure.
 Example:
@@ -95,7 +95,7 @@ ps ::
   IO (Either OllamaError RunningModels)
 ps mbConfig = do
   withOllamaRequest
-    "/api//ps"
+    "/api/ps"
     "GET"
     (Nothing :: Maybe Value)
     mbConfig

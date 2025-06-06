@@ -13,7 +13,7 @@ Description : Functionality for creating new models in the Ollama client.
 This module provides functions to create a new model in the Ollama API using either a model file
 content or a file path. It includes both an IO-based function ('createModel') and a monadic version
 ('createModelM') for use in 'MonadIO' contexts. The create operation is performed via a POST request
-to the "/api//pull" endpoint, with streaming support for progress updates.
+to the @\/api\/pull@ endpoint, with streaming support for progress updates.
 
 Note: If both 'modelFile' and 'path' are provided, 'modelFile' takes precedence.
 
@@ -81,7 +81,7 @@ instance FromJSON CreateModelResp where
 
 {- | Creates a new model using either model file content or a file path.
 
-Sends a POST request to the "/api//pull" endpoint to create a model with the specified name.
+Sends a POST request to the @\/api\/pull@ endpoint to create a model with the specified name.
 The model can be defined either by 'modelFile' (Modelfile content as text) or 'path' (file path to a Modelfile).
 If both are provided, 'modelFile' is used. Supports streaming progress updates if 'stream' is 'Just True'.
 Prints progress messages to the console during creation.
@@ -106,7 +106,7 @@ createModel
   mbConfig =
     void $
       withOllamaRequest
-        "/api//pull"
+        "/api/pull"
         "POST"
         ( Just $
             CreateModelOps

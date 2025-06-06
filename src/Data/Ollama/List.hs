@@ -8,7 +8,7 @@
 --
 -- This module provides functions to retrieve a list of models available on the Ollama server.
 -- It includes both an IO-based function ('list') and a monadic version ('listM') for use in
--- 'MonadIO' contexts. The list operation is performed via a GET request to the "/api//tags" endpoint,
+-- 'MonadIO' contexts. The list operation is performed via a GET request to the @\/api\/tags@ endpoint,
 -- returning a 'Models' type containing a list of 'ModelInfo' records with details about each model.
 --
 -- Example:
@@ -75,7 +75,7 @@ instance FromJSON ModelInfo where
 
 -- | Retrieves a list of available models from the Ollama server.
 --
--- Sends a GET request to the "/api//tags" endpoint to fetch the list of models.
+-- Sends a GET request to the @\/api\/tags@ endpoint to fetch the list of models.
 -- Returns 'Right' with a 'Models' containing the list of 'ModelInfo' on success,
 -- or 'Left' with an 'OllamaError' on failure.
 list ::
@@ -83,7 +83,7 @@ list ::
   IO (Either OllamaError Models)
 list mbConfig = do
   withOllamaRequest
-    "/api//tags"
+    "/api/tags"
     "GET"
     (Nothing :: Maybe Value)
     mbConfig

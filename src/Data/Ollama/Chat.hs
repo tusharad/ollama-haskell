@@ -263,7 +263,7 @@ defaultChatOps =
 
 {- | Sends a chat request to the Ollama API.
 
-Validates the 'ChatOps' configuration and sends a POST request to the "/api//chat" endpoint.
+Validates the 'ChatOps' configuration and sends a POST request to the @\/api\/chat@ endpoint.
 Supports both streaming and non-streaming responses based on the 'stream' field in 'ChatOps'.
 Returns an 'Either' containing an 'OllamaError' on failure or a 'ChatResponse' on success.
 
@@ -277,7 +277,7 @@ chat :: ChatOps -> Maybe OllamaConfig -> IO (Either OllamaError ChatResponse)
 chat ops mbConfig =
   case validateChatOps ops of
     Left err -> return $ Left err
-    Right _ -> withOllamaRequest "/api//chat" "POST" (Just ops) mbConfig handler
+    Right _ -> withOllamaRequest "/api/chat" "POST" (Just ops) mbConfig handler
   where
     handler = case stream ops of
       Nothing -> commonNonStreamingHandler

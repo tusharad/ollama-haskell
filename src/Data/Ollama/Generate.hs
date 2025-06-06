@@ -211,7 +211,7 @@ defaultGenerateOps =
 
 {- | Generates text using the specified model and configuration.
 
-Validates the 'GenerateOps' configuration and sends a POST request to the "/api//generate" endpoint.
+Validates the 'GenerateOps' configuration and sends a POST request to the @\/api\/generate@ endpoint.
 Supports both streaming and non-streaming responses based on the 'stream' field in 'GenerateOps'.
 Returns 'Right' with a 'GenerateResponse' on success or 'Left' with an 'OllamaError' on failure.
 
@@ -225,7 +225,7 @@ generate :: GenerateOps -> Maybe OllamaConfig -> IO (Either OllamaError Generate
 generate ops mbConfig =
   case validateGenerateOps ops of
     Left err -> pure $ Left err
-    Right _ -> withOllamaRequest "/api//generate" "POST" (Just ops) mbConfig handler
+    Right _ -> withOllamaRequest "/api/generate" "POST" (Just ops) mbConfig handler
   where
     handler = case stream ops of
       Nothing -> commonNonStreamingHandler

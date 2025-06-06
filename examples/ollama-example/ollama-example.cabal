@@ -39,7 +39,6 @@ library
       Example.List
       Example.SimpleChat
       Example.SimpleGenerate
-      Lib
   other-modules:
       Paths_ollama_example
   autogen-modules:

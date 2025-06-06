@@ -287,7 +287,7 @@ defaultModelOptions =
 
 {- | Retrieves the Ollama server version.
 
-Sends a GET request to the "/api//version" endpoint and returns the server version
+Sends a GET request to the @\/api\/version@ endpoint and returns the server version
 as a 'Version' wrapped in an 'Either' 'OllamaError'.
 
 Example:
@@ -299,7 +299,7 @@ Example:
 getVersion :: IO (Either OllamaError Version)
 getVersion = do
   withOllamaRequest
-    "/api//version"
+    "/api/version"
     "GET"
     (Nothing :: Maybe Value)
     Nothing

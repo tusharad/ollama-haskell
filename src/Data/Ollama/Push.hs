@@ -14,7 +14,7 @@ Description : Functionality for pushing models to the Ollama server.
 
 This module provides functions to push (upload) a model to the Ollama server. It includes
 both an IO-based function ('push') and a monadic version ('pushM') for use in 'MonadIO'
-contexts. The push operation is performed via a POST request to the "/api//pull" endpoint,
+contexts. The push operation is performed via a POST request to the @\/api\/pull@ endpoint,
 with support for streaming progress updates and insecure connections.
 
 The 'PushOps' type configures the push request, and 'PushResp' represents the response
@@ -72,7 +72,7 @@ instance HasDone PushResp where
 
 {- | Pushes a model to the Ollama server with specified options.
 
-Sends a POST request to the "/api//pull" endpoint to upload the specified model. Supports
+Sends a POST request to the @\/api\/pull@ endpoint to upload the specified model. Supports
 streaming progress updates (if 'stream' is 'Just True') and insecure connections (if
 'insecure' is 'Just True'). Prints "Pushing..." during streaming and "Completed" when
 finished. Returns '()' on completion.
@@ -90,7 +90,7 @@ push ::
 push modelName mInsecure mStream mbConfig = do
   void $
     withOllamaRequest
-      "/api//push"
+      "/api/push"
       "POST"
       (Just $ PushOps {name = modelName, insecure = mInsecure, stream = mStream})
       mbConfig

@@ -14,7 +14,7 @@ Description : Functionality for retrieving detailed information about models in 
 This module provides functions to fetch detailed information about a specific model on the Ollama server.
 It includes both high-level ('showModel', 'showModelM') and low-level ('showModelOps', 'showModelOpsM') APIs
 for retrieving model details, with support for verbose output. The operation is performed via a POST request
-to the "/api//show" endpoint, returning a 'ShowModelResponse' containing comprehensive model metadata.
+to the @\/api\/show@ endpoint, returning a 'ShowModelResponse' containing comprehensive model metadata.
 
 The 'ShowModelOps' type configures the request, and 'ShowModelResponse' and 'ShowModelInfo' represent the
 response structure. The module also re-exports 'CT.ModelDetails' for completeness.
@@ -170,7 +170,7 @@ instance FromJSON ShowModelInfo where
 
 {- | Retrieves model information with configuration options.
 
-Sends a POST request to the "/api//show" endpoint to fetch detailed information about
+Sends a POST request to the @\/api\/show@ endpoint to fetch detailed information about
 the specified model. Supports verbose output if 'verbose' is 'Just True' (though verbose
 mode parsing is currently incomplete). Returns 'Right' with a 'ShowModelResponse' on
 success or 'Left' with an 'OllamaError' on failure.
@@ -185,7 +185,7 @@ showModelOps ::
   IO (Either OllamaError ShowModelResponse)
 showModelOps modelName verbose_ mbConfig = do
   withOllamaRequest
-    "/api//show"
+    "/api/show"
     "POST"
     ( Just $
         ShowModelOps
