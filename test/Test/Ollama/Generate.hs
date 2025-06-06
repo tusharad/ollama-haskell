@@ -257,12 +257,11 @@ testStreamingHandler = testCase "Should handle streaming response" $ do
   chunksRef <- newIORef []
   -- Define the stream handler: accumulate responses
   let streamHandler chunk = modifyIORef chunksRef (++ [genResponse chunk])
-      flushHandler = pure ()
       ops =
         defaultGenerateOps
           { modelName = "gemma3"
           , prompt = "Write few words about Haskell."
-          , stream = Just (streamHandler, flushHandler)
+          , stream = Just streamHandler
           }
   eRes <- generate ops Nothing
   -- Collect streamed chunks from IORef
