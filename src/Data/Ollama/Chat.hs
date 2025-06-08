@@ -148,8 +148,8 @@ toolMessage c = genMessage Tool c
 
 Checks that the 'chatModelName' is not empty and that no 'Message' in 'messages' has empty content.
 Returns 'Right' with the validated 'ChatOps' or 'Left' with an 'OllamaError' if validation fails.
---
--- @since 0.2.0.0
+
+@since 0.2.0.0
 -}
 validateChatOps :: ChatOps -> Either OllamaError ChatOps
 validateChatOps ops
