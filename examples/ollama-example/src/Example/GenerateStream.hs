@@ -4,13 +4,15 @@ module Example.GenerateStream (runApp) where
 
 import Data.Ollama.Generate
 import qualified Data.Text.IO as T
-
--- Pass callback function to define what you wanna do with those chunks
+import System.IO (hFlush, stdout)
 
 runApp :: IO ()
 runApp = do
-  let streamHandler = T.putStr . genResponse
-  let ops =
+  let -- Callback to specify what to do with each response chunk
+      streamHandler resp = do
+        T.putStr $ genResponse resp
+        hFlush stdout
+      ops =
         defaultGenerateOps
           { modelName = "gemma3"
           , prompt = "What is the meaning of life?"

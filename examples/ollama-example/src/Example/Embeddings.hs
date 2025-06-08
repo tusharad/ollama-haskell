@@ -6,7 +6,7 @@ import Data.Ollama.Embeddings
 
 runApp :: IO ()
 runApp = do
-  eRes <- embedding "gemma3" ["Hello World", "Nice to meet you"]
+  eRes <- embedding "qwen3:0.6b" ["Hello World", "Nice to meet you"]
   case eRes of
     Left err -> putStrLn $ "Something went wrong: " ++ show err
     Right r -> do

@@ -7,8 +7,6 @@ import Data.Ollama.Chat
 import qualified Data.Text.IO as T
 import Data.Ollama.Common.Utils (encodeImage)
 
--- Pass callback function to define what you wanna do with those chunks
-
 runApp :: IO ()
 runApp = do
   mbEncodedImage <- encodeImage "../sample.png"

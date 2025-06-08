@@ -9,10 +9,9 @@ runApp :: IO ()
 runApp = do
   let modelOps =
         defaultModelOptions
-          { numCtx = Just 10000
+          { numCtx = Just 10000 -- By default Ollama have a small context window
           , temperature = Just 0.8
           }
-  -- \^ By default Ollama have a small context window
 
   let ops =
         defaultGenerateOps
