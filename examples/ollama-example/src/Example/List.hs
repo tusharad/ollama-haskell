@@ -10,5 +10,5 @@ runApp = do
   eList <- list Nothing
   case eList of
     Left err -> putStrLn $ "Something went wrong: " ++ show err
-    Right (Models modelInfoList) -> do 
+    Right (Models modelInfoList) -> do
       mapM_ (T.putStrLn . name) modelInfoList
