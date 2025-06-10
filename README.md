@@ -1,5 +1,9 @@
 # 🦙 Ollama Haskell
 
+<div style="text-align: center;">
+<img src="./examples/ollama_haskell.png" alt="logo image" height="200"/>
+</div>
+
 **`ollama-haskell`** is an unofficial Haskell client for [Ollama](https://ollama.com), inspired by [`ollama-python`](https://github.com/ollama/ollama-python). It enables interaction with locally running LLMs through the Ollama HTTP API — directly from Haskell.
 
 ---
