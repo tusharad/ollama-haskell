@@ -2,9 +2,9 @@ name: Haskell CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
 
 permissions:
   contents: read
@@ -80,12 +80,12 @@ jobs:
       uses: actions/checkout@v4
  
     - name: Installing ollama
-      uses: pydantic/ollama-action@v3
+      uses: ai-action/ollama-action@v2
       with:
         model: gemma3:latest
 
     - name: Installing ollama
-      uses: pydantic/ollama-action@v3
+      uses: ai-action/ollama-action@v2
       with:
         model: qwen3:0.6b
 
@@ -94,6 +94,33 @@ jobs:
         ollama run gemma3 "Hey, how are you?"
         ollama run qwen3:0.6b "Hey, how are you?"
 
+    - name: install dependancies, build and test stack project.
+      uses: freckle/stack-action@v5
+
+  # Run tests with multiple ollama versions
+  ollama-versions:
+    needs: tests
+    name: tests with multiple ollama server versions
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        ollama-versions: ["0.15.1", "0.14.3", "0.13.5"]
+    steps:
+    - name: Copy repo into actions 
+      uses: actions/checkout@v4
+ 
+    - name: Installing ollama
+      uses: ai-action/ollama-action@v2
+      with:
+        model: gemma3:latest
+        version: ${{matrix.ollama-versions}}
+    
+    - name: Installing ollama
+      uses: ai-action/ollama-action@v2
+      with:
+        model: qwen3:0.6b
+        version: ${{matrix.ollama-versions}}
+    
     - name: install dependancies, build and test stack project.
       uses: freckle/stack-action@v5
 
