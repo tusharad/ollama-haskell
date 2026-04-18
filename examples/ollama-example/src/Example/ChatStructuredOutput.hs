@@ -18,17 +18,17 @@ runApp = do
           emptyObject
             |+ ( "friends"
                , JArray
-                  ( JObject
-                      ( buildSchema $
-                          emptyObject
-                            |+ ("name", JString)
-                            |+ ("age", JNumber)
-                            |+ ("isAvailable", JBoolean)
-                            |! "name"
-                            |! "age"
-                            |! "isAvailable"
-                      )
-                  )
+                   ( JObject
+                       ( buildSchema $
+                           emptyObject
+                             |+ ("name", JString)
+                             |+ ("age", JNumber)
+                             |+ ("isAvailable", JBoolean)
+                             |! "name"
+                             |! "age"
+                             |! "isAvailable"
+                       )
+                   )
                )
 
   let prompt =

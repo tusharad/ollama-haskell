@@ -86,9 +86,10 @@ data GenerateOps = GenerateOps
   , images :: !(Maybe [Text])
   -- ^ Optional list of Base64-encoded images to include with the request.
   , format :: !(Maybe Format)
-  -- ^ Optional format specifier for the response (e.g., JSON).
-  --
-  -- @since 0.1.3.0
+  {- ^ Optional format specifier for the response (e.g., JSON).
+
+  @since 0.1.3.0
+  -}
   , system :: !(Maybe Text)
   -- ^ Optional system text to include in the generation context.
   , template :: !(Maybe Text)
@@ -100,13 +101,15 @@ data GenerateOps = GenerateOps
   , keepAlive :: !(Maybe Int)
   -- ^ Optional override for how long (in minutes) the model stays loaded in memory (default: 5 minutes).
   , options :: !(Maybe ModelOptions)
-  -- ^ Optional model parameters (e.g., temperature) as specified in the Modelfile.
-  --
-  -- @since 0.1.3.0
+  {- ^ Optional model parameters (e.g., temperature) as specified in the Modelfile.
+
+  @since 0.1.3.0
+  -}
   , think :: !(Maybe Bool)
-  -- ^ Optional flag to enable thinking mode.
-  --
-  -- @since 0.2.0.0
+  {- ^ Optional flag to enable thinking mode.
+
+  @since 0.2.0.0
+  -}
   }
 
 instance Show GenerateOps where

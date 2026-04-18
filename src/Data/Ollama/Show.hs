@@ -73,13 +73,15 @@ data ShowModelResponse = ShowModelResponse
   , modelInfo :: !ShowModelInfo
   -- ^ Detailed technical information about the model.
   , license :: !(Maybe Text)
-  -- ^ Optional license information for the model.
-  --
-  -- @since 0.2.0.0
+  {- ^ Optional license information for the model.
+
+  @since 0.2.0.0
+  -}
   , capabilities :: Maybe [Text]
-  -- ^ Optional list of model capabilities.
-  --
-  -- @since 0.2.0.0
+  {- ^ Optional list of model capabilities.
+
+  @since 0.2.0.0
+  -}
   }
   deriving (Show, Eq)
 
