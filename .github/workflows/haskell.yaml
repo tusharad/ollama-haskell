@@ -63,7 +63,7 @@ jobs:
       stack-yamls: ${{ steps.generate.outputs.stack-yamls }}
 
   build:
-    needs: generate, hlint, format
+    needs: [generate, hlint, format]
     strategy:
       matrix:
         stack-yaml: ${{ fromJSON(needs.generate.outputs.stack-yamls) }}
