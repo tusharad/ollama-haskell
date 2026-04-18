@@ -13,10 +13,13 @@ jobs:
 
   only-merge-develop:
     runs-on: ubuntu-latest
-    if : github.event_name == 'pull_request'
     steps:
       - name: Enforce develop-to-main merges
         run: |
+          if : github.event_name == 'pull_request'; then
+            echo "This workflow only runs for pull requests. Skipping checks."
+            exit 0
+          fi
           if [[ "${{ github.event.pull_request.base.ref }}" != "main" ]]; then
             echo "Pull request is not targeting main branch. Skipping checks."
             exit 0
