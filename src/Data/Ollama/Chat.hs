@@ -170,21 +170,24 @@ data ChatOps = ChatOps
   , tools :: !(Maybe [InputTool])
   -- ^ Optional tools that may be used in the chat.
   , format :: !(Maybe Format)
-  -- ^ Optional format for the chat response (e.g., JSON or JSON schema).
-  --
-  -- @since 0.1.3.0
+  {- ^ Optional format for the chat response (e.g., JSON or JSON schema).
+
+  @since 0.1.3.0
+  -}
   , stream :: !(Maybe (ChatResponse -> IO (), IO ()))
   -- ^ Optional callback function to be called with each incoming response.
   , keepAlive :: !(Maybe Int)
   -- ^ Optional override for the response timeout in minutes (default: 15 minutes).
   , options :: !(Maybe ModelOptions)
-  -- ^ Optional model parameters (e.g., temperature) as specified in the Modelfile.
-  --
-  -- @since 0.1.3.0
+  {- ^ Optional model parameters (e.g., temperature) as specified in the Modelfile.
+
+  @since 0.1.3.0
+  -}
   , think :: !(Maybe Bool)
-  -- ^ Optional flag to enable thinking mode.
-  --
-  -- @since 0.2.0.0
+  {- ^ Optional flag to enable thinking mode.
+
+  @since 0.2.0.0
+  -}
   }
 
 instance Show ChatOps where

@@ -126,14 +126,16 @@ data GenerateResponse = GenerateResponse
   , evalDuration :: !(Maybe Int64)
   -- ^ Optional duration in milliseconds for evaluations during the generation process.
   , thinking :: !(Maybe Text)
-  -- ^ Thinking of reasoning models; if think is set to true
-  --
-  -- @since 0.2.0.0
+  {- ^ Thinking of reasoning models; if think is set to true
+
+  @since 0.2.0.0
+  -}
   , doneReason :: !(Maybe Text)
-  -- ^ Reason why the generation process completed (e.g., "stop", "length", "cancel").
-  -- Available when the Ollama server provides completion reason information.
-  --
-  -- @since 0.2.1.0
+  {- ^ Reason why the generation process completed (e.g., "stop", "length", "cancel").
+  Available when the Ollama server provides completion reason information.
+
+  @since 0.2.1.0
+  -}
   }
   deriving (Show, Eq)
 
@@ -181,9 +183,10 @@ data Message = Message
   , images :: !(Maybe [Text])
   -- ^ Optional list of base64 encoded images that accompany the message.
   , tool_calls :: !(Maybe [ToolCall])
-  -- ^ a list of tools in JSON that the model wants to use
-  --
-  -- @since 0.1.3.0
+  {- ^ a list of tools in JSON that the model wants to use
+
+  @since 0.1.3.0
+  -}
   , thinking :: !(Maybe Text)
   --
   -- @since 0.2.0.0
@@ -212,10 +215,11 @@ data ChatResponse = ChatResponse
   , evalDuration :: !(Maybe Int64)
   -- ^ Optional duration in milliseconds for evaluations during the chat process.
   , doneReason :: !(Maybe Text)
-  -- ^ Reason why the chat process completed (e.g., "stop", "length", "cancel").
-  -- Available when the Ollama server provides completion reason information.
-  --
-  -- @since 0.2.1.0
+  {- ^ Reason why the chat process completed (e.g., "stop", "length", "cancel").
+  Available when the Ollama server provides completion reason information.
+
+  @since 0.2.1.0
+  -}
   }
   deriving (Show, Eq)
 

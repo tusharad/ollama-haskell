@@ -75,13 +75,15 @@ data EmbeddingOps = EmbeddingOps
   , keepAlive :: !(Maybe Int)
   -- ^ Optional override for the keep-alive timeout in minutes.
   , modelOptions :: !(Maybe ModelOptions)
-  -- ^ Optional model parameters (e.g., temperature) as specified in the Modelfile.
-  --
-  -- @since 0.2.0.0
+  {- ^ Optional model parameters (e.g., temperature) as specified in the Modelfile.
+
+  @since 0.2.0.0
+  -}
   , dimensions :: !(Maybe Int)
-  -- ^ number of dimensions for the embedding
-  --
-  -- @since 0.2.1.0
+  {- ^ number of dimensions for the embedding
+
+  @since 0.2.1.0
+  -}
   }
   deriving (Show, Eq)
 

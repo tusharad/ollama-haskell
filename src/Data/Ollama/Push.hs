@@ -48,11 +48,13 @@ data PushOps = PushOps
   { name :: !Text
   -- ^ The name of the model to push (e.g., "gemma3").
   , insecure :: !(Maybe Bool)
-  -- ^ Optional flag to allow insecure connections.
-  -- If 'Just True', insecure connections are permitted.
+  {- ^ Optional flag to allow insecure connections.
+  If 'Just True', insecure connections are permitted.
+  -}
   , stream :: !(Maybe Bool)
-  -- ^ Optional flag to enable streaming of the upload.
-  -- If 'Just True', progress updates are streamed.
+  {- ^ Optional flag to enable streaming of the upload.
+  If 'Just True', progress updates are streamed.
+  -}
   }
   deriving (Show, Eq, Generic, ToJSON)
 

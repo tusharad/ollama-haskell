@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: haskell-actions/run-fourmolu@v11
         with:
-          version: "latest"
+          version: "0.17.0.0"
           working-directory: "./src"
 
   hlint:

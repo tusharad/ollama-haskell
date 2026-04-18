@@ -82,22 +82,25 @@ Provides methods for saving, loading, listing, and deleting conversations in a m
 @since 0.2.0.0
 -}
 class Monad m => ConversationStore m where
-  -- | Saves a conversation to the store.
-  --
-  -- Validates the conversation and updates its 'lastUpdated' timestamp before saving.
+  {- | Saves a conversation to the store.
+
+  Validates the conversation and updates its 'lastUpdated' timestamp before saving.
+  -}
   saveConversation :: Conversation -> m ()
 
-  -- | Loads a conversation by its ID.
-  --
-  -- Returns 'Just' the conversation if found, or 'Nothing' if not.
+  {- | Loads a conversation by its ID.
+
+  Returns 'Just' the conversation if found, or 'Nothing' if not.
+  -}
   loadConversation :: Text -> m (Maybe Conversation)
 
   -- | Lists all conversations in the store.
   listConversations :: m [Conversation]
 
-  -- | Deletes a conversation by its ID.
-  --
-  -- Returns 'True' if the conversation was found and deleted, 'False' otherwise.
+  {- | Deletes a conversation by its ID.
+
+  Returns 'True' if the conversation was found and deleted, 'False' otherwise.
+  -}
   deleteConversation :: Text -> m Bool
 
 {- | In-memory conversation store using a 'TVar' for thread-safe operations.
