@@ -7,7 +7,7 @@ import Control.Monad (void)
 import Data.Aeson qualified as Aeson
 import Data.ByteString.Lazy.Char8 qualified as BSL
 import Data.IORef (modifyIORef, newIORef, readIORef, writeIORef)
-import Data.List.NonEmpty (fromList)
+import Data.List.NonEmpty (fromList, NonEmpty(..))
 import Data.List.NonEmpty qualified as NE
 import Data.Map qualified as HM
 import Data.Maybe (isJust)
@@ -35,7 +35,7 @@ basicChatTest = testCase "Basic chat should contain 4 for 2+2" $ do
 timeoutTest :: TestTree
 timeoutTest = testCase "Setting timeout" $ do
   let config = Just $ defaultOllamaConfig {timeout = 1}
-  eRes <- chat defaultChatOps config
+  eRes <- chat defaultChatOps { messages = userMessage "Write a poem about greek history" :| [] } config
   case eRes of
     Right _ -> assertFailure "The model responded before timeout"
     Left (TimeoutError _) -> pure ()
