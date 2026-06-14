@@ -180,7 +180,7 @@ testThinkOption :: TestTree
 testThinkOption = testCase "Should activate thinking mode when think=True" $ do
   let ops =
         defaultGenerateOps
-          { modelName = "qwen3:0.6b"
+          { modelName = "qwen3.5:2b"
           , prompt = "What is 2+2?"
           , think = Just True
           }

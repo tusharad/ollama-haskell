@@ -107,12 +107,12 @@ jobs:
     - name: Installing ollama
       uses: ai-action/ollama-action@v2
       with:
-        model: qwen3:0.6b
+        model: qwen3.5:2b
 
     - name: Warming up ollama models
       run: |
         ollama run gemma3 "Hey, how are you?"
-        ollama run qwen3:0.6b "Hey, how are you?"
+        ollama run qwen3.5:2b "Hey, how are you?"
 
     - name: install dependancies, build and test stack project.
       uses: freckle/stack-action@v5

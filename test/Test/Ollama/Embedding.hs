@@ -23,7 +23,7 @@ import Test.Tasty.HUnit
 --   let opts = defaultModelOptions {numKeep = Just 5, seed = Just 42}
 --   res <-
 --     embeddingOps
---       "qwen3:0.6b"
+--       "qwen3.5:2b"
 --       ["Hello world"]
 --       (Just True)
 --       (Just 30)

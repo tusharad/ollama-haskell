@@ -21,7 +21,7 @@ testShowModelBasic = testCase "Show model info: basic call" $ do
 
 testShowModelVerbose :: TestTree
 testShowModelVerbose = testCase "Show model info: verbose enabled" $ do
-  res <- showModelOps "qwen3:0.6b" (Just True) Nothing
+  res <- showModelOps "qwen3.5:2b" (Just True) Nothing
   case res of
     Left _ -> pure () -- assertFailure $ "Expected success, got error: " ++ show err
     Right ShowModelResponse {template, parameters} -> do

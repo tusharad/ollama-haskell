@@ -10,7 +10,7 @@ runApp :: IO ()
 runApp = do
   let ops =
         defaultGenerateOps
-          { modelName = "qwen3:0.6b"
+          { modelName = "qwen3.5:2b"
           , prompt = "Why is sky blue?"
           , think = Just True
           }
