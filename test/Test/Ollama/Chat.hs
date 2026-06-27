@@ -268,7 +268,7 @@ multiMessageConversationTest = testCase "Multi-message conversation should work"
           , assistantMessage "2+2 equals 4."
           , userMessage "What about 3+3?"
           ]
-      ops = defaultChatOps {messages = msgs}
+      ops = defaultChatOps {modelName = "qwen3.5:2b", messages = msgs}
   eRes <- chat ops Nothing
   case eRes of
     Left _ -> assertFailure "Expected success, got error"
