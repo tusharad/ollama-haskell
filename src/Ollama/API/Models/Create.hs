@@ -1,22 +1,23 @@
--- |
--- Module      : Ollama.API.Models.Create
--- Copyright   : (c) 2024-2026 Tushar Adhatrao
--- License     : MIT
--- Maintainer  : tusharadhatrao@gmail.com
--- Stability   : stable
--- Portability : portable
---
--- Model creation endpoint (@/api/create@).
---
--- @since 1.0.0.0
-module Ollama.API.Models.Create
-  ( CreateRequest (..)
-  , CreateResponse (..)
-  , QuantizationType (..)
-  , createModel
-  , createModelStream
-  , defaultCreateRequest
-  ) where
+{- |
+Module      : Ollama.API.Models.Create
+Copyright   : (c) 2024-2026 Tushar Adhatrao
+License     : MIT
+Maintainer  : tusharadhatrao@gmail.com
+Stability   : stable
+Portability : portable
+
+Model creation endpoint (@/api/create@).
+
+@since 1.0.0.0
+-}
+module Ollama.API.Models.Create (
+  CreateRequest (..),
+  CreateResponse (..),
+  QuantizationType (..),
+  createModel,
+  createModelStream,
+  defaultCreateRequest,
+) where
 
 import Conduit (ConduitT)
 import Control.Monad.IO.Class (MonadIO (liftIO))
@@ -34,9 +35,10 @@ import Ollama.Types.Common (Digest, ModelName)
 import Ollama.Types.Message (Message)
 import Ollama.Types.Options (ModelOptions)
 
--- | Quantization precision options for model creation.
---
--- @since 1.0.0.0
+{- | Quantization precision options for model creation.
+
+@since 1.0.0.0
+-}
 data QuantizationType = Q4_K_M | Q4_K_S | Q8_0
   deriving stock (Eq, Show, Bounded, Enum, Generic)
 
@@ -52,9 +54,10 @@ instance FromJSON QuantizationType where
     "q8_0" -> pure Q8_0
     other -> fail $ "Invalid QuantizationType: " <> show other
 
--- | Model creation request configuration payload.
---
--- @since 1.0.0.0
+{- | Model creation request configuration payload.
+
+@since 1.0.0.0
+-}
 data CreateRequest = CreateRequest
   { crqModel :: !ModelName
   , crqFrom :: !(Maybe ModelName)
@@ -91,9 +94,10 @@ instance ToJSON CreateRequest where
         , ("quantize" .=) <$> crqQuantize
         ]
 
--- | Smart constructor for a basic 'CreateRequest'.
---
--- @since 1.0.0.0
+{- | Smart constructor for a basic 'CreateRequest'.
+
+@since 1.0.0.0
+-}
 defaultCreateRequest :: ModelName -> CreateRequest
 defaultCreateRequest name =
   CreateRequest
@@ -112,9 +116,10 @@ defaultCreateRequest name =
     , crqQuantize = Nothing
     }
 
--- | Progress / status response during model creation.
---
--- @since 1.0.0.0
+{- | Progress / status response during model creation.
+
+@since 1.0.0.0
+-}
 data CreateResponse = CreateResponse
   { crsStatus :: !Text
   , crsDigest :: !(Maybe Digest)
@@ -143,14 +148,16 @@ instance ToJSON CreateResponse where
 instance HasDone CreateResponse where
   isDone CreateResponse {..} = crsStatus == "success"
 
--- | Create a model non-streaming.
---
--- @since 1.0.0.0
-createModel :: MonadIO m => OllamaClient -> CreateRequest -> m (Either OllamaError CreateResponse)
+{- | Create a model non-streaming.
+
+@since 1.0.0.0
+-}
+createModel :: (MonadIO m) => OllamaClient -> CreateRequest -> m (Either OllamaError CreateResponse)
 createModel client req = request client "POST" "/api/create" (Just req {crqStream = Just False})
 
--- | Create a model streaming progress updates.
---
--- @since 1.0.0.0
-createModelStream :: MonadIO m => OllamaClient -> CreateRequest -> ConduitT () CreateResponse m ()
+{- | Create a model streaming progress updates.
+
+@since 1.0.0.0
+-}
+createModelStream :: (MonadIO m) => OllamaClient -> CreateRequest -> ConduitT () CreateResponse m ()
 createModelStream _client _req = liftIO $ pure ()

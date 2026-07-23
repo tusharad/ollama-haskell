@@ -1,21 +1,22 @@
--- |
--- Module      : Ollama.Types.Model
--- Copyright   : (c) 2024-2026 Tushar Adhatrao
--- License     : MIT
--- Maintainer  : tusharadhatrao@gmail.com
--- Stability   : stable
--- Portability : portable
---
--- Model info, details, listing, and metadata types.
---
--- @since 1.0.0.0
-module Ollama.Types.Model
-  ( ModelDetails (..)
-  , ModelInfo (..)
-  , ListResponse (..)
-  , RunningModel (..)
-  , RunningModelsResponse (..)
-  ) where
+{- |
+Module      : Ollama.Types.Model
+Copyright   : (c) 2024-2026 Tushar Adhatrao
+License     : MIT
+Maintainer  : tusharadhatrao@gmail.com
+Stability   : stable
+Portability : portable
+
+Model info, details, listing, and metadata types.
+
+@since 1.0.0.0
+-}
+module Ollama.Types.Model (
+  ModelDetails (..),
+  ModelInfo (..),
+  ListResponse (..),
+  RunningModel (..),
+  RunningModelsResponse (..),
+) where
 
 import Data.Aeson
 import Data.Int (Int64)
@@ -24,9 +25,10 @@ import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import Ollama.Types.Common (Digest, ModelName)
 
--- | Detailed specifications of a model's architecture and family.
---
--- @since 1.0.0.0
+{- | Detailed specifications of a model's architecture and family.
+
+@since 1.0.0.0
+-}
 data ModelDetails = ModelDetails
   { parentModel :: !(Maybe Text)
   , format :: !Text
@@ -58,9 +60,10 @@ instance ToJSON ModelDetails where
       , "quantization_level" .= quantizationLevel
       ]
 
--- | Summary information for an installed local model.
---
--- @since 1.0.0.0
+{- | Summary information for an installed local model.
+
+@since 1.0.0.0
+-}
 data ModelInfo = ModelInfo
   { miName :: !ModelName
   , miModel :: !ModelName
@@ -92,18 +95,20 @@ instance ToJSON ModelInfo where
       , "details" .= miDetails
       ]
 
--- | Response listing available local models.
---
--- @since 1.0.0.0
+{- | Response listing available local models.
+
+@since 1.0.0.0
+-}
 newtype ListResponse = ListResponse
   { models :: [ModelInfo]
   }
   deriving stock (Eq, Show, Generic)
   deriving anyclass (ToJSON, FromJSON)
 
--- | Summary information for a model currently loaded in memory.
---
--- @since 1.0.0.0
+{- | Summary information for a model currently loaded in memory.
+
+@since 1.0.0.0
+-}
 data RunningModel = RunningModel
   { rmName :: !ModelName
   , rmModel :: !ModelName
@@ -138,9 +143,10 @@ instance ToJSON RunningModel where
       , "size_vram" .= rmSizeVram
       ]
 
--- | Response listing loaded running models.
---
--- @since 1.0.0.0
+{- | Response listing loaded running models.
+
+@since 1.0.0.0
+-}
 newtype RunningModelsResponse = RunningModelsResponse
   { runningModels :: [RunningModel]
   }

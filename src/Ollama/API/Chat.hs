@@ -1,21 +1,22 @@
--- |
--- Module      : Ollama.API.Chat
--- Copyright   : (c) 2024-2026 Tushar Adhatrao
--- License     : MIT
--- Maintainer  : tusharadhatrao@gmail.com
--- Stability   : stable
--- Portability : portable
---
--- Chat completion API endpoint (@/api/chat@).
---
--- @since 1.0.0.0
-module Ollama.API.Chat
-  ( ChatRequest (..)
-  , ChatResponse (..)
-  , chatRequest
-  , chat
-  , chatStream
-  ) where
+{- |
+Module      : Ollama.API.Chat
+Copyright   : (c) 2024-2026 Tushar Adhatrao
+License     : MIT
+Maintainer  : tusharadhatrao@gmail.com
+Stability   : stable
+Portability : portable
+
+Chat completion API endpoint (@/api/chat@).
+
+@since 1.0.0.0
+-}
+module Ollama.API.Chat (
+  ChatRequest (..),
+  ChatResponse (..),
+  chatRequest,
+  chat,
+  chatStream,
+) where
 
 import Conduit (ConduitT)
 import Control.Monad.IO.Class (MonadIO (liftIO))
@@ -35,9 +36,10 @@ import Ollama.Types.Message (Message)
 import Ollama.Types.Options (ModelOptions)
 import Ollama.Types.Tool (Tool)
 
--- | Chat completion request payload.
---
--- @since 1.0.0.0
+{- | Chat completion request payload.
+
+@since 1.0.0.0
+-}
 data ChatRequest = ChatRequest
   { chatModel :: !ModelName
   , chatMessages :: !(NonEmpty Message)
@@ -64,9 +66,10 @@ instance ToJSON ChatRequest where
         , ("think" .=) <$> chatThink
         ]
 
--- | Create a default 'ChatRequest' for a model and message history.
---
--- @since 1.0.0.0
+{- | Create a default 'ChatRequest' for a model and message history.
+
+@since 1.0.0.0
+-}
 chatRequest :: ModelName -> NonEmpty Message -> ChatRequest
 chatRequest model msgs =
   ChatRequest
@@ -80,9 +83,10 @@ chatRequest model msgs =
     , chatThink = Nothing
     }
 
--- | Chat completion response payload.
---
--- @since 1.0.0.0
+{- | Chat completion response payload.
+
+@since 1.0.0.0
+-}
 data ChatResponse = ChatResponse
   { crModel :: !ModelName
   , crCreatedAt :: !UTCTime
@@ -132,14 +136,16 @@ instance ToJSON ChatResponse where
 instance HasDone ChatResponse where
   isDone = crDone
 
--- | Non-streaming chat completion API.
---
--- @since 1.0.0.0
-chat :: MonadIO m => OllamaClient -> ChatRequest -> m (Either OllamaError ChatResponse)
+{- | Non-streaming chat completion API.
+
+@since 1.0.0.0
+-}
+chat :: (MonadIO m) => OllamaClient -> ChatRequest -> m (Either OllamaError ChatResponse)
 chat client req = request client "POST" "/api/chat" (Just req {crqStream = Just False})
 
--- | Streaming chat completion API.
---
--- @since 1.0.0.0
-chatStream :: MonadIO m => OllamaClient -> ChatRequest -> ConduitT () ChatResponse m ()
+{- | Streaming chat completion API.
+
+@since 1.0.0.0
+-}
+chatStream :: (MonadIO m) => OllamaClient -> ChatRequest -> ConduitT () ChatResponse m ()
 chatStream _client _req = liftIO $ pure ()

@@ -1,27 +1,29 @@
--- |
--- Module      : Ollama.Types.Options
--- Copyright   : (c) 2024-2026 Tushar Adhatrao
--- License     : MIT
--- Maintainer  : tusharadhatrao@gmail.com
--- Stability   : stable
--- Portability : portable
---
--- Model parameters and runtime execution options.
---
--- @since 1.0.0.0
-module Ollama.Types.Options
-  ( ModelOptions (..)
-  , defaultOptions
-  ) where
+{- |
+Module      : Ollama.Types.Options
+Copyright   : (c) 2024-2026 Tushar Adhatrao
+License     : MIT
+Maintainer  : tusharadhatrao@gmail.com
+Stability   : stable
+Portability : portable
+
+Model parameters and runtime execution options.
+
+@since 1.0.0.0
+-}
+module Ollama.Types.Options (
+  ModelOptions (..),
+  defaultOptions,
+) where
 
 import Data.Aeson (FromJSON (..), ToJSON (..), object, withObject, (.:?), (.=))
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
--- | Optional inference and hardware tuning parameters.
---
--- @since 1.0.0.0
+{- | Optional inference and hardware tuning parameters.
+
+@since 1.0.0.0
+-}
 data ModelOptions = ModelOptions
   { optNumKeep :: !(Maybe Int)
   , optSeed :: !(Maybe Int)
@@ -102,9 +104,10 @@ instance FromJSON ModelOptions where
       <*> v .:? "use_mmap"
       <*> v .:? "num_thread"
 
--- | Default empty options (all settings default to server Modelfile values).
---
--- @since 1.0.0.0
+{- | Default empty options (all settings default to server Modelfile values).
+
+@since 1.0.0.0
+-}
 defaultOptions :: ModelOptions
 defaultOptions =
   ModelOptions

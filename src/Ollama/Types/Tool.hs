@@ -1,30 +1,32 @@
--- |
--- Module      : Ollama.Types.Tool
--- Copyright   : (c) 2024-2026 Tushar Adhatrao
--- License     : MIT
--- Maintainer  : tusharadhatrao@gmail.com
--- Stability   : stable
--- Portability : portable
---
--- Tool calling and structured function interfaces for the Ollama API.
---
--- @since 1.0.0.0
-module Ollama.Types.Tool
-  ( Tool (..)
-  , FunctionDef (..)
-  , FunctionParameters (..)
-  , ToolCall (..)
-  , ToolCallFunction (..)
-  ) where
+{- |
+Module      : Ollama.Types.Tool
+Copyright   : (c) 2024-2026 Tushar Adhatrao
+License     : MIT
+Maintainer  : tusharadhatrao@gmail.com
+Stability   : stable
+Portability : portable
+
+Tool calling and structured function interfaces for the Ollama API.
+
+@since 1.0.0.0
+-}
+module Ollama.Types.Tool (
+  Tool (..),
+  FunctionDef (..),
+  FunctionParameters (..),
+  ToolCall (..),
+  ToolCallFunction (..),
+) where
 
 import Data.Aeson
 import Data.Map.Strict (Map)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
--- | Tool definition provided to the model.
---
--- @since 1.0.0.0
+{- | Tool definition provided to the model.
+
+@since 1.0.0.0
+-}
 data Tool = Tool
   { toolType :: !Text
   , toolFunction :: !FunctionDef
@@ -44,9 +46,10 @@ instance FromJSON Tool where
       <$> v .: "type"
       <*> v .: "function"
 
--- | Definition of a function that can be called by the model.
---
--- @since 1.0.0.0
+{- | Definition of a function that can be called by the model.
+
+@since 1.0.0.0
+-}
 data FunctionDef = FunctionDef
   { fnName :: !Text
   , fnDescription :: !(Maybe Text)
@@ -71,9 +74,10 @@ instance FromJSON FunctionDef where
       <*> v .:? "parameters"
       <*> v .:? "strict"
 
--- | Parameters schema for a function call.
---
--- @since 1.0.0.0
+{- | Parameters schema for a function call.
+
+@since 1.0.0.0
+-}
 data FunctionParameters = FunctionParameters
   { fpType :: !Text
   , fpProperties :: !(Maybe (Map Text FunctionParameters))
@@ -104,9 +108,10 @@ instance FromJSON FunctionParameters where
       <*> v .:? "description"
       <*> v .:? "enum"
 
--- | Tool call returned in model's assistant response.
---
--- @since 1.0.0.0
+{- | Tool call returned in model's assistant response.
+
+@since 1.0.0.0
+-}
 data ToolCall = ToolCall
   { tcFunction :: !ToolCallFunction
   }
@@ -119,9 +124,10 @@ instance FromJSON ToolCall where
   parseJSON = withObject "ToolCall" $ \v ->
     ToolCall <$> v .: "function"
 
--- | Function invocation payload inside a tool call.
---
--- @since 1.0.0.0
+{- | Function invocation payload inside a tool call.
+
+@since 1.0.0.0
+-}
 data ToolCallFunction = ToolCallFunction
   { tcfName :: !Text
   , tcfArguments :: !(Map Text Value)

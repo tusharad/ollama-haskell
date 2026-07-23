@@ -1,21 +1,22 @@
--- |
--- Module      : Ollama.API.Generate
--- Copyright   : (c) 2024-2026 Tushar Adhatrao
--- License     : MIT
--- Maintainer  : tusharadhatrao@gmail.com
--- Stability   : stable
--- Portability : portable
---
--- Text completion API endpoint (@/api/generate@).
---
--- @since 1.0.0.0
-module Ollama.API.Generate
-  ( GenerateRequest (..)
-  , GenerateResponse (..)
-  , generateRequest
-  , generate
-  , generateStream
-  ) where
+{- |
+Module      : Ollama.API.Generate
+Copyright   : (c) 2024-2026 Tushar Adhatrao
+License     : MIT
+Maintainer  : tusharadhatrao@gmail.com
+Stability   : stable
+Portability : portable
+
+Text completion API endpoint (@/api/generate@).
+
+@since 1.0.0.0
+-}
+module Ollama.API.Generate (
+  GenerateRequest (..),
+  GenerateResponse (..),
+  generateRequest,
+  generate,
+  generateStream,
+) where
 
 import Conduit (ConduitT)
 import Control.Monad.IO.Class (MonadIO (liftIO))
@@ -32,9 +33,10 @@ import Ollama.Types.Common (Base64Image, Duration, ModelName, Think)
 import Ollama.Types.Format (Format)
 import Ollama.Types.Options (ModelOptions)
 
--- | Request payload for text generation completion.
---
--- @since 1.0.0.0
+{- | Request payload for text generation completion.
+
+@since 1.0.0.0
+-}
 data GenerateRequest = GenerateRequest
   { genModel :: !ModelName
   , genPrompt :: !Text
@@ -75,9 +77,10 @@ instance ToJSON GenerateRequest where
         , ("steps" .=) <$> genSteps
         ]
 
--- | Create a default 'GenerateRequest' for a model and prompt.
---
--- @since 1.0.0.0
+{- | Create a default 'GenerateRequest' for a model and prompt.
+
+@since 1.0.0.0
+-}
 generateRequest :: ModelName -> Text -> GenerateRequest
 generateRequest model prompt =
   GenerateRequest
@@ -98,9 +101,10 @@ generateRequest model prompt =
     , genSteps = Nothing
     }
 
--- | Response payload returned by text generation.
---
--- @since 1.0.0.0
+{- | Response payload returned by text generation.
+
+@since 1.0.0.0
+-}
 data GenerateResponse = GenerateResponse
   { grModel :: !ModelName
   , grCreatedAt :: !UTCTime
@@ -159,14 +163,16 @@ instance ToJSON GenerateResponse where
 instance HasDone GenerateResponse where
   isDone = grDone
 
--- | Non-streaming text completion API.
---
--- @since 1.0.0.0
-generate :: MonadIO m => OllamaClient -> GenerateRequest -> m (Either OllamaError GenerateResponse)
+{- | Non-streaming text completion API.
+
+@since 1.0.0.0
+-}
+generate :: (MonadIO m) => OllamaClient -> GenerateRequest -> m (Either OllamaError GenerateResponse)
 generate client req = request client "POST" "/api/generate" (Just req {genStream = Just False})
 
--- | Streaming text completion API.
---
--- @since 1.0.0.0
-generateStream :: MonadIO m => OllamaClient -> GenerateRequest -> ConduitT () GenerateResponse m ()
+{- | Streaming text completion API.
+
+@since 1.0.0.0
+-}
+generateStream :: (MonadIO m) => OllamaClient -> GenerateRequest -> ConduitT () GenerateResponse m ()
 generateStream _client _req = liftIO $ pure ()

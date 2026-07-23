@@ -1,20 +1,21 @@
--- |
--- Module      : Ollama.API.Embed
--- Copyright   : (c) 2024-2026 Tushar Adhatrao
--- License     : MIT
--- Maintainer  : tusharadhatrao@gmail.com
--- Stability   : stable
--- Portability : portable
---
--- Vector embeddings API endpoint (@/api/embed@).
---
--- @since 1.0.0.0
-module Ollama.API.Embed
-  ( EmbedRequest (..)
-  , EmbedResponse (..)
-  , embedRequest
-  , embed
-  ) where
+{- |
+Module      : Ollama.API.Embed
+Copyright   : (c) 2024-2026 Tushar Adhatrao
+License     : MIT
+Maintainer  : tusharadhatrao@gmail.com
+Stability   : stable
+Portability : portable
+
+Vector embeddings API endpoint (@/api/embed@).
+
+@since 1.0.0.0
+-}
+module Ollama.API.Embed (
+  EmbedRequest (..),
+  EmbedResponse (..),
+  embedRequest,
+  embed,
+) where
 
 import Control.Monad.IO.Class (MonadIO)
 import Data.Aeson
@@ -27,9 +28,10 @@ import Ollama.Error (OllamaError)
 import Ollama.Types.Common (Duration, ModelName)
 import Ollama.Types.Options (ModelOptions)
 
--- | Embedding request payload for single text or batch list of texts.
---
--- @since 1.0.0.0
+{- | Embedding request payload for single text or batch list of texts.
+
+@since 1.0.0.0
+-}
 data EmbedRequest = EmbedRequest
   { embModel :: !ModelName
   , embInput :: !(Either Text [Text])
@@ -54,9 +56,10 @@ instance ToJSON EmbedRequest where
         , ("dimensions" .=) <$> embDimensions
         ]
 
--- | Create an 'EmbedRequest' for a list of input texts.
---
--- @since 1.0.0.0
+{- | Create an 'EmbedRequest' for a list of input texts.
+
+@since 1.0.0.0
+-}
 embedRequest :: ModelName -> [Text] -> EmbedRequest
 embedRequest model inputs =
   EmbedRequest
@@ -68,9 +71,10 @@ embedRequest model inputs =
     , embDimensions = Nothing
     }
 
--- | Embedding response payload containing vector embeddings.
---
--- @since 1.0.0.0
+{- | Embedding response payload containing vector embeddings.
+
+@since 1.0.0.0
+-}
 data EmbedResponse = EmbedResponse
   { erModel :: !ModelName
   , erEmbeddings :: ![[Double]]
@@ -99,8 +103,9 @@ instance ToJSON EmbedResponse where
       , "prompt_eval_count" .= erPromptEvalCount
       ]
 
--- | Generate vector embeddings.
---
--- @since 1.0.0.0
-embed :: MonadIO m => OllamaClient -> EmbedRequest -> m (Either OllamaError EmbedResponse)
+{- | Generate vector embeddings.
+
+@since 1.0.0.0
+-}
+embed :: (MonadIO m) => OllamaClient -> EmbedRequest -> m (Either OllamaError EmbedResponse)
 embed client req = request client "POST" "/api/embed" (Just req)

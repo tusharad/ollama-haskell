@@ -53,14 +53,14 @@ graph LR
   ```
 - [x] **S1.5** — Set up `test/` directory with the new structure (Unit, Property, Golden, Integration).
 - [x] **S1.6** — Add `integration-tests` cabal flag (default: `False`).
-- [ ] **S1.7** — Set up GitHub Actions CI pipeline:
+- [x] **S1.7** — Set up GitHub Actions CI pipeline:
   - GHC matrix: 9.4, 9.6, 9.8, 9.10
   - Jobs: build, test, hlint, fourmolu check, cabal check, haddock build
-- [ ] **S1.8** — Configure `fourmolu.yaml` for the project.
-- [ ] **S1.9** — Configure `.hlint.yaml` with custom rules (ban `head`, `tail`, `fromJust`, `read`, `error`, `undefined`).
-- [ ] **S1.10** — Add a `Makefile` with targets: `build`, `test`, `lint`, `format`, `docs`, `clean`.
-- [ ] **S1.11** — Create stub `ARCHITECTURE.md`, `CONTRIBUTING.md` files.
-- [ ] **S1.12** — Update `.gitignore` for new structure.
+- [x] **S1.8** — Configure `fourmolu.yaml` for the project.
+- [x] **S1.9** — Configure `.hlint.yaml` with custom rules (ban `head`, `tail`, `fromJust`, `read`, `error`, `undefined`).
+- [x] **S1.10** — Add a `Makefile` with targets: `build`, `test`, `lint`, `format`, `docs`, `clean`.
+- [x] **S1.11** — Create stub `ARCHITECTURE.md`, `CONTRIBUTING.md` files.
+- [x] **S1.12** — Update `.gitignore` for new structure.
 
 ### Acceptance Criteria
 

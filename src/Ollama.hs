@@ -1,134 +1,136 @@
--- |
--- Module      : Ollama
--- Copyright   : (c) 2024-2026 Tushar Adhatrao
--- License     : MIT
--- Maintainer  : tusharadhatrao@gmail.com
--- Stability   : stable
--- Portability : portable
---
--- Top-level umbrella re-export module for the Ollama Haskell client library.
---
--- == Quick Example
---
--- @
--- import Ollama
---
--- main :: IO ()
--- main = do
---   client <- defaultClient
---   let req = chatRequest "llama3.2" (userMessage "Why is the sky blue?" :| [])
---   result <- chat client req
---   case result of
---     Left err -> print err
---     Right resp -> case crMessage resp of
---       Just msg -> putStrLn (messageContent msg)
---       Nothing  -> putStrLn "No message returned"
--- @
---
--- @since 1.0.0.0
-module Ollama
-  ( -- * Client
-    OllamaClient
-  , newClient
-  , defaultClient
-  , clientFromEnv
-  , closeClient
-  , withClient
+{- |
+Module      : Ollama
+Copyright   : (c) 2024-2026 Tushar Adhatrao
+License     : MIT
+Maintainer  : tusharadhatrao@gmail.com
+Stability   : stable
+Portability : portable
 
-    -- * Config & Retry
-  , OllamaClientConfig (..)
-  , defaultConfig
-  , RetryPolicy (..)
-  , LogLevel (..)
+Top-level umbrella re-export module for the Ollama Haskell client library.
 
-    -- * API Endpoints
-    -- ** Chat
-  , chat
-  , chatStream
-  , ChatRequest (..)
-  , ChatResponse (..)
-  , chatRequest
+== Quick Example
 
-    -- ** Generate
-  , generate
-  , generateStream
-  , GenerateRequest (..)
-  , GenerateResponse (..)
-  , generateRequest
+@
+import Ollama
 
-    -- ** Embeddings
-  , embed
-  , EmbedRequest (..)
-  , EmbedResponse (..)
-  , embedRequest
+main :: IO ()
+main = do
+  client <- defaultClient
+  let req = chatRequest "llama3.2" (userMessage "Why is the sky blue?" :| [])
+  result <- chat client req
+  case result of
+    Left err -> print err
+    Right resp -> case crMessage resp of
+      Just msg -> putStrLn (messageContent msg)
+      Nothing  -> putStrLn "No message returned"
+@
 
-    -- ** Model Management
-  , listModels
-  , showModel
-  , copyModel
-  , deleteModel
-  , ListResponse (..)
-  , ShowResponse (..)
+@since 1.0.0.0
+-}
+module Ollama (
+  -- * Client
+  OllamaClient,
+  newClient,
+  defaultClient,
+  clientFromEnv,
+  closeClient,
+  withClient,
 
-    -- ** Pull & Push
-  , pull
-  , pullStream
-  , push
-  , pushStream
-  , PullResponse (..)
-  , PushResponse (..)
+  -- * Config & Retry
+  OllamaClientConfig (..),
+  defaultConfig,
+  RetryPolicy (..),
+  LogLevel (..),
 
-    -- ** Blobs
-  , checkBlob
-  , pushBlob
+  -- * API Endpoints
 
-    -- ** System
-  , getVersion
-  , listRunning
-  , RunningModelsResponse (..)
+  -- ** Chat
+  chat,
+  chatStream,
+  ChatRequest (..),
+  ChatResponse (..),
+  chatRequest,
 
-    -- * Types & Primitives
-  , ModelName (..)
-  , mkModelName
-  , Digest (..)
-  , Base64Image (..)
-  , Duration (..)
-  , durationToSeconds
-  , durationToMillis
-  , Version (..)
-  , Think (..)
-  , ThinkingLevel (..)
+  -- ** Generate
+  generate,
+  generateStream,
+  GenerateRequest (..),
+  GenerateResponse (..),
+  generateRequest,
 
-    -- ** Messages
-  , Role (..)
-  , Message (..)
-  , userMessage
-  , systemMessage
-  , assistantMessage
-  , toolMessage
-  , toolResultMessage
-  , imageMessage
+  -- ** Embeddings
+  embed,
+  EmbedRequest (..),
+  EmbedResponse (..),
+  embedRequest,
 
-    -- ** Tools & Functions
-  , Tool (..)
-  , FunctionDef (..)
-  , FunctionParameters (..)
-  , ToolCall (..)
-  , ToolCallFunction (..)
+  -- ** Model Management
+  listModels,
+  showModel,
+  copyModel,
+  deleteModel,
+  ListResponse (..),
+  ShowResponse (..),
 
-    -- ** Options & Format
-  , ModelOptions (..)
-  , defaultOptions
-  , Format (..)
+  -- ** Pull & Push
+  pull,
+  pullStream,
+  push,
+  pushStream,
+  PullResponse (..),
+  PushResponse (..),
 
-    -- * Error Handling
-  , OllamaError (..)
-  , isRetryable
-  , throwOllama
+  -- ** Blobs
+  checkBlob,
+  pushBlob,
 
-    -- * Streaming
-  , HasDone (..)
-  ) where
+  -- ** System
+  getVersion,
+  listRunning,
+  RunningModelsResponse (..),
+
+  -- * Types & Primitives
+  ModelName (..),
+  mkModelName,
+  Digest (..),
+  Base64Image (..),
+  Duration (..),
+  durationToSeconds,
+  durationToMillis,
+  Version (..),
+  Think (..),
+  ThinkingLevel (..),
+
+  -- ** Messages
+  Role (..),
+  Message (..),
+  userMessage,
+  systemMessage,
+  assistantMessage,
+  toolMessage,
+  toolResultMessage,
+  imageMessage,
+
+  -- ** Tools & Functions
+  Tool (..),
+  FunctionDef (..),
+  FunctionParameters (..),
+  ToolCall (..),
+  ToolCallFunction (..),
+
+  -- ** Options & Format
+  ModelOptions (..),
+  defaultOptions,
+  Format (..),
+
+  -- * Error Handling
+  OllamaError (..),
+  isRetryable,
+  throwOllama,
+
+  -- * Streaming
+  HasDone (..),
+) where
 
 import Ollama.API.Blobs
 import Ollama.API.Chat

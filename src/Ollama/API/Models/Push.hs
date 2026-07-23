@@ -1,20 +1,21 @@
--- |
--- Module      : Ollama.API.Models.Push
--- Copyright   : (c) 2024-2026 Tushar Adhatrao
--- License     : MIT
--- Maintainer  : tusharadhatrao@gmail.com
--- Stability   : stable
--- Portability : portable
---
--- Model push endpoint (@/api/push@).
---
--- @since 1.0.0.0
-module Ollama.API.Models.Push
-  ( PushRequest (..)
-  , PushResponse (..)
-  , push
-  , pushStream
-  ) where
+{- |
+Module      : Ollama.API.Models.Push
+Copyright   : (c) 2024-2026 Tushar Adhatrao
+License     : MIT
+Maintainer  : tusharadhatrao@gmail.com
+Stability   : stable
+Portability : portable
+
+Model push endpoint (@/api/push@).
+
+@since 1.0.0.0
+-}
+module Ollama.API.Models.Push (
+  PushRequest (..),
+  PushResponse (..),
+  push,
+  pushStream,
+) where
 
 import Conduit (ConduitT)
 import Control.Monad.IO.Class (MonadIO (liftIO))
@@ -29,9 +30,10 @@ import Ollama.Error (OllamaError)
 import Ollama.Streaming (HasDone (..))
 import Ollama.Types.Common (Digest, ModelName)
 
--- | Push model request payload.
---
--- @since 1.0.0.0
+{- | Push model request payload.
+
+@since 1.0.0.0
+-}
 data PushRequest = PushRequest
   { psqModel :: !ModelName
   , psqInsecure :: !(Maybe Bool)
@@ -48,9 +50,10 @@ instance ToJSON PushRequest where
         , ("stream" .=) <$> psqStream
         ]
 
--- | Push progress response payload.
---
--- @since 1.0.0.0
+{- | Push progress response payload.
+
+@since 1.0.0.0
+-}
 data PushResponse = PushResponse
   { psStatus :: !Text
   , psDigest :: !(Maybe Digest)
@@ -79,15 +82,17 @@ instance ToJSON PushResponse where
 instance HasDone PushResponse where
   isDone PushResponse {..} = psStatus == "success"
 
--- | Push a model to a remote library (non-streaming).
---
--- @since 1.0.0.0
-push :: MonadIO m => OllamaClient -> ModelName -> m (Either OllamaError PushResponse)
+{- | Push a model to a remote library (non-streaming).
+
+@since 1.0.0.0
+-}
+push :: (MonadIO m) => OllamaClient -> ModelName -> m (Either OllamaError PushResponse)
 push client model =
   request client "POST" "/api/push" (Just $ PushRequest model Nothing (Just False))
 
--- | Push a model streaming upload progress.
---
--- @since 1.0.0.0
-pushStream :: MonadIO m => OllamaClient -> ModelName -> ConduitT () PushResponse m ()
+{- | Push a model streaming upload progress.
+
+@since 1.0.0.0
+-}
+pushStream :: (MonadIO m) => OllamaClient -> ModelName -> ConduitT () PushResponse m ()
 pushStream _client _model = liftIO $ pure ()
