@@ -95,12 +95,12 @@ graph LR
 
 #### Track A: Domain Types
 
-- [ ] **S2.1** — Implement `Ollama.Types.Common`: `ModelName`, `Digest`, `Base64Image`, `Duration`, `Version`, `Think`, `ThinkingLevel`. Include smart constructors and JSON instances.
-- [ ] **S2.2** — Implement `Ollama.Types.Message`: `Role`, `Message`, all smart constructors (`userMessage`, `systemMessage`, `assistantMessage`, `toolMessage`, `toolResultMessage`, `imageMessage`). Custom `ToJSON`/`FromJSON`.
-- [ ] **S2.3** — Implement `Ollama.Types.Tool`: `Tool`, `FunctionDef`, `FunctionParameters`, `ToolCall`, `ToolCallFunction`. Custom JSON instances.
-- [ ] **S2.4** — Implement `Ollama.Types.Options`: `ModelOptions` with all fields from [API spec](./api.md) including `draft_num_predict`. Custom `ToJSON` that omits `Nothing` fields.
-- [ ] **S2.5** — Implement `Ollama.Types.Format`: `Format` (`JsonFormat`, `SchemaFormat`). Migrate and improve `SchemaBuilder` DSL to `Ollama.Types.Format.SchemaBuilder`.
-- [ ] **S2.6** — Implement `Ollama.Types.Model`: `ModelInfo`, `ModelDetails`, `RunningModel`, `RunningModelsResponse`, `ListResponse`. Custom `FromJSON`.
+- [x] **S2.1** — Implement `Ollama.Types.Common`: `ModelName`, `Digest`, `Base64Image`, `Duration`, `Version`, `Think`, `ThinkingLevel`. Include smart constructors and JSON instances.
+- [x] **S2.2** — Implement `Ollama.Types.Message`: `Role`, `Message`, all smart constructors (`userMessage`, `systemMessage`, `assistantMessage`, `toolMessage`, `toolResultMessage`, `imageMessage`). Custom `ToJSON`/`FromJSON`.
+- [x] **S2.3** — Implement `Ollama.Types.Tool`: `Tool`, `FunctionDef`, `FunctionParameters`, `ToolCall`, `ToolCallFunction`. Custom JSON instances.
+- [x] **S2.4** — Implement `Ollama.Types.Options`: `ModelOptions` with all fields from [API spec](./api.md) including `draft_num_predict`. Custom `ToJSON` that omits `Nothing` fields.
+- [x] **S2.5** — Implement `Ollama.Types.Format`: `Format` (`JsonFormat`, `SchemaFormat`). Migrate and improve `SchemaBuilder` DSL to `Ollama.Types.Format.SchemaBuilder`.
+- [x] **S2.6** — Implement `Ollama.Types.Model`: `ModelInfo`, `ModelDetails`, `RunningModel`, `RunningModelsResponse`, `ListResponse`. Custom `FromJSON`.
 
 #### Track B: Error & Config
 

@@ -8,7 +8,7 @@ Portability : portable
 
 Model parameters and runtime execution options.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 module Ollama.Types.Options (
   ModelOptions (..),
@@ -22,7 +22,7 @@ import GHC.Generics (Generic)
 
 {- | Optional inference and hardware tuning parameters.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 data ModelOptions = ModelOptions
   { optNumKeep :: !(Maybe Int)
@@ -106,7 +106,7 @@ instance FromJSON ModelOptions where
 
 {- | Default empty options (all settings default to server Modelfile values).
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 defaultOptions :: ModelOptions
 defaultOptions =
