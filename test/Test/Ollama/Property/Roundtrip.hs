@@ -24,5 +24,8 @@ tests =
     , testCase "Think and ThinkingLevel JSON roundtrip" $ do
         assertEqual "ThinkEnabled roundtrip" (Just ThinkEnabled) (decode $ encode ThinkEnabled)
         assertEqual "ThinkDisabled roundtrip" (Just ThinkDisabled) (decode $ encode ThinkDisabled)
-        assertEqual "ThinkLevel High roundtrip" (Just $ ThinkLevel ThinkHigh) (decode $ encode (ThinkLevel ThinkHigh))
+        assertEqual
+          "ThinkLevel High roundtrip"
+          (Just $ ThinkLevel ThinkHigh)
+          (decode $ encode (ThinkLevel ThinkHigh))
     ]

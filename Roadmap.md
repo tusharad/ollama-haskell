@@ -104,9 +104,9 @@ graph LR
 
 #### Track B: Error & Config
 
-- [ ] **S2.7** — Implement `Ollama.Error`: `OllamaError` sum type (5 constructors), `Exception` instance, proper `Eq`, `isRetryable`, `throwOllama`.
-- [ ] **S2.8** — Implement `Ollama.Client.Config`: `OllamaClientConfig`, `RetryPolicy`, `LogLevel`, `defaultConfig`.
-- [ ] **S2.9** — Create `Ollama.Types` re-export module that exposes all public types.
+- [x] **S2.7** — Implement `Ollama.Error`: `OllamaError` sum type (5 constructors), `Exception` instance, proper `Eq`, `isRetryable`, `throwOllama`.
+- [x] **S2.8** — Implement `Ollama.Client.Config`: `OllamaClientConfig`, `RetryPolicy`, `LogLevel`, `defaultConfig`.
+- [x] **S2.9** — Create `Ollama.Types` re-export module that exposes all public types.
 
 ### Acceptance Criteria
 

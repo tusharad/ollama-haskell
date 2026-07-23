@@ -115,6 +115,8 @@ test-suite ollama-haskell-test
   main-is: Main.hs
   other-modules:
     Test.Ollama.Unit.Types
+    Test.Ollama.Unit.Error
+    Test.Ollama.Unit.Config
     Test.Ollama.Property.Roundtrip
     Test.Ollama.Golden.Chat
   build-depends:

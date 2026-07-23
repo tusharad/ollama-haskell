@@ -112,8 +112,8 @@ instance FromJSON FunctionParameters where
 
 @since 3.0.0.0
 -}
-data ToolCall = ToolCall
-  { tcFunction :: !ToolCallFunction
+newtype ToolCall = ToolCall
+  { tcFunction :: ToolCallFunction
   }
   deriving stock (Eq, Show, Generic)
 

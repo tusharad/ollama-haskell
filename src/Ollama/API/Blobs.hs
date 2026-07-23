@@ -17,6 +17,7 @@ module Ollama.API.Blobs (
 
 import Control.Monad.IO.Class (MonadIO)
 import Data.ByteString (ByteString)
+import Data.Functor (void)
 import Ollama.Client (OllamaClient)
 import Ollama.Client.Internal (requestRaw)
 import Ollama.Error (OllamaError (..))
@@ -41,4 +42,4 @@ checkBlob client (Digest d) = do
 pushBlob :: (MonadIO m) => OllamaClient -> Digest -> ByteString -> m (Either OllamaError ())
 pushBlob client (Digest d) payload = do
   res <- requestRaw client "POST" ("/api/blobs/" <> d) (Just payload)
-  pure $ fmap (const ()) res
+  pure $ void res

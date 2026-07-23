@@ -8,7 +8,7 @@ Portability : portable
 
 Re-export all domain types for convenience.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 module Ollama.Types (
   module Ollama.Types.Common,
