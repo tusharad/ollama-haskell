@@ -1,4 +1,26 @@
+# Haskell / Cabal build artifacts
 dist-newstyle/
 .stack-work/
-code.txt
-collect_code.sh
+.ghc.environment.*
+*.o
+*.hi
+*.dyn_o
+*.dyn_hi
+*.chi
+*.chs.h
+
+# Cabal local overrides
+cabal.project.local
+cabal.project.local*
+
+# IDE & Editor files
+.HaskellHandy/
+.hie/
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Antigravity / Agent temporary files
+.gemini/
