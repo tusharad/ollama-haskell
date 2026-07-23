@@ -1,64 +1,28 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
-
-{- |
-Module      : Data.Ollama.Common.SchemaBuilder
-Copyright   : (c) 2025 Tushar Adhatrao
-License     : MIT
-Maintainer  : Tushar Adhatrao <tusharadhatrao@gmail.com>
-Stability   : experimental
-Description : DSL for constructing structured JSON Schemas for Ollama's structured output API.
-
-== Overview
-
-This module defines a simple schema builder DSL for programmatically constructing
-JSON Schemas compatible with the structured output features in the Ollama API.
-
-It supports nested objects, arrays, required fields, and custom types, and
-provides infix operators for a fluent and expressive syntax.
-
-== Example
-
-@
-import Data.Ollama.Common.SchemaBuilder
-
-let schema =
-      emptyObject
-        |+ ("name", JString)
-        |+ ("age", JInteger)
-        |++ ("address", buildSchema $
-              emptyObject
-                |+ ("city", JString)
-                |+ ("zip", JInteger)
-                |! "city"
-            )
-        |!! ["name", "age"]
-        & buildSchema
-
-printSchema schema
-@
--}
-module Data.Ollama.Common.SchemaBuilder
-  ( -- * Core Types
-    JsonType (..)
+-- |
+-- Module      : Ollama.Types.Format.SchemaBuilder
+-- Copyright   : (c) 2024-2026 Tushar Adhatrao
+-- License     : MIT
+-- Maintainer  : tusharadhatrao@gmail.com
+-- Stability   : stable
+-- Portability : portable
+--
+-- DSL for constructing structured JSON Schemas for Ollama's structured output API.
+--
+-- @since 1.0.0.0
+module Ollama.Types.Format.SchemaBuilder
+  ( JsonType (..)
   , Property (..)
   , Schema (..)
-
-    -- * Schema Construction
+  , SchemaBuilder
   , emptyObject
   , addProperty
   , addObjectProperty
   , requireField
   , requireFields
   , buildSchema
-
-    -- * Schema Utilities
   , objectOf
   , arrayOf
-  , toOllamaFormat
   , printSchema
-
-    -- * Infix Schema DSL
   , (|+)
   , (|++)
   , (|!)
@@ -70,21 +34,21 @@ import Data.Map.Strict qualified as HM
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
-import Data.Text.Lazy.Encoding qualified as T
-import GHC.Generics
+import Data.Text.Lazy.Encoding qualified as TEncoding
+import GHC.Generics (Generic)
 
--- | Supported JSON types for schema generation.
+-- | Supported JSON primitive and compound types.
+--
+-- @since 1.0.0.0
 data JsonType
   = JString
   | JNumber
   | JInteger
   | JBoolean
   | JNull
-  | -- | Array of a specific type
-    JArray JsonType
-  | -- | Nested object schema
-    JObject Schema
-  deriving (Show, Eq, Generic)
+  | JArray !JsonType
+  | JObject !Schema
+  deriving stock (Show, Eq, Generic)
 
 instance ToJSON JsonType where
   toJSON JString = "string"
@@ -95,9 +59,11 @@ instance ToJSON JsonType where
   toJSON (JArray _) = "array"
   toJSON (JObject _) = "object"
 
--- | A named property with a given type (supports nested values).
+-- | Property metadata for schema properties.
+--
+-- @since 1.0.0.0
 newtype Property = Property JsonType
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 instance ToJSON Property where
   toJSON (Property (JArray itemType)) =
@@ -105,15 +71,14 @@ instance ToJSON Property where
   toJSON (Property (JObject schema)) = toJSON schema
   toJSON (Property typ) = object ["type" .= typ]
 
-{- | Complete schema representation.
-
-@since 0.2.0.0
--}
+-- | JSON schema specification.
+--
+-- @since 1.0.0.0
 data Schema = Schema
-  { schemaProperties :: HM.Map Text Property
-  , schemaRequired :: [Text]
+  { schemaProperties :: !(HM.Map Text Property)
+  , schemaRequired :: ![Text]
   }
-  deriving (Show, Eq, Generic)
+  deriving stock (Show, Eq, Generic)
 
 instance ToJSON Schema where
   toJSON (Schema props req) =
@@ -123,67 +88,116 @@ instance ToJSON Schema where
       , "required" .= req
       ]
 
--- | Internal builder for schema DSL.
-newtype SchemaBuilder = SchemaBuilder Schema
-  deriving (Show, Eq)
+instance FromJSON JsonType where
+  parseJSON = withText "JsonType" $ \case
+    "string" -> pure JString
+    "number" -> pure JNumber
+    "integer" -> pure JInteger
+    "boolean" -> pure JBoolean
+    "null" -> pure JNull
+    "array" -> pure (JArray JString)
+    "object" -> pure (JObject (Schema HM.empty []))
+    other -> fail $ "Unknown JsonType: " <> T.unpack other
 
--- | Create an empty schema object.
+instance FromJSON Property where
+  parseJSON = withObject "Property" $ \v -> do
+    t <- v .: "type"
+    case (t :: Text) of
+      "array" -> Property . JArray <$> (v .: "items" >>= parseJSON)
+      "object" -> Property . JObject <$> parseJSON (Object v)
+      _ -> Property <$> parseJSON (String t)
+
+instance FromJSON Schema where
+  parseJSON = withObject "Schema" $ \v ->
+    Schema
+      <$> v .:? "properties" .!= HM.empty
+      <*> v .:? "required" .!= []
+
+-- | Opaque builder for fluid schema construction.
+--
+-- @since 1.0.0.0
+newtype SchemaBuilder = SchemaBuilder Schema
+  deriving stock (Show, Eq)
+
+-- | Create an empty schema builder object.
+--
+-- @since 1.0.0.0
 emptyObject :: SchemaBuilder
 emptyObject = SchemaBuilder $ Schema HM.empty []
 
--- | Add a simple field with a given name and type.
+-- | Add a primitive property to the schema builder.
+--
+-- @since 1.0.0.0
 addProperty :: Text -> JsonType -> SchemaBuilder -> SchemaBuilder
 addProperty name typ (SchemaBuilder s) =
   SchemaBuilder $ s {schemaProperties = HM.insert name (Property typ) (schemaProperties s)}
 
--- | Add a nested object field with its own schema.
+-- | Add a nested object property to the schema builder.
+--
+-- @since 1.0.0.0
 addObjectProperty :: Text -> Schema -> SchemaBuilder -> SchemaBuilder
 addObjectProperty name nestedSchema (SchemaBuilder s) =
   SchemaBuilder $
     s {schemaProperties = HM.insert name (Property (JObject nestedSchema)) (schemaProperties s)}
 
 -- | Mark a field as required.
+--
+-- @since 1.0.0.0
 requireField :: Text -> SchemaBuilder -> SchemaBuilder
 requireField name (SchemaBuilder s) =
   SchemaBuilder $ s {schemaRequired = name : schemaRequired s}
 
 -- | Mark multiple fields as required.
+--
+-- @since 1.0.0.0
 requireFields :: [Text] -> SchemaBuilder -> SchemaBuilder
 requireFields names builder = foldr requireField builder names
 
--- | Finalize the schema from a builder.
+-- | Finalize a 'Schema' from a 'SchemaBuilder'.
+--
+-- @since 1.0.0.0
 buildSchema :: SchemaBuilder -> Schema
 buildSchema (SchemaBuilder s) = s
 
--- | Wrap a 'SchemaBuilder' as a nested object type.
+-- | Treat a 'SchemaBuilder' as a nested object type.
+--
+-- @since 1.0.0.0
 objectOf :: SchemaBuilder -> JsonType
 objectOf builder = JObject (buildSchema builder)
 
--- | Create an array of a given JSON type.
+-- | Create an array schema type of an element type.
+--
+-- @since 1.0.0.0
 arrayOf :: JsonType -> JsonType
 arrayOf = JArray
 
--- | Convert schema into a JSON 'Value' suitable for API submission.
-toOllamaFormat :: Schema -> Value
-toOllamaFormat = toJSON
-
--- | Pretty print a schema as formatted JSON.
+-- | Pretty-print a schema as formatted JSON.
+--
+-- @since 1.0.0.0
 printSchema :: Schema -> IO ()
-printSchema = putStrLn . T.unpack . TL.toStrict . T.decodeUtf8 . encode
+printSchema = putStrLn . T.unpack . TL.toStrict . TEncoding.decodeUtf8 . encode
 
 -- | Infix alias for 'addProperty'.
+--
+-- @since 1.0.0.0
 (|+) :: SchemaBuilder -> (Text, JsonType) -> SchemaBuilder
 builder |+ (name, typ) = addProperty name typ builder
 
 -- | Infix alias for 'addObjectProperty'.
+--
+-- @since 1.0.0.0
 (|++) :: SchemaBuilder -> (Text, Schema) -> SchemaBuilder
 builder |++ (name, schema) = addObjectProperty name schema builder
 
 -- | Infix alias for 'requireField'.
+--
+-- @since 1.0.0.0
 (|!) :: SchemaBuilder -> Text -> SchemaBuilder
 builder |! name = requireField name builder
 
 -- | Infix alias for 'requireFields'.
+--
+-- @since 1.0.0.0
 (|!!) :: SchemaBuilder -> [Text] -> SchemaBuilder
 builder |!! names = requireFields names builder
 

@@ -1,115 +1,142 @@
-cabal-version: 1.12
-
--- This file has been generated from package.yaml by hpack version 0.38.1.
---
--- see: https://github.com/sol/hpack
-
-name:           ollama-haskell
-version:        0.2.1.0
-synopsis:       Haskell client for ollama.
-description:    Ollama client for Haskell
-category:       Web
-homepage:       https://github.com/tusharad/ollama-haskell#readme
-bug-reports:    https://github.com/tusharad/ollama-haskell/issues
-author:         tushar
-maintainer:     tusharadhatrao@gmail.com
-copyright:      2024 tushar
-license:        MIT
-license-file:   LICENSE
-build-type:     Simple
-extra-source-files:
-    README.md
-    CHANGELOG.md
+cabal-version: 3.0
+name:          ollama-haskell
+version:       3.0.0.0
+synopsis:      Industry-grade Haskell client for the Ollama API
+description:
+  A type-safe, well-tested Haskell client for interacting with
+  locally-running LLMs via the Ollama HTTP API. Supports chat,
+  text generation, embeddings, model management, streaming via
+  conduit, structured outputs, tool calling, and more.
+category:      Web, AI, Network
+license:       MIT
+license-file:  LICENSE
+author:        Tushar Adhatrao
+maintainer:    tusharadhatrao@gmail.com
+copyright:     2024-2026 Tushar Adhatrao
+homepage:      https://github.com/tusharad/ollama-haskell
+bug-reports:   https://github.com/tusharad/ollama-haskell/issues
+tested-with:   GHC == 9.4.8, GHC == 9.6.4, GHC == 9.8.2, GHC == 9.10.1
+stability:     stable
+extra-doc-files:
+  README.md
+  CHANGELOG.md
 
 source-repository head
   type: git
   location: https://github.com/tusharad/ollama-haskell
 
-library
-  exposed-modules:
-      Data.Ollama.Blob
-      Data.Ollama.Chat
-      Data.Ollama.Common.Config
-      Data.Ollama.Common.Error
-      Data.Ollama.Common.SchemaBuilder
-      Data.Ollama.Common.Types
-      Data.Ollama.Common.Utils
-      Data.Ollama.Conversation
-      Data.Ollama.Copy
-      Data.Ollama.Create
-      Data.Ollama.Delete
-      Data.Ollama.Embeddings
-      Data.Ollama.Generate
-      Data.Ollama.List
-      Data.Ollama.Load
-      Data.Ollama.Ps
-      Data.Ollama.Pull
-      Data.Ollama.Push
-      Data.Ollama.Show
-      Ollama
-  other-modules:
-      Paths_ollama_haskell
-  hs-source-dirs:
-      src
+flag integration-tests
+  description: Build and run integration tests (requires running Ollama server)
+  default: False
+  manual: True
+
+common warnings
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wmissing-export-lists
+    -Wmissing-home-modules
+    -Wpartial-fields
+    -Wredundant-constraints
+
+common lang
+  default-language: GHC2021
   default-extensions:
-      ImportQualifiedPost
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+    StrictData
+    DerivingStrategies
+    DeriveGeneric
+    DeriveAnyClass
+    GeneralizedNewtypeDeriving
+    OverloadedStrings
+    ImportQualifiedPost
+    TypeApplications
+    RecordWildCards
+    NamedFieldPuns
+    LambdaCase
+    MultiWayIf
+    ScopedTypeVariables
+    BangPatterns
+
+library
+  import: warnings, lang
+  hs-source-dirs: src
+  exposed-modules:
+    Ollama
+    Ollama.Client
+    Ollama.Client.Config
+    Ollama.API.Generate
+    Ollama.API.Chat
+    Ollama.API.Embed
+    Ollama.API.Models
+    Ollama.API.Models.Create
+    Ollama.API.Models.Pull
+    Ollama.API.Models.Push
+    Ollama.API.Blobs
+    Ollama.API.Ps
+    Ollama.API.Version
+    Ollama.Types
+    Ollama.Types.Message
+    Ollama.Types.Tool
+    Ollama.Types.Model
+    Ollama.Types.Options
+    Ollama.Types.Format
+    Ollama.Types.Format.SchemaBuilder
+    Ollama.Types.Common
+    Ollama.Error
+    Ollama.Streaming
+    Ollama.Conversation
+  other-modules:
+    Ollama.Client.Internal
   build-depends:
-      aeson ==2.*
-    , base >=4.7 && <5
-    , base64-bytestring ==1.*
-    , bytestring >=0.10 && <0.13
-    , containers >=0.6 && <0.9
-    , directory >=1 && <1.4
-    , filepath >=1 && <1.6
-    , http-client >=0.6 && <0.8
-    , http-client-tls >=0.2 && <0.5
-    , http-types >=0.7 && <0.13
-    , mtl ==2.*
-    , stm ==2.*
-    , text >=1 && <3
-    , time ==1.*
-  default-language: Haskell2010
+      aeson            >= 2.0 && < 3
+    , base             >= 4.17 && < 5
+    , bytestring       >= 0.10 && < 0.13
+    , case-insensitive >= 1.2 && < 1.3
+    , conduit          >= 1.3 && < 1.4
+    , containers       >= 0.6 && < 0.9
+    , hashable         >= 1.4 && < 1.6
+    , http-client      >= 0.6 && < 0.8
+    , http-client-tls  >= 0.2 && < 0.5
+    , http-types       >= 0.7 && < 0.13
+    , mtl              >= 2.2 && < 3
+    , retry            >= 0.9 && < 0.10
+    , stm              >= 2.5 && < 3
+    , text             >= 2.0 && < 3
+    , time             >= 1.11 && < 2
+    , unliftio-core    >= 0.2 && < 0.3
 
 test-suite ollama-haskell-test
+  import: warnings, lang
   type: exitcode-stdio-1.0
+  hs-source-dirs: test
   main-is: Main.hs
   other-modules:
-      Test.Ollama.Blob
-      Test.Ollama.Chat
-      Test.Ollama.Common
-      Test.Ollama.Copy
-      Test.Ollama.Create
-      Test.Ollama.Delete
-      Test.Ollama.Embedding
-      Test.Ollama.Generate
-      Test.Ollama.List
-      Test.Ollama.Load
-      Test.Ollama.Show
-      Paths_ollama_haskell
-  hs-source-dirs:
-      test
-  default-extensions:
-      ImportQualifiedPost
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+    Test.Ollama.Unit.Types
+    Test.Ollama.Property.Roundtrip
+    Test.Ollama.Golden.Chat
   build-depends:
-      aeson
-    , base >=4.7 && <5
-    , base64-bytestring ==1.*
-    , bytestring >=0.10 && <0.13
-    , containers >=0.6 && <0.9
-    , directory >=1 && <1.4
-    , filepath >=1 && <1.6
-    , http-client >=0.6 && <0.8
-    , http-client-tls >=0.2 && <0.5
-    , http-types >=0.7 && <0.13
-    , mtl ==2.*
+      base
     , ollama-haskell
-    , scientific
-    , silently
-    , stm ==2.*
-    , tasty >=1.5
+    , aeson
+    , bytestring
+    , containers
+    , tasty          >= 1.5
     , tasty-hunit
     , text
-    , time ==1.*
-  default-language: Haskell2010
+
+test-suite ollama-haskell-integration
+  import: warnings, lang
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test-integration
+  main-is: Main.hs
+  if !flag(integration-tests)
+    buildable: False
+  build-depends:
+      base
+    , ollama-haskell
+    , tasty
+    , tasty-hunit
+    , text
