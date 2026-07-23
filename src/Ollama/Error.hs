@@ -8,7 +8,7 @@ Portability : portable
 
 Core error type definitions for the Ollama library.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 module Ollama.Error (
   OllamaError (..),
@@ -24,7 +24,7 @@ import Network.HTTP.Client (HttpException)
 
 {- | Unified error type representing all failure modes in the Ollama client.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 data OllamaError
   = -- | HTTP transport failure (connection error, DNS failure, etc.)
@@ -51,16 +51,16 @@ instance Eq OllamaError where
 
 {- | Determine whether an error is transient and safe to retry.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 isRetryable :: OllamaError -> Bool
 isRetryable (HttpError _) = True
 isRetryable TimeoutError = True
 isRetryable _ = False
 
-{- | Helper to throw an 'OllamaError' as an exception with callstack info.
+{- | Helper to throw an 'OllamaError' as an exception.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 throwOllama :: OllamaError -> IO a
 throwOllama = throwIO

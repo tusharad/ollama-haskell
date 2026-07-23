@@ -167,12 +167,14 @@ instance HasDone GenerateResponse where
 
 @since 1.0.0.0
 -}
-generate :: (MonadIO m) => OllamaClient -> GenerateRequest -> m (Either OllamaError GenerateResponse)
+generate ::
+  (MonadIO m) => OllamaClient -> GenerateRequest -> m (Either OllamaError GenerateResponse)
 generate client req = request client "POST" "/api/generate" (Just req {genStream = Just False})
 
 {- | Streaming text completion API.
 
 @since 1.0.0.0
 -}
-generateStream :: (MonadIO m) => OllamaClient -> GenerateRequest -> ConduitT () GenerateResponse m ()
+generateStream ::
+  (MonadIO m) => OllamaClient -> GenerateRequest -> ConduitT () GenerateResponse m ()
 generateStream _client _req = liftIO $ pure ()
