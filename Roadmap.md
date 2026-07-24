@@ -95,18 +95,18 @@ graph LR
 
 #### Track A: Domain Types
 
-- [ ] **S2.1** — Implement `Ollama.Types.Common`: `ModelName`, `Digest`, `Base64Image`, `Duration`, `Version`, `Think`, `ThinkingLevel`. Include smart constructors and JSON instances.
-- [ ] **S2.2** — Implement `Ollama.Types.Message`: `Role`, `Message`, all smart constructors (`userMessage`, `systemMessage`, `assistantMessage`, `toolMessage`, `toolResultMessage`, `imageMessage`). Custom `ToJSON`/`FromJSON`.
-- [ ] **S2.3** — Implement `Ollama.Types.Tool`: `Tool`, `FunctionDef`, `FunctionParameters`, `ToolCall`, `ToolCallFunction`. Custom JSON instances.
-- [ ] **S2.4** — Implement `Ollama.Types.Options`: `ModelOptions` with all fields from [API spec](./api.md) including `draft_num_predict`. Custom `ToJSON` that omits `Nothing` fields.
-- [ ] **S2.5** — Implement `Ollama.Types.Format`: `Format` (`JsonFormat`, `SchemaFormat`). Migrate and improve `SchemaBuilder` DSL to `Ollama.Types.Format.SchemaBuilder`.
-- [ ] **S2.6** — Implement `Ollama.Types.Model`: `ModelInfo`, `ModelDetails`, `RunningModel`, `RunningModelsResponse`, `ListResponse`. Custom `FromJSON`.
+- [x] **S2.1** — Implement `Ollama.Types.Common`: `ModelName`, `Digest`, `Base64Image`, `Duration`, `Version`, `Think`, `ThinkingLevel`. Include smart constructors and JSON instances.
+- [x] **S2.2** — Implement `Ollama.Types.Message`: `Role`, `Message`, all smart constructors (`userMessage`, `systemMessage`, `assistantMessage`, `toolMessage`, `toolResultMessage`, `imageMessage`). Custom `ToJSON`/`FromJSON`.
+- [x] **S2.3** — Implement `Ollama.Types.Tool`: `Tool`, `FunctionDef`, `FunctionParameters`, `ToolCall`, `ToolCallFunction`. Custom JSON instances.
+- [x] **S2.4** — Implement `Ollama.Types.Options`: `ModelOptions` with all fields from [API spec](./api.md) including `draft_num_predict`. Custom `ToJSON` that omits `Nothing` fields.
+- [x] **S2.5** — Implement `Ollama.Types.Format`: `Format` (`JsonFormat`, `SchemaFormat`). Migrate and improve `SchemaBuilder` DSL to `Ollama.Types.Format.SchemaBuilder`.
+- [x] **S2.6** — Implement `Ollama.Types.Model`: `ModelInfo`, `ModelDetails`, `RunningModel`, `RunningModelsResponse`, `ListResponse`. Custom `FromJSON`.
 
 #### Track B: Error & Config
 
-- [ ] **S2.7** — Implement `Ollama.Error`: `OllamaError` sum type (5 constructors), `Exception` instance, proper `Eq`, `isRetryable`, `throwOllama`.
-- [ ] **S2.8** — Implement `Ollama.Client.Config`: `OllamaClientConfig`, `RetryPolicy`, `LogLevel`, `defaultConfig`.
-- [ ] **S2.9** — Create `Ollama.Types` re-export module that exposes all public types.
+- [x] **S2.7** — Implement `Ollama.Error`: `OllamaError` sum type (5 constructors), `Exception` instance, proper `Eq`, `isRetryable`, `throwOllama`.
+- [x] **S2.8** — Implement `Ollama.Client.Config`: `OllamaClientConfig`, `RetryPolicy`, `LogLevel`, `defaultConfig`.
+- [x] **S2.9** — Create `Ollama.Types` re-export module that exposes all public types.
 
 ### Acceptance Criteria
 
@@ -141,24 +141,24 @@ graph LR
 
 ### Tasks
 
-- [ ] **S3.1** — Implement `Ollama.Client`: `OllamaClient` (abstract type), `newClient`, `defaultClient`, `closeClient`, `withClient`.
-- [ ] **S3.2** — Implement `clientFromEnv`: Read `OLLAMA_HOST` and `OLLAMA_API_KEY` from environment variables. Parse host URL robustly (handle `host:port`, `http://host:port`, bare `host`).
-- [ ] **S3.3** — Implement `Ollama.Client.Internal.request`:
+- [x] **S3.1** — Implement `Ollama.Client`: `OllamaClient` (abstract type), `newClient`, `defaultClient`, `closeClient`, `withClient`.
+- [x] **S3.2** — Implement `clientFromEnv`: Read `OLLAMA_HOST` and `OLLAMA_API_KEY` from environment variables. Parse host URL robustly (handle `host:port`, `http://host:port`, bare `host`).
+- [x] **S3.3** — Implement `Ollama.Client.Internal.request`:
   - Resolve full URL from base URL + endpoint.
   - Set `Content-Type: application/json` and `Accept: application/json`.
   - Apply `Authorization: Bearer <key>` if configured.
   - Apply custom headers.
   - Handle JSON decode of response body.
   - Map HTTP errors to `OllamaError` constructors.
-- [ ] **S3.4** — Implement `Ollama.Client.Internal.requestRaw`: For non-JSON endpoints (blobs).
-- [ ] **S3.5** — Implement retry logic using the `retry` package:
+- [x] **S3.4** — Implement `Ollama.Client.Internal.requestRaw`: For non-JSON endpoints (blobs).
+- [x] **S3.5** — Implement retry logic using the `retry` package:
   - `NoRetry`: No retries.
   - `ConstantRetry count delay`: Fixed interval.
   - `ExponentialRetry count initialDelay`: Exponential backoff.
   - Only retry on `isRetryable` errors.
-- [ ] **S3.6** — Implement lifecycle callbacks: Fire `configOnStart` before request, `configOnSuccess` on 2xx, `configOnError` on failure.
-- [ ] **S3.7** — Implement optional logging: Call `configLogger` with structured log messages at appropriate levels.
-- [ ] **S3.8** — Ensure `Manager` reuse: If `configManager` is `Just`, use it. Otherwise create one per `OllamaClient` and reuse it.
+- [x] **S3.6** — Implement lifecycle callbacks: Fire `configOnStart` before request, `configOnSuccess` on 2xx, `configOnError` on failure.
+- [x] **S3.7** — Implement optional logging: Call `configLogger` with structured log messages at appropriate levels.
+- [x] **S3.8** — Ensure `Manager` reuse: If `configManager` is `Just`, use it. Otherwise create one per `OllamaClient` and reuse it.
 
 ### Acceptance Criteria
 

@@ -21,7 +21,6 @@ module Ollama.Client (
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.IO.Unlift (MonadUnliftIO, withRunInIO)
-import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Network.HTTP.Client (Manager, closeManager, newManager)
@@ -58,7 +57,14 @@ newClient cfg = liftIO $ do
 defaultClient :: (MonadIO m) => m OllamaClient
 defaultClient = newClient defaultConfig
 
-{- | Construct a client resolving host and credentials from environment variables (@OLLAMA_HOST@, @OLLAMA_API_KEY@).
+{- | Construct a client resolving host and credentials from environment variables
+(@OLLAMA_HOST@, @OLLAMA_API_KEY@).
+
+Parses @OLLAMA_HOST@ robustly, handling these formats:
+
+  * @host:port@        → @http:\/\/host:port@
+  * @http:\/\/host:port@ → used as-is
+  * @host@             → @http:\/\/host:11434@
 
 @since 1.0.0.0
 -}
@@ -66,10 +72,22 @@ clientFromEnv :: (MonadIO m) => m OllamaClient
 clientFromEnv = liftIO $ do
   mbHost <- lookupEnv "OLLAMA_HOST"
   mbKey <- lookupEnv "OLLAMA_API_KEY"
-  let hostText = maybe "http://127.0.0.1:11434" T.pack mbHost
+  let hostText = maybe "http://127.0.0.1:11434" (normalizeHost . T.pack) mbHost
       keyText = T.pack <$> mbKey
       cfg = defaultConfig {configBaseUrl = hostText, configApiKey = keyText}
   newClient cfg
+
+{- | Normalize an @OLLAMA_HOST@ value to a full URL with scheme.
+
+Handles: bare @host:port@, @http(s):\/\/host:port@, and bare @host@.
+
+@since 1.0.0.0
+-}
+normalizeHost :: Text -> Text
+normalizeHost raw
+  | "http://" `T.isPrefixOf` raw || "https://" `T.isPrefixOf` raw = T.dropWhileEnd (== '/') raw
+  | ":" `T.isInfixOf` raw = "http://" <> T.dropWhileEnd (== '/') raw
+  | otherwise = "http://" <> T.dropWhileEnd (== '/') raw <> ":11434"
 
 {- | Close the underlying HTTP connection manager if owned by this client.
 
