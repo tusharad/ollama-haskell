@@ -20,7 +20,8 @@ module Ollama.API.Models.Create (
 ) where
 
 import Conduit (ConduitT)
-import Control.Monad.IO.Class (MonadIO (liftIO))
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Aeson
 import Data.Int (Int64)
 import Data.Map.Strict (Map)
@@ -28,7 +29,7 @@ import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Ollama.Client (OllamaClient)
-import Ollama.Client.Internal (request)
+import Ollama.Client.Internal (request, requestStreaming)
 import Ollama.Error (OllamaError)
 import Ollama.Streaming (HasDone (..))
 import Ollama.Types.Common (Digest, ModelName)
@@ -159,5 +160,5 @@ createModel client req = request client "POST" "/api/create" (Just req {crqStrea
 
 @since 1.0.0.0
 -}
-createModelStream :: (MonadIO m) => OllamaClient -> CreateRequest -> ConduitT () CreateResponse m ()
-createModelStream _client _req = liftIO $ pure ()
+createModelStream :: (MonadUnliftIO m) => OllamaClient -> CreateRequest -> ConduitT () CreateResponse m ()
+createModelStream client req = requestStreaming client "/api/create" (req {crqStream = Just True})

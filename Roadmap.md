@@ -141,24 +141,24 @@ graph LR
 
 ### Tasks
 
-- [ ] **S3.1** — Implement `Ollama.Client`: `OllamaClient` (abstract type), `newClient`, `defaultClient`, `closeClient`, `withClient`.
-- [ ] **S3.2** — Implement `clientFromEnv`: Read `OLLAMA_HOST` and `OLLAMA_API_KEY` from environment variables. Parse host URL robustly (handle `host:port`, `http://host:port`, bare `host`).
-- [ ] **S3.3** — Implement `Ollama.Client.Internal.request`:
+- [x] **S3.1** — Implement `Ollama.Client`: `OllamaClient` (abstract type), `newClient`, `defaultClient`, `closeClient`, `withClient`.
+- [x] **S3.2** — Implement `clientFromEnv`: Read `OLLAMA_HOST` and `OLLAMA_API_KEY` from environment variables. Parse host URL robustly (handle `host:port`, `http://host:port`, bare `host`).
+- [x] **S3.3** — Implement `Ollama.Client.Internal.request`:
   - Resolve full URL from base URL + endpoint.
   - Set `Content-Type: application/json` and `Accept: application/json`.
   - Apply `Authorization: Bearer <key>` if configured.
   - Apply custom headers.
   - Handle JSON decode of response body.
   - Map HTTP errors to `OllamaError` constructors.
-- [ ] **S3.4** — Implement `Ollama.Client.Internal.requestRaw`: For non-JSON endpoints (blobs).
-- [ ] **S3.5** — Implement retry logic using the `retry` package:
+- [x] **S3.4** — Implement `Ollama.Client.Internal.requestRaw`: For non-JSON endpoints (blobs).
+- [x] **S3.5** — Implement retry logic using the `retry` package:
   - `NoRetry`: No retries.
   - `ConstantRetry count delay`: Fixed interval.
   - `ExponentialRetry count initialDelay`: Exponential backoff.
   - Only retry on `isRetryable` errors.
-- [ ] **S3.6** — Implement lifecycle callbacks: Fire `configOnStart` before request, `configOnSuccess` on 2xx, `configOnError` on failure.
-- [ ] **S3.7** — Implement optional logging: Call `configLogger` with structured log messages at appropriate levels.
-- [ ] **S3.8** — Ensure `Manager` reuse: If `configManager` is `Just`, use it. Otherwise create one per `OllamaClient` and reuse it.
+- [x] **S3.6** — Implement lifecycle callbacks: Fire `configOnStart` before request, `configOnSuccess` on 2xx, `configOnError` on failure.
+- [x] **S3.7** — Implement optional logging: Call `configLogger` with structured log messages at appropriate levels.
+- [x] **S3.8** — Ensure `Manager` reuse: If `configManager` is `Just`, use it. Otherwise create one per `OllamaClient` and reuse it.
 
 ### Acceptance Criteria
 
@@ -188,23 +188,23 @@ graph LR
 
 #### Developer A: Core AI Endpoints
 
-- [ ] **S4.1** — `Ollama.API.Generate`: `GenerateRequest`, `GenerateResponse`, `generateRequest` smart constructor, `generate` function.
-- [ ] **S4.2** — `Ollama.API.Chat`: `ChatRequest`, `ChatResponse`, `chatRequest` smart constructor, `chat` function.
-- [ ] **S4.3** — `Ollama.API.Embed`: `EmbedRequest`, `EmbedResponse`, `embedRequest` smart constructor, `embed` function.
+- [x] **S4.1** — `Ollama.API.Generate`: `GenerateRequest`, `GenerateResponse`, `generateRequest` smart constructor, `generate` function.
+- [x] **S4.2** — `Ollama.API.Chat`: `ChatRequest`, `ChatResponse`, `chatRequest` smart constructor, `chat` function.
+- [x] **S4.3** — `Ollama.API.Embed`: `EmbedRequest`, `EmbedResponse`, `embedRequest` smart constructor, `embed` function.
 
 #### Developer B: Model Management Endpoints
 
-- [ ] **S4.4** — `Ollama.API.Models`: `listModels`, `showModel`, `copyModel`, `deleteModel` with all request/response types.
-- [ ] **S4.5** — `Ollama.API.Models.Create`: `CreateRequest`, `CreateResponse`, `QuantizationType`, `createModel` (non-streaming).
-- [ ] **S4.6** — `Ollama.API.Models.Pull`: `PullRequest`, `PullResponse`, `pull` (non-streaming, blocks until complete).
-- [ ] **S4.7** — `Ollama.API.Models.Push`: `PushRequest`, `PushResponse`, `push` (non-streaming).
+- [x] **S4.4** — `Ollama.API.Models`: `listModels`, `showModel`, `copyModel`, `deleteModel` with all request/response types.
+- [x] **S4.5** — `Ollama.API.Models.Create`: `CreateRequest`, `CreateResponse`, `QuantizationType`, `createModel` (non-streaming).
+- [x] **S4.6** — `Ollama.API.Models.Pull`: `PullRequest`, `PullResponse`, `pull` (non-streaming, blocks until complete).
+- [x] **S4.7** — `Ollama.API.Models.Push`: `PushRequest`, `PushResponse`, `push` (non-streaming).
 
 #### Developer C: Utility Endpoints
 
-- [ ] **S4.8** — `Ollama.API.Blobs`: `checkBlob` (HEAD request), `pushBlob` (POST with raw body).
-- [ ] **S4.9** — `Ollama.API.Ps`: `listRunning`, `RunningModelsResponse`, `RunningModel`.
-- [ ] **S4.10** — `Ollama.API.Version`: `getVersion`.
-- [ ] **S4.11** — `Ollama.Conversation`: Migrate `ConversationStore` typeclass and `InMemoryStore` to new type system.
+- [x] **S4.8** — `Ollama.API.Blobs`: `checkBlob` (HEAD request), `pushBlob` (POST with raw body).
+- [x] **S4.9** — `Ollama.API.Ps`: `listRunning`, `RunningModelsResponse`, `RunningModel`.
+- [x] **S4.10** — `Ollama.API.Version`: `getVersion`.
+- [x] **S4.11** — `Ollama.Conversation`: Migrate `ConversationStore` typeclass and `InMemoryStore` to new type system.
 
 ### Acceptance Criteria (per endpoint)
 
@@ -241,21 +241,21 @@ For each API endpoint:
 
 ### Tasks
 
-- [ ] **S5.1** — Add `conduit` and `conduit-extra` dependencies.
-- [ ] **S5.2** — Implement `Ollama.Client.Internal.requestStreaming`:
+- [x] **S5.1** — Add `conduit` and `conduit-extra` dependencies.
+- [x] **S5.2** — Implement `Ollama.Client.Internal.requestStreaming`:
   - Open HTTP connection with `withResponse`.
   - Read chunks from `BodyReader`.
   - Parse each line-delimited JSON chunk.
   - Yield parsed values into `ConduitT`.
   - Stop when `isDone` returns `True`.
-- [ ] **S5.3** — Implement `Ollama.Streaming` module (public-facing streaming helpers/utilities).
-- [ ] **S5.4** — Add `generateStream` to `Ollama.API.Generate`.
-- [ ] **S5.5** — Add `chatStream` to `Ollama.API.Chat`.
-- [ ] **S5.6** — Add `pullStream` to `Ollama.API.Models.Pull`.
-- [ ] **S5.7** — Add `pushStream` to `Ollama.API.Models.Push`.
-- [ ] **S5.8** — Add `createModelStream` to `Ollama.API.Models.Create`.
-- [ ] **S5.9** — Add convenience function: `collectStream :: ConduitT () a IO () -> IO [a]`.
-- [ ] **S5.10** — Add convenience function: `foldStream :: (b -> a -> b) -> b -> ConduitT () a IO () -> IO b`.
+- [x] **S5.3** — Implement `Ollama.Streaming` module (public-facing streaming helpers/utilities).
+- [x] **S5.4** — Add `generateStream` to `Ollama.API.Generate`.
+- [x] **S5.5** — Add `chatStream` to `Ollama.API.Chat`.
+- [x] **S5.6** — Add `pullStream` to `Ollama.API.Models.Pull`.
+- [x] **S5.7** — Add `pushStream` to `Ollama.API.Models.Push`.
+- [x] **S5.8** — Add `createModelStream` to `Ollama.API.Models.Create`.
+- [x] **S5.9** — Add convenience function: `collectStream :: ConduitT () a IO () -> IO [a]`.
+- [x] **S5.10** — Add convenience function: `foldStream :: (b -> a -> b) -> b -> ConduitT () a IO () -> IO b`.
 
 ### Acceptance Criteria
 

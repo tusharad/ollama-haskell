@@ -19,14 +19,15 @@ module Ollama.API.Generate (
 ) where
 
 import Conduit (ConduitT)
-import Control.Monad.IO.Class (MonadIO (liftIO))
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Aeson
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import Ollama.Client (OllamaClient)
-import Ollama.Client.Internal (request)
+import Ollama.Client.Internal (request, requestStreaming)
 import Ollama.Error (OllamaError)
 import Ollama.Streaming (HasDone (..))
 import Ollama.Types.Common (Base64Image, Duration, ModelName, Think)
@@ -171,10 +172,9 @@ generate ::
   (MonadIO m) => OllamaClient -> GenerateRequest -> m (Either OllamaError GenerateResponse)
 generate client req = request client "POST" "/api/generate" (Just req {genStream = Just False})
 
-{- | Streaming text completion API.
+{- | Streaming text completion API yielding 'GenerateResponse' chunks.
 
 @since 1.0.0.0
 -}
-generateStream ::
-  (MonadIO m) => OllamaClient -> GenerateRequest -> ConduitT () GenerateResponse m ()
-generateStream _client _req = liftIO $ pure ()
+generateStream :: (MonadUnliftIO m) => OllamaClient -> GenerateRequest -> ConduitT () GenerateResponse m ()
+generateStream client req = requestStreaming client "/api/generate" (req {genStream = Just True})
