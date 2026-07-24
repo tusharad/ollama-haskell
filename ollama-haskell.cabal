@@ -119,6 +119,8 @@ test-suite ollama-haskell-test
     Test.Ollama.Unit.Types
     Test.Ollama.Unit.Error
     Test.Ollama.Unit.Config
+    Test.Ollama.Unit.SchemaBuilder
+    Test.Ollama.Property.Arbitrary
     Test.Ollama.Property.Roundtrip
     Test.Ollama.Golden.Chat
   build-depends:
@@ -127,8 +129,11 @@ test-suite ollama-haskell-test
     , aeson
     , bytestring
     , containers
+    , QuickCheck       >= 2.14
     , tasty          >= 1.5
+    , tasty-golden   >= 2.3
     , tasty-hunit
+    , tasty-quickcheck >= 0.10
     , text
     , time
     , conduit

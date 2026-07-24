@@ -40,7 +40,7 @@ import Ollama.Client (OllamaClient)
 import Ollama.Client.Internal (request)
 import Ollama.Error (OllamaError)
 import Ollama.Types.Common (ModelName)
-import Ollama.Types.Model (ListResponse (..), ModelDetails)
+import Ollama.Types.Model (ListResponse (..), ModelDetails (..))
 
 {- | Show model info request payload.
 
@@ -88,10 +88,10 @@ data ShowResponse = ShowResponse
 instance FromJSON ShowResponse where
   parseJSON = withObject "ShowResponse" $ \v ->
     ShowResponse
-      <$> v .: "modelfile"
+      <$> v .:? "modelfile" .!= ""
       <*> v .:? "parameters"
       <*> v .:? "template"
-      <*> v .: "details"
+      <*> v .:? "details" .!= ModelDetails Nothing "" "" [] "" ""
       <*> v .:? "model_info"
       <*> v .:? "license"
       <*> v .:? "capabilities"

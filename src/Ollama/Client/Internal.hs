@@ -21,7 +21,7 @@ module Ollama.Client.Internal (
 
 import Conduit (
   ConduitT,
-  await,
+  awaitForever,
   bracketP,
   filterC,
   takeWhileC,
@@ -29,19 +29,18 @@ import Conduit (
   yield,
   (.|),
  )
-import Control.Monad.Trans.Resource (runResourceT)
-import Data.Conduit.Binary qualified as CB
-import Data.Conduit.Combinators (repeatM)
 import Control.Exception (SomeException, catch, try)
-import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.IO.Unlift (MonadUnliftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 import Control.Retry qualified as Retry
 import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as BSL
 import Data.CaseInsensitive (CI)
+import Data.Conduit.Binary qualified as CB
+import Data.Conduit.Combinators (repeatM)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
@@ -50,7 +49,6 @@ import Network.HTTP.Types (statusCode)
 import Ollama.Client (OllamaClient (..))
 import Ollama.Client.Config (LogLevel (..), OllamaClientConfig (..), RetryPolicy (..))
 import Ollama.Error (OllamaError (..), isRetryable)
-import Ollama.Streaming (HasDone (..))
 
 -- ---------------------------------------------------------------------------
 -- Public API
@@ -96,13 +94,13 @@ requestRaw client reqMethod endpoint mbPayload = liftIO $
 {- | Dispatch a conduit-based streaming API request.
 
 Opens an HTTP response stream, reads line-delimited JSON chunks as they arrive,
-decodes each chunk, and yields values into a 'ConduitT'. Stops when 'isDone'
-returns 'True' or the server closes the connection.
+decodes each chunk, and yields values into a 'ConduitT'. Stops when the server
+closes the connection.
 
 @since 1.0.0.0
 -}
 requestStreaming ::
-  (MonadUnliftIO m, ToJSON req, FromJSON resp, HasDone resp) =>
+  (MonadUnliftIO m, ToJSON req, FromJSON resp) =>
   OllamaClient ->
   Text ->
   req ->
@@ -114,8 +112,9 @@ requestStreaming OllamaClient {..} endpoint payload = do
   let req =
         initReq
           { method = "POST"
+          , responseTimeout = responseTimeoutNone
           , requestHeaders =
-              [("Content-Type", "application/json"), ("Accept", "application/x-ndjson")]
+              [("Content-Type", "application/json")]
                 ++ authHeader cfg
                 ++ configHeaders cfg
           , requestBody = RequestBodyLBS (encode payload)
@@ -130,16 +129,10 @@ requestStreaming OllamaClient {..} endpoint payload = do
           source .| CB.lines .| filterC (not . BS.null) .| parseAndYield
       )
   where
-    parseAndYield = do
-      mLine <- await
-      case mLine of
-        Nothing -> pure ()
-        Just line -> do
-          case eitherDecode (BSL.fromStrict line) of
-            Left _err -> parseAndYield
-            Right val -> do
-              yield val
-              when (not $ isDone val) parseAndYield
+    parseAndYield = awaitForever $ \line -> do
+      case eitherDecode (BSL.fromStrict line) of
+        Left _err -> pure ()
+        Right val -> yield val
 
 -- ---------------------------------------------------------------------------
 -- Core request execution
@@ -157,9 +150,11 @@ executeJsonRequest OllamaClient {..} reqMethod endpoint mbPayload = do
   let fullUrl = T.unpack $ configBaseUrl clientConfig <> endpoint
       cfg = clientConfig
   initReq <- parseRequest fullUrl
-  let req =
+  let timeoutMicro = configTimeout cfg * 1000000
+      req =
         initReq
           { method = reqMethod
+          , responseTimeout = responseTimeoutMicro timeoutMicro
           , requestHeaders =
               [("Content-Type", "application/json"), ("Accept", "application/json")]
                 ++ authHeader cfg
@@ -171,11 +166,17 @@ executeJsonRequest OllamaClient {..} reqMethod endpoint mbPayload = do
     Left httpErr -> pure $ Left $ HttpError httpErr
     Right resp -> do
       let status = statusCode (responseStatus resp)
+          body = responseBody resp
       if status >= 200 && status < 300
-        then case eitherDecode (responseBody resp) of
-          Left err -> pure $ Left $ DecodeError (T.pack err) (BSL.toStrict $ responseBody resp)
-          Right val -> pure $ Right val
-        else pure $ Left $ ApiError status (TE.decodeUtf8 . BSL.toStrict $ responseBody resp)
+        then
+          if BSL.null body
+            then case eitherDecode "null" of
+              Left err -> pure $ Left $ DecodeError (T.pack err) (BSL.toStrict body)
+              Right val -> pure $ Right val
+            else case eitherDecode body of
+              Left err -> pure $ Left $ DecodeError (T.pack err) (BSL.toStrict body)
+              Right val -> pure $ Right val
+        else pure $ Left $ ApiError status (TE.decodeUtf8 . BSL.toStrict $ body)
 
 {- | Execute a raw byte request without retry wrapping. -}
 executeRawRequest ::
@@ -188,9 +189,11 @@ executeRawRequest OllamaClient {..} reqMethod endpoint mbPayload = do
   let fullUrl = T.unpack $ configBaseUrl clientConfig <> endpoint
       cfg = clientConfig
   initReq <- parseRequest fullUrl
-  let req =
+  let timeoutMicro = configTimeout cfg * 1000000
+      req =
         initReq
           { method = reqMethod
+          , responseTimeout = responseTimeoutMicro timeoutMicro
           , requestHeaders = authHeader cfg ++ configHeaders cfg
           , requestBody = maybe mempty RequestBodyBS mbPayload
           }
@@ -201,7 +204,9 @@ executeRawRequest OllamaClient {..} reqMethod endpoint mbPayload = do
       let status = statusCode (responseStatus resp)
       if status >= 200 && status < 300
         then pure $ Right (BSL.toStrict $ responseBody resp)
-        else pure $ Left $ ApiError status (TE.decodeUtf8 . BSL.toStrict $ responseBody resp)
+        else pure $ Left $ ApiError status (TE.decodeUtf8 . BSL.toStrict $ body)
+        where
+          body = responseBody resp
 
 -- ---------------------------------------------------------------------------
 -- Retry logic

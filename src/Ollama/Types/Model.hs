@@ -43,11 +43,11 @@ instance FromJSON ModelDetails where
   parseJSON = withObject "ModelDetails" $ \v ->
     ModelDetails
       <$> v .:? "parent_model"
-      <*> v .: "format"
-      <*> v .: "family"
+      <*> v .:? "format" .!= ""
+      <*> v .:? "family" .!= ""
       <*> v .:? "families" .!= []
-      <*> v .: "parameter_size"
-      <*> v .: "quantization_level"
+      <*> v .:? "parameter_size" .!= ""
+      <*> v .:? "quantization_level" .!= ""
 
 instance ToJSON ModelDetails where
   toJSON ModelDetails {..} =
