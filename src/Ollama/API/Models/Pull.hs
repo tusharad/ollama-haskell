@@ -18,14 +18,15 @@ module Ollama.API.Models.Pull (
 ) where
 
 import Conduit (ConduitT)
-import Control.Monad.IO.Class (MonadIO (liftIO))
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Aeson
 import Data.Int (Int64)
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Ollama.Client (OllamaClient)
-import Ollama.Client.Internal (request)
+import Ollama.Client.Internal (request, requestStreaming)
 import Ollama.Error (OllamaError)
 import Ollama.Streaming (HasDone (..))
 import Ollama.Types.Common (Digest, ModelName)
@@ -94,5 +95,6 @@ pull client model =
 
 @since 1.0.0.0
 -}
-pullStream :: (MonadIO m) => OllamaClient -> ModelName -> ConduitT () PullResponse m ()
-pullStream _client _model = liftIO $ pure ()
+pullStream :: (MonadUnliftIO m) => OllamaClient -> ModelName -> ConduitT () PullResponse m ()
+pullStream client model =
+  requestStreaming client "/api/pull" (PullRequest model Nothing (Just True))

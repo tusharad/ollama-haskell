@@ -241,21 +241,21 @@ For each API endpoint:
 
 ### Tasks
 
-- [ ] **S5.1** — Add `conduit` and `conduit-extra` dependencies.
-- [ ] **S5.2** — Implement `Ollama.Client.Internal.requestStreaming`:
+- [x] **S5.1** — Add `conduit` and `conduit-extra` dependencies.
+- [x] **S5.2** — Implement `Ollama.Client.Internal.requestStreaming`:
   - Open HTTP connection with `withResponse`.
   - Read chunks from `BodyReader`.
   - Parse each line-delimited JSON chunk.
   - Yield parsed values into `ConduitT`.
   - Stop when `isDone` returns `True`.
-- [ ] **S5.3** — Implement `Ollama.Streaming` module (public-facing streaming helpers/utilities).
-- [ ] **S5.4** — Add `generateStream` to `Ollama.API.Generate`.
-- [ ] **S5.5** — Add `chatStream` to `Ollama.API.Chat`.
-- [ ] **S5.6** — Add `pullStream` to `Ollama.API.Models.Pull`.
-- [ ] **S5.7** — Add `pushStream` to `Ollama.API.Models.Push`.
-- [ ] **S5.8** — Add `createModelStream` to `Ollama.API.Models.Create`.
-- [ ] **S5.9** — Add convenience function: `collectStream :: ConduitT () a IO () -> IO [a]`.
-- [ ] **S5.10** — Add convenience function: `foldStream :: (b -> a -> b) -> b -> ConduitT () a IO () -> IO b`.
+- [x] **S5.3** — Implement `Ollama.Streaming` module (public-facing streaming helpers/utilities).
+- [x] **S5.4** — Add `generateStream` to `Ollama.API.Generate`.
+- [x] **S5.5** — Add `chatStream` to `Ollama.API.Chat`.
+- [x] **S5.6** — Add `pullStream` to `Ollama.API.Models.Pull`.
+- [x] **S5.7** — Add `pushStream` to `Ollama.API.Models.Push`.
+- [x] **S5.8** — Add `createModelStream` to `Ollama.API.Models.Create`.
+- [x] **S5.9** — Add convenience function: `collectStream :: ConduitT () a IO () -> IO [a]`.
+- [x] **S5.10** — Add convenience function: `foldStream :: (b -> a -> b) -> b -> ConduitT () a IO () -> IO b`.
 
 ### Acceptance Criteria
 

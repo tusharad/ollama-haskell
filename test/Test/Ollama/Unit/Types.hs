@@ -1,5 +1,6 @@
 module Test.Ollama.Unit.Types (tests) where
 
+import Conduit (yield)
 import Data.Aeson (decode, encode)
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.Time (getCurrentTime)
@@ -60,4 +61,12 @@ tests =
 
         mLoadedAfter <- loadConversationInMemory store "c1"
         assertEqual "Load after delete" Nothing mLoadedAfter
+    , testCase "Streaming collectStream helper" $ do
+        let mockStream = mapM_ yield [1 .. 5 :: Int]
+        items <- collectStream mockStream
+        assertEqual "Collected list" [1, 2, 3, 4, 5] items
+    , testCase "Streaming foldStream helper" $ do
+        let mockStream = mapM_ yield [1 .. 5 :: Int]
+        sumVal <- foldStream (+) 0 mockStream
+        assertEqual "Folded sum" 15 sumVal
     ]

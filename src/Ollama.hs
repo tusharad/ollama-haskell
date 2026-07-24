@@ -138,6 +138,8 @@ module Ollama (
 
   -- * Streaming
   HasDone (..),
+  collectStream,
+  foldStream,
 
   -- * Conversation Store
   Conversation (..),

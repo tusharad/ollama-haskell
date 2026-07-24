@@ -9,20 +9,37 @@ Portability : portable
 Low-level HTTP transport plumbing and request dispatchers.
 
 Implements retry logic, lifecycle callbacks, structured logging,
-and authentication header injection.
+authentication header injection, and conduit-based response streaming.
 
 @since 1.0.0.0
 -}
 module Ollama.Client.Internal (
   request,
   requestRaw,
+  requestStreaming,
 ) where
 
+import Conduit (
+  ConduitT,
+  await,
+  bracketP,
+  filterC,
+  takeWhileC,
+  transPipe,
+  yield,
+  (.|),
+ )
+import Control.Monad.Trans.Resource (runResourceT)
+import Data.Conduit.Binary qualified as CB
+import Data.Conduit.Combinators (repeatM)
 import Control.Exception (SomeException, catch, try)
+import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO (liftIO))
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Retry qualified as Retry
 import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
 import Data.ByteString (ByteString)
+import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as BSL
 import Data.CaseInsensitive (CI)
 import Data.Text (Text)
@@ -33,6 +50,7 @@ import Network.HTTP.Types (statusCode)
 import Ollama.Client (OllamaClient (..))
 import Ollama.Client.Config (LogLevel (..), OllamaClientConfig (..), RetryPolicy (..))
 import Ollama.Error (OllamaError (..), isRetryable)
+import Ollama.Streaming (HasDone (..))
 
 -- ---------------------------------------------------------------------------
 -- Public API
@@ -74,6 +92,54 @@ requestRaw ::
 requestRaw client reqMethod endpoint mbPayload = liftIO $
   withRetry client endpoint $
     executeRawRequest client reqMethod endpoint mbPayload
+
+{- | Dispatch a conduit-based streaming API request.
+
+Opens an HTTP response stream, reads line-delimited JSON chunks as they arrive,
+decodes each chunk, and yields values into a 'ConduitT'. Stops when 'isDone'
+returns 'True' or the server closes the connection.
+
+@since 1.0.0.0
+-}
+requestStreaming ::
+  (MonadUnliftIO m, ToJSON req, FromJSON resp, HasDone resp) =>
+  OllamaClient ->
+  Text ->
+  req ->
+  ConduitT () resp m ()
+requestStreaming OllamaClient {..} endpoint payload = do
+  let fullUrl = T.unpack $ configBaseUrl clientConfig <> endpoint
+      cfg = clientConfig
+  initReq <- liftIO $ parseRequest fullUrl
+  let req =
+        initReq
+          { method = "POST"
+          , requestHeaders =
+              [("Content-Type", "application/json"), ("Accept", "application/x-ndjson")]
+                ++ authHeader cfg
+                ++ configHeaders cfg
+          , requestBody = RequestBodyLBS (encode payload)
+          }
+  transPipe runResourceT $
+    bracketP
+      (responseOpen req clientManager)
+      responseClose
+      ( \resp -> do
+          let bodyReader = responseBody resp
+              source = repeatM (liftIO $ brRead bodyReader) .| takeWhileC (not . BS.null)
+          source .| CB.lines .| filterC (not . BS.null) .| parseAndYield
+      )
+  where
+    parseAndYield = do
+      mLine <- await
+      case mLine of
+        Nothing -> pure ()
+        Just line -> do
+          case eitherDecode (BSL.fromStrict line) of
+            Left _err -> parseAndYield
+            Right val -> do
+              yield val
+              when (not $ isDone val) parseAndYield
 
 -- ---------------------------------------------------------------------------
 -- Core request execution

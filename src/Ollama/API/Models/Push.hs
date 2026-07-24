@@ -18,14 +18,15 @@ module Ollama.API.Models.Push (
 ) where
 
 import Conduit (ConduitT)
-import Control.Monad.IO.Class (MonadIO (liftIO))
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Aeson
 import Data.Int (Int64)
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Ollama.Client (OllamaClient)
-import Ollama.Client.Internal (request)
+import Ollama.Client.Internal (request, requestStreaming)
 import Ollama.Error (OllamaError)
 import Ollama.Streaming (HasDone (..))
 import Ollama.Types.Common (Digest, ModelName)
@@ -90,9 +91,10 @@ push :: (MonadIO m) => OllamaClient -> ModelName -> m (Either OllamaError PushRe
 push client model =
   request client "POST" "/api/push" (Just $ PushRequest model Nothing (Just False))
 
-{- | Push a model streaming upload progress.
+{- | Push a model streaming upload progress updates.
 
 @since 1.0.0.0
 -}
-pushStream :: (MonadIO m) => OllamaClient -> ModelName -> ConduitT () PushResponse m ()
-pushStream _client _model = liftIO $ pure ()
+pushStream :: (MonadUnliftIO m) => OllamaClient -> ModelName -> ConduitT () PushResponse m ()
+pushStream client model =
+  requestStreaming client "/api/push" (PushRequest model Nothing (Just True))
