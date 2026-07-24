@@ -160,5 +160,6 @@ createModel client req = request client "POST" "/api/create" (Just req {crqStrea
 
 @since 1.0.0.0
 -}
-createModelStream :: (MonadUnliftIO m) => OllamaClient -> CreateRequest -> ConduitT () CreateResponse m ()
+createModelStream ::
+  (MonadUnliftIO m) => OllamaClient -> CreateRequest -> ConduitT () CreateResponse m ()
 createModelStream client req = requestStreaming client "/api/create" (req {crqStream = Just True})

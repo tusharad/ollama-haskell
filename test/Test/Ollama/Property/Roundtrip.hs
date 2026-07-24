@@ -1,7 +1,6 @@
 module Test.Ollama.Property.Roundtrip (tests) where
 
 import Data.Aeson (decode, encode)
-import Data.Maybe (fromJust)
 import Data.Text qualified as T
 import Ollama
 import Test.Ollama.Property.Arbitrary ()
@@ -24,8 +23,10 @@ tests =
         \(d :: Digest) -> decode (encode d) === Just d
     , testProperty "Duration JSON roundtrip: ∀ x. decode (encode x) == Just x" $
         \(dur :: Duration) -> decode (encode dur) === Just dur
-    , testProperty "Idempotency property: ∀ x. encode (fromJust (decode (encode x))) == encode x" $
-        \(msg :: Message) -> encode (fromJust (decode (encode msg) :: Maybe Message)) === encode msg
+    , testProperty "Idempotency property: ∀ x. encode (decoded x) == encode x" $
+        \(msg :: Message) -> case decode (encode msg) :: Maybe Message of
+          Nothing -> property False
+          Just decoded -> encode decoded === encode msg
     , testProperty "Smart constructor invariant: mkModelName never returns empty ModelName" $
         \txt -> case mkModelName (T.pack txt) of
           Left err -> err === "Model name cannot be empty"

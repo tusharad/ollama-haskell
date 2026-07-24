@@ -68,9 +68,10 @@ request ::
   Text ->
   Maybe req ->
   m (Either OllamaError resp)
-request client reqMethod endpoint mbPayload = liftIO $
-  withRetry client endpoint $
-    executeJsonRequest client reqMethod endpoint mbPayload
+request client reqMethod endpoint mbPayload =
+  liftIO $
+    withRetry client endpoint $
+      executeJsonRequest client reqMethod endpoint mbPayload
 
 {- | Dispatch a raw (non-JSON) request returning raw bytes.
 
@@ -87,9 +88,10 @@ requestRaw ::
   Text ->
   Maybe ByteString ->
   m (Either OllamaError ByteString)
-requestRaw client reqMethod endpoint mbPayload = liftIO $
-  withRetry client endpoint $
-    executeRawRequest client reqMethod endpoint mbPayload
+requestRaw client reqMethod endpoint mbPayload =
+  liftIO $
+    withRetry client endpoint $
+      executeRawRequest client reqMethod endpoint mbPayload
 
 {- | Dispatch a conduit-based streaming API request.
 
@@ -138,7 +140,7 @@ requestStreaming OllamaClient {..} endpoint payload = do
 -- Core request execution
 -- ---------------------------------------------------------------------------
 
-{- | Execute a JSON request without retry wrapping. -}
+-- | Execute a JSON request without retry wrapping.
 executeJsonRequest ::
   (ToJSON req, FromJSON resp) =>
   OllamaClient ->
@@ -178,7 +180,7 @@ executeJsonRequest OllamaClient {..} reqMethod endpoint mbPayload = do
               Right val -> pure $ Right val
         else pure $ Left $ ApiError status (TE.decodeUtf8 . BSL.toStrict $ body)
 
-{- | Execute a raw byte request without retry wrapping. -}
+-- | Execute a raw byte request without retry wrapping.
 executeRawRequest ::
   OllamaClient ->
   ByteString ->
@@ -205,8 +207,8 @@ executeRawRequest OllamaClient {..} reqMethod endpoint mbPayload = do
       if status >= 200 && status < 300
         then pure $ Right (BSL.toStrict $ responseBody resp)
         else pure $ Left $ ApiError status (TE.decodeUtf8 . BSL.toStrict $ body)
-        where
-          body = responseBody resp
+      where
+        body = responseBody resp
 
 -- ---------------------------------------------------------------------------
 -- Retry logic
@@ -240,7 +242,7 @@ withRetry OllamaClient {clientConfig = cfg} endpoint action = do
       logMsg cfg Info $ "Request succeeded: " <> endpoint
   pure result
 
-{- | Map our 'RetryPolicy' ADT to the @retry@ package's 'Retry.RetryPolicyM'. -}
+-- | Map our 'RetryPolicy' ADT to the @retry@ package's 'Retry.RetryPolicyM'.
 toRetryPolicy :: RetryPolicy -> Retry.RetryPolicyM IO
 toRetryPolicy NoRetry = Retry.limitRetries 0
 toRetryPolicy (ConstantRetry count delaySec) =
@@ -252,18 +254,18 @@ toRetryPolicy (ExponentialRetry count initialDelayMs) =
 -- Helpers
 -- ---------------------------------------------------------------------------
 
-{- | Build the Authorization header if an API key is configured. -}
+-- | Build the Authorization header if an API key is configured.
 authHeader :: OllamaClientConfig -> [(CI ByteString, ByteString)]
 authHeader cfg = case configApiKey cfg of
   Nothing -> []
   Just key -> [("Authorization", "Bearer " <> TE.encodeUtf8 key)]
 
-{- | Fire an optional callback, silently ignoring exceptions. -}
+-- | Fire an optional callback, silently ignoring exceptions.
 fireCallback :: Maybe (IO ()) -> IO ()
 fireCallback Nothing = pure ()
 fireCallback (Just cb) = cb `catch` \(_ :: SomeException) -> pure ()
 
-{- | Log a message via the configured logger, if present. -}
+-- | Log a message via the configured logger, if present.
 logMsg :: OllamaClientConfig -> LogLevel -> Text -> IO ()
 logMsg cfg level msg = case configLogger cfg of
   Nothing -> pure ()
