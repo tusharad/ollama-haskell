@@ -188,23 +188,23 @@ graph LR
 
 #### Developer A: Core AI Endpoints
 
-- [ ] **S4.1** — `Ollama.API.Generate`: `GenerateRequest`, `GenerateResponse`, `generateRequest` smart constructor, `generate` function.
-- [ ] **S4.2** — `Ollama.API.Chat`: `ChatRequest`, `ChatResponse`, `chatRequest` smart constructor, `chat` function.
-- [ ] **S4.3** — `Ollama.API.Embed`: `EmbedRequest`, `EmbedResponse`, `embedRequest` smart constructor, `embed` function.
+- [x] **S4.1** — `Ollama.API.Generate`: `GenerateRequest`, `GenerateResponse`, `generateRequest` smart constructor, `generate` function.
+- [x] **S4.2** — `Ollama.API.Chat`: `ChatRequest`, `ChatResponse`, `chatRequest` smart constructor, `chat` function.
+- [x] **S4.3** — `Ollama.API.Embed`: `EmbedRequest`, `EmbedResponse`, `embedRequest` smart constructor, `embed` function.
 
 #### Developer B: Model Management Endpoints
 
-- [ ] **S4.4** — `Ollama.API.Models`: `listModels`, `showModel`, `copyModel`, `deleteModel` with all request/response types.
-- [ ] **S4.5** — `Ollama.API.Models.Create`: `CreateRequest`, `CreateResponse`, `QuantizationType`, `createModel` (non-streaming).
-- [ ] **S4.6** — `Ollama.API.Models.Pull`: `PullRequest`, `PullResponse`, `pull` (non-streaming, blocks until complete).
-- [ ] **S4.7** — `Ollama.API.Models.Push`: `PushRequest`, `PushResponse`, `push` (non-streaming).
+- [x] **S4.4** — `Ollama.API.Models`: `listModels`, `showModel`, `copyModel`, `deleteModel` with all request/response types.
+- [x] **S4.5** — `Ollama.API.Models.Create`: `CreateRequest`, `CreateResponse`, `QuantizationType`, `createModel` (non-streaming).
+- [x] **S4.6** — `Ollama.API.Models.Pull`: `PullRequest`, `PullResponse`, `pull` (non-streaming, blocks until complete).
+- [x] **S4.7** — `Ollama.API.Models.Push`: `PushRequest`, `PushResponse`, `push` (non-streaming).
 
 #### Developer C: Utility Endpoints
 
-- [ ] **S4.8** — `Ollama.API.Blobs`: `checkBlob` (HEAD request), `pushBlob` (POST with raw body).
-- [ ] **S4.9** — `Ollama.API.Ps`: `listRunning`, `RunningModelsResponse`, `RunningModel`.
-- [ ] **S4.10** — `Ollama.API.Version`: `getVersion`.
-- [ ] **S4.11** — `Ollama.Conversation`: Migrate `ConversationStore` typeclass and `InMemoryStore` to new type system.
+- [x] **S4.8** — `Ollama.API.Blobs`: `checkBlob` (HEAD request), `pushBlob` (POST with raw body).
+- [x] **S4.9** — `Ollama.API.Ps`: `listRunning`, `RunningModelsResponse`, `RunningModel`.
+- [x] **S4.10** — `Ollama.API.Version`: `getVersion`.
+- [x] **S4.11** — `Ollama.Conversation`: Migrate `ConversationStore` typeclass and `InMemoryStore` to new type system.
 
 ### Acceptance Criteria (per endpoint)
 

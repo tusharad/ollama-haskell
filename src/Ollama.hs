@@ -72,6 +72,14 @@ module Ollama (
   ListResponse (..),
   ShowResponse (..),
 
+  -- ** Create
+  createModel,
+  createModelStream,
+  defaultCreateRequest,
+  CreateRequest (..),
+  CreateResponse (..),
+  QuantizationType (..),
+
   -- ** Pull & Push
   pull,
   pullStream,
@@ -130,6 +138,16 @@ module Ollama (
 
   -- * Streaming
   HasDone (..),
+
+  -- * Conversation Store
+  Conversation (..),
+  ConversationStore (..),
+  InMemoryStore (..),
+  initInMemoryStore,
+  saveConversationInMemory,
+  loadConversationInMemory,
+  listConversationsInMemory,
+  deleteConversationInMemory,
 ) where
 
 import Ollama.API.Blobs
@@ -137,12 +155,14 @@ import Ollama.API.Chat
 import Ollama.API.Embed
 import Ollama.API.Generate
 import Ollama.API.Models
+import Ollama.API.Models.Create
 import Ollama.API.Models.Pull
 import Ollama.API.Models.Push
 import Ollama.API.Ps
 import Ollama.API.Version
 import Ollama.Client
 import Ollama.Client.Config
+import Ollama.Conversation
 import Ollama.Error
 import Ollama.Streaming
 import Ollama.Types

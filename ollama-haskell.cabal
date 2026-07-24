@@ -126,6 +126,7 @@ test-suite ollama-haskell-test
     , tasty          >= 1.5
     , tasty-hunit
     , text
+    , time
 
 test-suite ollama-haskell-integration
   import: warnings, lang

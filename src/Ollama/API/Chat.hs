@@ -46,7 +46,7 @@ data ChatRequest = ChatRequest
   , chatTools :: !(Maybe [Tool])
   , chatFormat :: !(Maybe Format)
   , chatOptions :: !(Maybe ModelOptions)
-  , crqStream :: !(Maybe Bool)
+  , chStream :: !(Maybe Bool)
   , chatKeepAlive :: !(Maybe Text)
   , chatThink :: !(Maybe Think)
   }
@@ -61,7 +61,7 @@ instance ToJSON ChatRequest where
         , ("tools" .=) <$> chatTools
         , ("format" .=) <$> chatFormat
         , ("options" .=) <$> chatOptions
-        , ("stream" .=) <$> crqStream
+        , ("stream" .=) <$> chStream
         , ("keep_alive" .=) <$> chatKeepAlive
         , ("think" .=) <$> chatThink
         ]
@@ -78,7 +78,7 @@ chatRequest model msgs =
     , chatTools = Nothing
     , chatFormat = Nothing
     , chatOptions = Nothing
-    , crqStream = Just False
+    , chStream = Just False
     , chatKeepAlive = Nothing
     , chatThink = Nothing
     }
@@ -141,7 +141,7 @@ instance HasDone ChatResponse where
 @since 1.0.0.0
 -}
 chat :: (MonadIO m) => OllamaClient -> ChatRequest -> m (Either OllamaError ChatResponse)
-chat client req = request client "POST" "/api/chat" (Just req {crqStream = Just False})
+chat client req = request client "POST" "/api/chat" (Just req {chStream = Just False})
 
 {- | Streaming chat completion API.
 
