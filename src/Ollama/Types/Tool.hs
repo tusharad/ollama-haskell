@@ -8,7 +8,7 @@ Portability : portable
 
 Tool calling and structured function interfaces for the Ollama API.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 module Ollama.Types.Tool (
   Tool (..),
@@ -25,7 +25,7 @@ import GHC.Generics (Generic)
 
 {- | Tool definition provided to the model.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 data Tool = Tool
   { toolType :: !Text
@@ -48,7 +48,7 @@ instance FromJSON Tool where
 
 {- | Definition of a function that can be called by the model.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 data FunctionDef = FunctionDef
   { fnName :: !Text
@@ -76,7 +76,7 @@ instance FromJSON FunctionDef where
 
 {- | Parameters schema for a function call.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 data FunctionParameters = FunctionParameters
   { fpType :: !Text
@@ -110,10 +110,10 @@ instance FromJSON FunctionParameters where
 
 {- | Tool call returned in model's assistant response.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
-data ToolCall = ToolCall
-  { tcFunction :: !ToolCallFunction
+newtype ToolCall = ToolCall
+  { tcFunction :: ToolCallFunction
   }
   deriving stock (Eq, Show, Generic)
 
@@ -126,7 +126,7 @@ instance FromJSON ToolCall where
 
 {- | Function invocation payload inside a tool call.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 data ToolCallFunction = ToolCallFunction
   { tcfName :: !Text

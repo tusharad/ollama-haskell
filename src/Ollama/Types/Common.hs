@@ -8,7 +8,7 @@ Portability : portable
 
 Common newtypes and domain primitives for the Ollama API.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 module Ollama.Types.Common (
   ModelName (..),
@@ -34,14 +34,14 @@ import GHC.Generics (Generic)
 
 {- | Model name following the @model:tag@ format.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 newtype ModelName = ModelName {unModelName :: Text}
   deriving newtype (Eq, Ord, Show, IsString, ToJSON, FromJSON, Hashable)
 
 {- | Smart constructor that validates that a model name is non-empty.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 mkModelName :: Text -> Either Text ModelName
 mkModelName t
@@ -50,49 +50,49 @@ mkModelName t
 
 {- | SHA256 digest of a layer blob.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 newtype Digest = Digest {unDigest :: Text}
-  deriving newtype (Eq, Ord, Show, ToJSON, FromJSON)
+  deriving newtype (Eq, Ord, Show, ToJSON, FromJSON, Hashable)
 
 {- | Base64-encoded image data for multimodal inputs.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 newtype Base64Image = Base64Image {unBase64Image :: Text}
   deriving newtype (Eq, Show, ToJSON, FromJSON)
 
 {- | Duration in nanoseconds as returned by the Ollama API.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 newtype Duration = Duration {durationNanos :: Int64}
   deriving newtype (Eq, Ord, Show, ToJSON, FromJSON, Num)
 
 {- | Convert duration nanoseconds to seconds.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 durationToSeconds :: Duration -> Double
 durationToSeconds (Duration ns) = fromIntegral ns / 1e9
 
 {- | Convert duration nanoseconds to milliseconds.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 durationToMillis :: Duration -> Double
 durationToMillis (Duration ns) = fromIntegral ns / 1e6
 
 {- | Ollama server engine version string.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 newtype Version = Version {unVersion :: Text}
   deriving newtype (Eq, Show, ToJSON, FromJSON)
 
 {- | Thinking level settings for reasoning models.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 data ThinkingLevel = ThinkLow | ThinkMedium | ThinkHigh | ThinkMax
   deriving stock (Eq, Show, Bounded, Enum, Generic)
@@ -113,7 +113,7 @@ instance FromJSON ThinkingLevel where
 
 {- | Controls whether a thinking/reasoning model outputs its thoughts.
 
-@since 1.0.0.0
+@since 3.0.0.0
 -}
 data Think
   = ThinkEnabled

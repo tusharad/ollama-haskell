@@ -8,3 +8,8 @@ record-brace-space: true
 newlines-between-decls: 1
 haddock-style: multi-line
 respectful: true
+default-extensions:
+  - ImportQualifiedPost
+  - OverloadedStrings
+  - GHC2021
+  - StrictData

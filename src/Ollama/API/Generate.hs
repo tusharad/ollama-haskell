@@ -168,7 +168,8 @@ instance HasDone GenerateResponse where
 
 @since 1.0.0.0
 -}
-generate :: (MonadIO m) => OllamaClient -> GenerateRequest -> m (Either OllamaError GenerateResponse)
+generate ::
+  (MonadIO m) => OllamaClient -> GenerateRequest -> m (Either OllamaError GenerateResponse)
 generate client req = request client "POST" "/api/generate" (Just req {genStream = Just False})
 
 {- | Streaming text completion API yielding 'GenerateResponse' chunks.

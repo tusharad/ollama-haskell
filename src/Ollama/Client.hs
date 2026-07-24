@@ -19,6 +19,7 @@ module Ollama.Client (
   withClient,
 ) where
 
+import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.IO.Unlift (MonadUnliftIO, withRunInIO)
 import Data.Text (Text)
@@ -94,10 +95,7 @@ normalizeHost raw
 @since 1.0.0.0
 -}
 closeClient :: (MonadIO m) => OllamaClient -> m ()
-closeClient client = liftIO $ do
-  if clientOwned client
-    then closeManager (clientManager client)
-    else pure ()
+closeClient client = liftIO $ when (clientOwned client) $ closeManager (clientManager client)
 
 {- | Resource bracket helper to initialize, run a computation, and close client resources.
 
