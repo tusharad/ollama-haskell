@@ -289,7 +289,7 @@ For each API endpoint:
 
 #### Track A: Pure Unit Tests (no server required)
 
-- [ ] **S6.1** — JSON roundtrip tests for all request/response types:
+- [x] **S6.1** — JSON roundtrip tests for all request/response types:
   - `GenerateRequest`, `GenerateResponse`
   - `ChatRequest`, `ChatResponse`
   - `EmbedRequest`, `EmbedResponse`
@@ -297,57 +297,57 @@ For each API endpoint:
   - `ModelOptions`, `Think`, `ThinkingLevel`
   - `Format`, `Schema`
   - All model management request/response types
-- [ ] **S6.2** — Validation tests for smart constructors:
+- [x] **S6.2** — Validation tests for smart constructors:
   - `mkModelName ""` returns `Left`
   - `chatRequest` with valid messages succeeds
   - `generateRequest` with empty prompt behaviour
-- [ ] **S6.3** — Config resolution tests:
+- [x] **S6.3** — Config resolution tests:
   - `defaultConfig` has correct defaults
   - `RetryPolicy` serialization
-- [ ] **S6.4** — SchemaBuilder DSL tests:
+- [x] **S6.4** — SchemaBuilder DSL tests:
   - Build complex schemas with `|+`, `|++`, `|!`, `|!!`
   - Verify JSON output matches expected schema
-- [ ] **S6.5** — Error type tests:
+- [x] **S6.5** — Error type tests:
   - `isRetryable` returns correct values
   - `Eq` instance works correctly
   - `Exception` instance allows `throwIO`/`catch`
 
 #### Track B: Property-Based Tests
 
-- [ ] **S6.6** — Define `Arbitrary` instances for all public types in `Test.Ollama.Property.Arbitrary`.
-- [ ] **S6.7** — Roundtrip property: `∀ x. decode (encode x) == Just x` for every type with both instances.
-- [ ] **S6.8** — Idempotency property: `∀ x. encode (fromJust (decode (encode x))) == encode x`.
-- [ ] **S6.9** — Smart constructor invariant: `mkModelName` never produces `ModelName ""`.
+- [x] **S6.6** — Define `Arbitrary` instances for all public types in `Test.Ollama.Property.Arbitrary`.
+- [x] **S6.7** — Roundtrip property: `∀ x. decode (encode x) == Just x` for every type with both instances.
+- [x] **S6.8** — Idempotency property: `∀ x. encode (fromJust (decode (encode x))) == encode x`.
+- [x] **S6.9** — Smart constructor invariant: `mkModelName` never produces `ModelName ""`.
 
 #### Track C: Golden Tests
 
-- [ ] **S6.10** — Create golden files for representative JSON payloads (requests and responses) from `api.md`.
-- [ ] **S6.11** — Golden test for `chatRequest` serialization.
-- [ ] **S6.12** — Golden test for `generateRequest` serialization.
-- [ ] **S6.13** — Golden test for `embedRequest` serialization.
-- [ ] **S6.14** — Golden test for each model management request.
+- [x] **S6.10** — Create golden files for representative JSON payloads (requests and responses) from `api.md`.
+- [x] **S6.11** — Golden test for `chatRequest` serialization.
+- [x] **S6.12** — Golden test for `generateRequest` serialization.
+- [x] **S6.13** — Golden test for `embedRequest` serialization.
+- [x] **S6.14** — Golden test for each model management request.
 
 #### Track D: Integration Tests
 
-- [ ] **S6.15** — Migrate existing integration tests to new API surface.
-- [ ] **S6.16** — Integration test: basic chat roundtrip.
-- [ ] **S6.17** — Integration test: streaming chat.
-- [ ] **S6.18** — Integration test: generate with options.
-- [ ] **S6.19** — Integration test: embeddings (single and batch).
-- [ ] **S6.20** — Integration test: list models, show model.
-- [ ] **S6.21** — Integration test: tool calling roundtrip.
-- [ ] **S6.22** — Integration test: structured output (JSON format + schema format).
-- [ ] **S6.23** — Integration test: thinking mode.
-- [ ] **S6.24** — Integration test: timeout and retry behaviour.
-- [ ] **S6.25** — Integration test: lifecycle callbacks.
+- [x] **S6.15** — Migrate existing integration tests to new API surface.
+- [x] **S6.16** — Integration test: basic chat roundtrip.
+- [x] **S6.17** — Integration test: streaming chat.
+- [x] **S6.18** — Integration test: generate with options.
+- [x] **S6.19** — Integration test: embeddings (single and batch).
+- [x] **S6.20** — Integration test: list models, show model.
+- [x] **S6.21** — Integration test: tool calling roundtrip.
+- [x] **S6.22** — Integration test: structured output (JSON format + schema format).
+- [x] **S6.23** — Integration test: thinking mode.
+- [x] **S6.24** — Integration test: timeout and retry behaviour.
+- [x] **S6.25** — Integration test: lifecycle callbacks.
 
 #### Track E: Quality Tooling
 
-- [ ] **S6.26** — Set up `doctest` and verify all Haddock examples compile and pass.
-- [ ] **S6.27** — Run `weeder` and remove all dead code.
-- [ ] **S6.28** — Run `stan` and address all findings.
-- [ ] **S6.29** — Verify `cabal check` passes with zero warnings.
-- [ ] **S6.30** — Verify `cabal haddock` builds with zero warnings.
+- [x] **S6.26** — Set up `doctest` and verify all Haddock examples compile and pass.
+- [x] **S6.27** — Run `weeder` and remove all dead code.
+- [x] **S6.28** — Run `stan` and address all findings.
+- [x] **S6.29** — Verify `cabal check` passes with zero warnings.
+- [x] **S6.30** — Verify `cabal haddock` builds with zero warnings.
 
 ### Acceptance Criteria
 
@@ -388,16 +388,16 @@ For each API endpoint:
 
 #### Track A: Top-Level Module & Re-exports
 
-- [ ] **S7.1** — Implement `Ollama` (top-level re-export module):
+- [x] **S7.1** — Implement `Ollama` (top-level re-export module):
   - Re-export the most commonly used symbols from all submodules.
   - Users should be able to do `import Ollama` and have everything they need for basic usage.
   - Less common types (e.g., `ShowModelInfo`, `SchemaBuilder` DSL) require qualified imports.
-- [ ] **S7.2** — Finalize explicit export lists for every module.
-- [ ] **S7.3** — Verify no orphan instances exist.
+- [x] **S7.2** — Finalize explicit export lists for every module.
+- [x] **S7.3** — Verify no orphan instances exist.
 
 #### Track B: Documentation
 
-- [ ] **S7.4** — Write `README.md` with:
+- [x] **S7.4** — Write `README.md` with:
   - Feature overview.
   - Installation instructions (cabal, stack).
   - Quick start: 5-line example from install to first API call.
@@ -406,24 +406,24 @@ For each API endpoint:
   - Structured output example.
   - Configuration (env vars, custom config).
   - Link to Hackage docs.
-- [ ] **S7.5** — Write `ARCHITECTURE.md`:
+- [x] **S7.5** — Write `ARCHITECTURE.md`:
   - Module dependency diagram.
   - Design decisions and rationale.
   - How to add a new API endpoint.
-- [ ] **S7.6** — Write `CONTRIBUTING.md`:
+- [x] **S7.6** — Write `CONTRIBUTING.md`:
   - Development setup (GHC, cabal, Ollama server).
   - Code style (fourmolu, hlint).
   - PR process and CI requirements.
   - Testing guidelines (pure vs integration).
-- [ ] **S7.7** — Write `CHANGELOG.md` for v1.0.0.0:
+- [x] **S7.7** — Write `CHANGELOG.md` for v1.0.0.0:
   - Breaking changes from v0.2.x.
   - New features.
   - Migration guide summary.
-- [ ] **S7.8** — Review all Haddock documentation:
+- [x] **S7.8** — Review all Haddock documentation:
   - Every exported symbol has docs.
   - Every module has module-level docs.
   - All `@since 1.0.0.0` annotations present.
-- [ ] **S7.9** — Add comprehensive examples to `examples/` directory:
+- [x] **S7.9** — Add comprehensive examples to `examples/` directory:
   - `BasicChat.hs` — Simple chat interaction.
   - `StreamingChat.hs` — Streaming with conduit.
   - `ToolCalling.hs` — Tool/function calling.
@@ -433,12 +433,12 @@ For each API endpoint:
 
 #### Track C: Release Preparation
 
-- [ ] **S7.10** — Run full CI pipeline and fix any remaining issues.
-- [ ] **S7.11** — Run `cabal sdist` and verify the tarball is clean.
-- [ ] **S7.12** — Upload as Hackage candidate and verify docs render correctly.
-- [ ] **S7.13** — Tag release `v1.0.0.0`.
-- [ ] **S7.14** — Publish to Hackage.
-- [ ] **S7.15** — Create GitHub Release with changelog.
+- [x] **S7.10** — Run full CI pipeline and fix any remaining issues.
+- [x] **S7.11** — Run `cabal sdist` and verify the tarball is clean.
+- [x] **S7.12** — Upload as Hackage candidate and verify docs render correctly.
+- [x] **S7.13** — Tag release `v1.0.0.0`.
+- [x] **S7.14** — Publish to Hackage.
+- [x] **S7.15** — Create GitHub Release with changelog.
 
 ### Acceptance Criteria
 

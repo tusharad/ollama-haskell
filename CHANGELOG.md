@@ -1,67 +1,32 @@
-# Revision history for ollama-haskell
+# Changelog
 
-## Unreleased
+All notable changes to `ollama-haskell` will be documented in this file.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [PVP (Haskell Package Versioning Policy)](https://pvp.haskell.org/).
 
-## 0.2.1.0 -- 2025-09-24
+---
 
-* Added blob module for managing binary large objects (GGUF files/safetensors).
-* Breaking: Added `dimensions` option in embeddings for specifying embedding dimensions.
-* Breaking: Added `doneReason` field in chat and generate responses.
-* Improved test suite with more comprehensive test cases.
-* Added `onComplete` callback function in stream handlers for better streaming control.
-* Breaking: Standardized field names across the library for consistency.
-* Applied fourmolu code formatting and added hlint for better code quality.
+## [1.0.0.0] - 2026-07-24
 
-## 0.2.0.0 -- 2025-06-05
+### Added
+- **`OllamaClient` Core**: Thread-safe client handle with automatic connection manager lifecycle management (`newClient`, `defaultClient`, `clientFromEnv`, `withClient`).
+- **First-Class Streaming Pipeline**: `conduit`-based response streaming (`chatStream`, `generateStream`, `pullStream`, `pushStream`, `createModelStream`).
+- **Stream Combinators**: `collectStream` and `foldStream` in `Ollama.Streaming`.
+- **Structured Output DSL**: `SchemaBuilder` DSL in `Ollama.Types.Format.SchemaBuilder` with operators (`|+`, `|++`, `|!`, `|!!`) for building JSON Schemas.
+- **Thinking Models Support**: `Think` ADT (`ThinkEnabled`, `ThinkDisabled`, `ThinkLevel`) and `ThinkingLevel` (`ThinkLow`, `ThinkMedium`, `ThinkHigh`, `ThinkMax`) for thinking models (`qwen3.5`, `deepseek-r1`).
+- **Function / Tool Calling**: `Tool`, `FunctionDef`, `FunctionParameters`, `ToolCall`, and `toolResultMessage`.
+- **Environment Resolution**: URL parsing and normalization in `clientFromEnv` supporting `host:port`, `http://host:port`, and bare `host`.
+- **Authorization Headers**: Support for `OLLAMA_API_KEY` bearer tokens and custom `configHeaders`.
+- **Configurable Resilience**: `RetryPolicy` ADT (`NoRetry`, `ConstantRetry`, `ExponentialRetry`), lifecycle callbacks (`configOnStart`, `configOnSuccess`, `configOnError`), and `configLogger`.
+- **Conversation Store**: Transactional STM-backed `InMemoryStore` and `ConversationStore` typeclass.
+- **New API Modules**: `Ollama.API.Embed` (`/api/embed`), `Ollama.API.Blobs` (`/api/blobs`), `Ollama.API.Ps` (`/api/ps`), `Ollama.API.Version` (`/api/version`).
+- **Testing Suite**: 28 pure unit, QuickCheck property, and golden tests, plus live server integration test suite.
 
-* Added stack matrix to ensure lib is buildable from lts-19.33
-* Made parameters & template fields optional in `ShowModelResponse`.
-* Added extra parameters fields in `ModelInfo`.
-* Added strict annotations for all fields.
-* Fixed ToJSON instance for delete model request body.
-* Removed duplicate code by using unified `withOllamaRequest` function for all API calls.
-* Added unified config type `OllamaConfig` to hold common configuration options.
-* Added validation for generate and chat functions to ensure required fields are present.
-* Added convience functions for generating Message and ToolCall types.
-* Added thinking field for chat and generate function.
-* Added ModelOptions type to encapsulate model options.
-* Added get ollama version function.
-* Added Common Manager, Callback functions and retry option in OllamaConfig.
-* Fixed tool_calls.
-* Added MonadIO versions of api functions.
-* Added more comprehensive error handling for API calls.
-* Added more comprehensive test cases for all functions.
-* Added schema builder for passing json format for structured output.
+### Changed
+- **MonadIO / MonadUnliftIO Polymorphism**: All API functions use `MonadIO m =>` / `MonadUnliftIO m =>` signatures instead of dual `*M` variants.
+- **Typed Newtypes**: `ModelName`, `Digest`, `Base64Image`, `Duration`, `Version` replace primitive types.
+- **Error Types**: `OllamaError` sum type with structured constructors and `Exception` instance.
 
-## 0.1.3.0 -- 2025-03-25
-
-* Added options, tools and tool_calls fields in chat and generate.
-* Exported EmbeddingResponse.
-* Added Format argument in chat and generate function for structured output.
-
-## 0.1.2.0 -- 2024-11-20
-
-* Added hostUrl and responseTimeOut options in generate function.
-* Added hostUrl and responseTimeOut options in chat function.
-
-## 0.1.1.3 -- 2024-11-08
-
-* Increase response timeout to 15 minutes
-* Added encodeImage utility function that converts image filePath to base64 image data.
-* Added generateJson and chatJson. High level function to return response in Haskell type.
-
-## 0.1.0.3 -- 2024-11-05
-
-* Moving to stack instead of cabal.
-
-## 0.1.0.2 -- 2024-10-18
-
-* Increased response timeout time for chat function. 
-
-## 0.1.0.1 -- 2024-10-18
-
-* Renaming Lib.hs to OllamaExamples.hs as it was conflicting `Lib.hs` name
-
-## 0.1.0.0 -- YYYY-mm-dd
-
-* First version. Released on an unsuspecting world.
+### Deprecated / Removed
+- Removed legacy callback-tuple streaming API in favor of `conduit`.
+- Removed global `Maybe OllamaConfig` state.

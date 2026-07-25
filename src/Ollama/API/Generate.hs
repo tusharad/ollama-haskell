@@ -176,5 +176,6 @@ generate client req = request client "POST" "/api/generate" (Just req {genStream
 
 @since 1.0.0.0
 -}
-generateStream :: (MonadUnliftIO m) => OllamaClient -> GenerateRequest -> ConduitT () GenerateResponse m ()
+generateStream ::
+  (MonadUnliftIO m) => OllamaClient -> GenerateRequest -> ConduitT () GenerateResponse m ()
 generateStream client req = requestStreaming client "/api/generate" (req {genStream = Just True})
