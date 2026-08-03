@@ -18,6 +18,7 @@ module Ollama.Types.Common (
   Duration (..),
   durationToSeconds,
   durationToMillis,
+  tokensPerSecond,
   Version (..),
   Think (..),
   ThinkingLevel (..),
@@ -78,10 +79,19 @@ durationToSeconds (Duration ns) = fromIntegral ns / 1e9
 
 {- | Convert duration nanoseconds to milliseconds.
 
-@since 3.0.0.0
+@since 1.0.0.0
 -}
 durationToMillis :: Duration -> Double
 durationToMillis (Duration ns) = fromIntegral ns / 1e6
+
+{- | Calculate tokens per second (tokens\/s) given a token count and a 'Duration'.
+
+@since 1.0.0.0
+-}
+tokensPerSecond :: Int -> Duration -> Double
+tokensPerSecond count dur =
+  let secs = durationToSeconds dur
+   in if secs <= 0 then 0.0 else fromIntegral count / secs
 
 {- | Ollama server engine version string.
 

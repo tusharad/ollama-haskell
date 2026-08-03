@@ -1,6 +1,6 @@
 cabal-version: 3.0
 name:          ollama-haskell
-version:       3.0.0.0
+version:       1.0.0.0
 synopsis:      Industry-grade Haskell client for the Ollama API
 description:
   A type-safe, well-tested Haskell client for interacting with
@@ -87,6 +87,7 @@ library
     Ollama.Types.Common
     Ollama.Error
     Ollama.Streaming
+    Ollama.Testing
     Ollama.Conversation
   other-modules:
     Ollama.Client.Internal
@@ -120,9 +121,13 @@ test-suite ollama-haskell-test
     Test.Ollama.Unit.Error
     Test.Ollama.Unit.Config
     Test.Ollama.Unit.SchemaBuilder
+    Test.Ollama.Unit.Testing
     Test.Ollama.Property.Arbitrary
     Test.Ollama.Property.Roundtrip
     Test.Ollama.Golden.Chat
+    Test.Ollama.Golden.Generate
+    Test.Ollama.Golden.Embed
+    Test.Ollama.Golden.Models
   build-depends:
       base
     , ollama-haskell
@@ -151,3 +156,18 @@ test-suite ollama-haskell-integration
     , tasty
     , tasty-hunit
     , text
+
+benchmark ollama-haskell-bench
+  import: warnings, lang
+  type: exitcode-stdio-1.0
+  hs-source-dirs: bench
+  main-is: Main.hs
+  build-depends:
+      base
+    , ollama-haskell
+    , aeson
+    , bytestring
+    , tasty          >= 1.5
+    , tasty-bench    >= 0.3
+    , text
+

@@ -50,6 +50,8 @@ module Ollama (
   ChatRequest (..),
   ChatResponse (..),
   chatRequest,
+  chatEvalTokensPerSecond,
+  chatPromptEvalTokensPerSecond,
 
   -- ** Generate
   generate,
@@ -57,12 +59,17 @@ module Ollama (
   GenerateRequest (..),
   GenerateResponse (..),
   generateRequest,
+  evalTokensPerSecond,
+  promptEvalTokensPerSecond,
 
   -- ** Embeddings
   embed,
   EmbedRequest (..),
   EmbedResponse (..),
   embedRequest,
+  embeddings,
+  EmbeddingsRequest (..),
+  EmbeddingsResponse (..),
 
   -- ** Model Management
   listModels,
@@ -105,6 +112,7 @@ module Ollama (
   Duration (..),
   durationToSeconds,
   durationToMillis,
+  tokensPerSecond,
   Version (..),
   Think (..),
   ThinkingLevel (..),
@@ -141,6 +149,14 @@ module Ollama (
   collectStream,
   foldStream,
 
+  -- * Testing Infrastructure
+  newMockClient,
+  withMockClient,
+  mockGenerateResponse,
+  mockChatResponse,
+  mockEmbedResponse,
+  mockListModelsResponse,
+
   -- * Conversation Store
   Conversation (..),
   ConversationStore (..),
@@ -167,4 +183,5 @@ import Ollama.Client.Config
 import Ollama.Conversation
 import Ollama.Error
 import Ollama.Streaming
+import Ollama.Testing
 import Ollama.Types

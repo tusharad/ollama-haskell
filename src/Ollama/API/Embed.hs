@@ -15,6 +15,11 @@ module Ollama.API.Embed (
   EmbedResponse (..),
   embedRequest,
   embed,
+
+  -- * Deprecated Legacy API
+  EmbeddingsRequest (..),
+  EmbeddingsResponse (..),
+  embeddings,
 ) where
 
 import Control.Monad.IO.Class (MonadIO)
@@ -109,3 +114,62 @@ instance ToJSON EmbedResponse where
 -}
 embed :: (MonadIO m) => OllamaClient -> EmbedRequest -> m (Either OllamaError EmbedResponse)
 embed client req = request client "POST" "/api/embed" (Just req)
+
+{- | Legacy request payload for deprecated @/api/embeddings@ endpoint.
+
+@since 1.0.0.0
+-}
+data EmbeddingsRequest = EmbeddingsRequest
+  { ebrModel :: !ModelName
+  , ebrPrompt :: !Text
+  , ebrOptions :: !(Maybe ModelOptions)
+  , ebrKeepAlive :: !(Maybe Text)
+  }
+  deriving stock (Eq, Show, Generic)
+
+instance ToJSON EmbeddingsRequest where
+  toJSON EmbeddingsRequest {..} =
+    object $
+      catMaybes
+        [ Just $ "model" .= ebrModel
+        , Just $ "prompt" .= ebrPrompt
+        , ("options" .=) <$> ebrOptions
+        , ("keep_alive" .=) <$> ebrKeepAlive
+        ]
+
+instance FromJSON EmbeddingsRequest where
+  parseJSON = withObject "EmbeddingsRequest" $ \v ->
+    EmbeddingsRequest
+      <$> v .: "model"
+      <*> v .: "prompt"
+      <*> v .:? "options"
+      <*> v .:? "keep_alive"
+
+{- | Legacy response payload for deprecated @/api/embeddings@ endpoint.
+
+@since 1.0.0.0
+-}
+newtype EmbeddingsResponse = EmbeddingsResponse
+  { ebrEmbedding :: [Double]
+  }
+  deriving stock (Eq, Show, Generic)
+
+instance FromJSON EmbeddingsResponse where
+  parseJSON = withObject "EmbeddingsResponse" $ \v ->
+    EmbeddingsResponse <$> v .: "embedding"
+
+instance ToJSON EmbeddingsResponse where
+  toJSON EmbeddingsResponse {..} =
+    object ["embedding" .= ebrEmbedding]
+
+{- | Generate vector embeddings using the deprecated @/api/embeddings@ endpoint.
+
+@since 1.0.0.0
+-}
+embeddings ::
+  (MonadIO m) =>
+  OllamaClient ->
+  EmbeddingsRequest ->
+  m (Either OllamaError EmbeddingsResponse)
+embeddings client req = request client "POST" "/api/embeddings" (Just req)
+{-# DEPRECATED embeddings "Use embed instead" #-}
