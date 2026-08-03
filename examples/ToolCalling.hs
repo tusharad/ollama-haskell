@@ -28,9 +28,12 @@ calculatorTool =
 main :: IO ()
 main = do
   client <- defaultClient
-  let req =
+  let opts = Just (defaultOptions {optNumPredict = Just 20})
+      req =
         (chatRequest "qwen3.5:2b" (userMessage "What is 25 + 17?" :| []))
           { chatTools = Just [calculatorTool]
+          , chatOptions = opts
+          , chatThink = Just ThinkDisabled
           }
   res <- chat client req
   case res of

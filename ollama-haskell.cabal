@@ -173,6 +173,60 @@ benchmark ollama-haskell-bench
     , tasty-bench    >= 0.3
     , text
 
+executable ollama-example-basic-chat
+  import: warnings, lang
+  main-is: BasicChat.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-streaming-chat
+  import: warnings, lang
+  main-is: StreamingChat.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-tool-calling
+  import: warnings, lang
+  main-is: ToolCalling.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-structured-output
+  import: warnings, lang
+  main-is: StructuredOutput.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-embeddings
+  import: warnings, lang
+  main-is: Embeddings.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-model-management
+  import: warnings, lang
+  main-is: ModelManagement.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
 executable ollama-example-all-features
   import: warnings, lang
   main-is: AllFeatures.hs
