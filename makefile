@@ -34,6 +34,9 @@ docs:
 clean:
 	cabal clean
 
+e2e:
+	cabal run ollama-haskell-integration --flags="+integration-tests"
+
 ## Display help message
 help:
 	@echo "Available Makefile targets:"

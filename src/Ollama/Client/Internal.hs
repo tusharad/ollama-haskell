@@ -116,7 +116,10 @@ requestStreaming OllamaClient {..} endpoint payload = do
           { method = "POST"
           , responseTimeout = responseTimeoutNone
           , requestHeaders =
-              [("Content-Type", "application/json")]
+              [ ("Content-Type", "application/json")
+              , ("Accept", "application/x-ndjson, application/json")
+              , ("Connection", "keep-alive")
+              ]
                 ++ authHeader cfg
                 ++ configHeaders cfg
           , requestBody = RequestBodyLBS (encode payload)
@@ -127,7 +130,8 @@ requestStreaming OllamaClient {..} endpoint payload = do
       responseClose
       ( \resp -> do
           let bodyReader = responseBody resp
-              source = repeatM (liftIO $ brRead bodyReader) .| takeWhileC (not . BS.null)
+              readChunk = liftIO $ brRead bodyReader `catch` \(_ :: HttpException) -> pure BS.empty
+              source = repeatM readChunk .| takeWhileC (not . BS.null)
           source .| CB.lines .| filterC (not . BS.null) .| parseAndYield
       )
   where

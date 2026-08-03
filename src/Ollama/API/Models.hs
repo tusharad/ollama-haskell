@@ -68,7 +68,12 @@ newtype ShowModelInfo = ShowModelInfo
   { modelInfoMap :: Map Text Value
   }
   deriving stock (Eq, Show, Generic)
-  deriving anyclass (ToJSON, FromJSON)
+
+instance FromJSON ShowModelInfo where
+  parseJSON v = ShowModelInfo <$> parseJSON v
+
+instance ToJSON ShowModelInfo where
+  toJSON (ShowModelInfo m) = toJSON m
 
 {- | Model inspection response payload.
 

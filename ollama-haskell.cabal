@@ -153,9 +153,11 @@ test-suite ollama-haskell-integration
   build-depends:
       base
     , ollama-haskell
+    , aeson
     , tasty
     , tasty-hunit
     , text
+    , time
 
 benchmark ollama-haskell-bench
   import: warnings, lang
@@ -170,4 +172,15 @@ benchmark ollama-haskell-bench
     , tasty          >= 1.5
     , tasty-bench    >= 0.3
     , text
+
+executable ollama-example-all-features
+  import: warnings, lang
+  main-is: AllFeatures.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , aeson
+    , text
+    , time
 

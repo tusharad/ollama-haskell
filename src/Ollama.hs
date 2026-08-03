@@ -77,6 +77,8 @@ module Ollama (
   copyModel,
   deleteModel,
   ListResponse (..),
+  ModelInfo (..),
+  RunningModel (..),
   ShowResponse (..),
 
   -- ** Create

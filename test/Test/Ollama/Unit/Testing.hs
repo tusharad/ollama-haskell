@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-deprecations #-}
+
 {- |
 Module      : Test.Ollama.Unit.Testing
 Copyright   : (c) 2024-2026 Tushar Adhatrao

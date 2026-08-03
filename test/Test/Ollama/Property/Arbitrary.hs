@@ -2,7 +2,6 @@
 
 module Test.Ollama.Property.Arbitrary () where
 
-import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.Text (Text)
 import Data.Text qualified as T
 import Ollama

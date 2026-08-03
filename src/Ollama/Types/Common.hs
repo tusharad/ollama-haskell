@@ -24,7 +24,7 @@ module Ollama.Types.Common (
   ThinkingLevel (..),
 ) where
 
-import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
+import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), object, withText, (.:), (.=))
 import Data.Aeson.Types (typeMismatch)
 import Data.Hashable (Hashable)
 import Data.Int (Int64)
@@ -98,7 +98,16 @@ tokensPerSecond count dur =
 @since 3.0.0.0
 -}
 newtype Version = Version {unVersion :: Text}
-  deriving newtype (Eq, Show, ToJSON, FromJSON)
+  deriving stock (Eq, Show, Generic)
+
+instance FromJSON Version where
+  parseJSON = \case
+    String s -> pure $ Version s
+    Object v -> Version <$> v .: "version"
+    v -> typeMismatch "Version" v
+
+instance ToJSON Version where
+  toJSON (Version s) = object ["version" .= s]
 
 {- | Thinking level settings for reasoning models.
 

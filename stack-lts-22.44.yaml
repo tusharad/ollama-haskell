@@ -1,3 +1,6 @@
 resolver: lts-22.44
 packages:
 - .
+
+extra-deps:
+    - tasty-1.5.4@sha256:49f8307d78c7d6b1959d4448152858efe102ca5e9b289be082b9bf221e798084,2759
