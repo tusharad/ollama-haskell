@@ -19,12 +19,11 @@ module Ollama.Client (
   withClient,
 ) where
 
-import Control.Monad (when)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.IO.Unlift (MonadUnliftIO, withRunInIO)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Network.HTTP.Client (Manager, closeManager, newManager)
+import Network.HTTP.Client (Manager, newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Ollama.Client.Config (OllamaClientConfig (..), defaultConfig)
 import System.Environment (lookupEnv)
@@ -92,10 +91,12 @@ normalizeHost raw
 
 {- | Close the underlying HTTP connection manager if owned by this client.
 
+Note: Connection managers in @http-client@ are automatically reclaimed by garbage collection.
+
 @since 1.0.0.0
 -}
 closeClient :: (MonadIO m) => OllamaClient -> m ()
-closeClient client = liftIO $ when (clientOwned client) $ closeManager (clientManager client)
+closeClient _ = pure ()
 
 {- | Resource bracket helper to initialize, run a computation, and close client resources.
 

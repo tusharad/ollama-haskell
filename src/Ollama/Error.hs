@@ -19,7 +19,6 @@ module Ollama.Error (
 import Control.Exception (Exception, throwIO)
 import Data.ByteString (ByteString)
 import Data.Text (Text)
-import Data.Typeable (Typeable)
 import Network.HTTP.Client (HttpException)
 
 {- | Unified error type representing all failure modes in the Ollama client.
@@ -37,7 +36,7 @@ data OllamaError
     TimeoutError
   | -- | Client-side validation failure before sending the request
     InvalidRequest !Text
-  deriving stock (Show, Typeable)
+  deriving stock (Show)
 
 instance Exception OllamaError
 

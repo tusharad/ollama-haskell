@@ -10,4 +10,4 @@ main = do
     Left err -> putStrLn $ "Error listing models: " <> show err
     Right (ListResponse ms) -> do
       putStrLn "Installed Models:"
-      mapM_ (print . modelInfoName) ms
+      mapM_ (print . miName) ms

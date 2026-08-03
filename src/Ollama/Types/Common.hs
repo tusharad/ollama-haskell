@@ -18,12 +18,13 @@ module Ollama.Types.Common (
   Duration (..),
   durationToSeconds,
   durationToMillis,
+  tokensPerSecond,
   Version (..),
   Think (..),
   ThinkingLevel (..),
 ) where
 
-import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), withText)
+import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), object, withText, (.:), (.=))
 import Data.Aeson.Types (typeMismatch)
 import Data.Hashable (Hashable)
 import Data.Int (Int64)
@@ -78,17 +79,35 @@ durationToSeconds (Duration ns) = fromIntegral ns / 1e9
 
 {- | Convert duration nanoseconds to milliseconds.
 
-@since 3.0.0.0
+@since 1.0.0.0
 -}
 durationToMillis :: Duration -> Double
 durationToMillis (Duration ns) = fromIntegral ns / 1e6
+
+{- | Calculate tokens per second (tokens\/s) given a token count and a 'Duration'.
+
+@since 1.0.0.0
+-}
+tokensPerSecond :: Int -> Duration -> Double
+tokensPerSecond count dur =
+  let secs = durationToSeconds dur
+   in if secs <= 0 then 0.0 else fromIntegral count / secs
 
 {- | Ollama server engine version string.
 
 @since 3.0.0.0
 -}
 newtype Version = Version {unVersion :: Text}
-  deriving newtype (Eq, Show, ToJSON, FromJSON)
+  deriving stock (Eq, Show, Generic)
+
+instance FromJSON Version where
+  parseJSON = \case
+    String s -> pure $ Version s
+    Object v -> Version <$> v .: "version"
+    v -> typeMismatch "Version" v
+
+instance ToJSON Version where
+  toJSON (Version s) = object ["version" .= s]
 
 {- | Thinking level settings for reasoning models.
 

@@ -1,32 +1,39 @@
 module Main (main) where
 
 import Data.List.NonEmpty (NonEmpty ((:|)))
-import Data.Map.Strict qualified as Map
 import Ollama
 
 calculatorTool :: Tool
 calculatorTool =
-  Tool "function" $
-    FunctionDef
-      { fnName = "add"
-      , fnDescription = "Add two numbers"
-      , fnParameters =
-          FunctionParameters
-            "object"
-            ( Map.fromList
-                [ ("a", object ["type" .= ("number" :: String)])
-                , ("b", object ["type" .= ("number" :: String)])
-                ]
-            )
-            ["a", "b"]
-      }
+  Tool
+    { toolType = "function"
+    , toolFunction =
+        FunctionDef
+          { fnName = "add"
+          , fnDescription = Just "Add two numbers"
+          , fnParameters =
+              Just
+                FunctionParameters
+                  { fpType = "object"
+                  , fpProperties = Nothing
+                  , fpRequired = Just ["a", "b"]
+                  , fpAdditionalProperties = Nothing
+                  , fpDescription = Nothing
+                  , fpEnum = Nothing
+                  }
+          , fnStrict = Just True
+          }
+    }
 
 main :: IO ()
 main = do
   client <- defaultClient
-  let req =
-        (chatRequest "llama3.2" (userMessage "What is 25 + 17?" :| []))
+  let opts = Just (defaultOptions {optNumPredict = Just 20})
+      req =
+        (chatRequest "qwen3.5:2b" (userMessage "What is 25 + 17?" :| []))
           { chatTools = Just [calculatorTool]
+          , chatOptions = opts
+          , chatThink = Just ThinkDisabled
           }
   res <- chat client req
   case res of

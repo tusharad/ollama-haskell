@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Data.Text.IO qualified as TIO
 import Ollama
 import Ollama.Types.Format.SchemaBuilder
 
@@ -14,11 +15,14 @@ personSchema =
 main :: IO ()
 main = do
   client <- defaultClient
-  let req =
-        (generateRequest "llama3.2" "Generate a person profile.")
+  let opts = Just (defaultOptions {optNumPredict = Just 20})
+      req =
+        (generateRequest "qwen3.5:2b" "Generate a person profile.")
           { genFormat = Just (SchemaFormat personSchema)
+          , genOptions = opts
+          , genThink = Just ThinkDisabled
           }
   res <- generate client req
   case res of
     Left err -> putStrLn $ "Error: " <> show err
-    Right resp -> putStrLn $ "Structured Response:\n" <> grResponse resp
+    Right resp -> TIO.putStrLn $ "Structured Response:\n" <> grResponse resp

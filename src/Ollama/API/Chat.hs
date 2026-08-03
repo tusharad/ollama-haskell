@@ -16,6 +16,8 @@ module Ollama.API.Chat (
   chatRequest,
   chat,
   chatStream,
+  chatEvalTokensPerSecond,
+  chatPromptEvalTokensPerSecond,
 ) where
 
 import Conduit (ConduitT)
@@ -31,7 +33,7 @@ import Ollama.Client (OllamaClient)
 import Ollama.Client.Internal (request, requestStreaming)
 import Ollama.Error (OllamaError)
 import Ollama.Streaming (HasDone (..))
-import Ollama.Types.Common (Duration, ModelName, Think)
+import Ollama.Types.Common (Duration, ModelName, Think, tokensPerSecond)
 import Ollama.Types.Format (Format)
 import Ollama.Types.Message (Message)
 import Ollama.Types.Options (ModelOptions)
@@ -150,3 +152,19 @@ chat client req = request client "POST" "/api/chat" (Just req {chStream = Just F
 -}
 chatStream :: (MonadUnliftIO m) => OllamaClient -> ChatRequest -> ConduitT () ChatResponse m ()
 chatStream client req = requestStreaming client "/api/chat" (req {chStream = Just True})
+
+{- | Calculate generation throughput (eval tokens \/ second) from a 'ChatResponse'.
+
+@since 1.0.0.0
+-}
+chatEvalTokensPerSecond :: ChatResponse -> Maybe Double
+chatEvalTokensPerSecond ChatResponse {..} =
+  tokensPerSecond <$> crEvalCount <*> crEvalDuration
+
+{- | Calculate prompt evaluation throughput (prompt tokens \/ second) from a 'ChatResponse'.
+
+@since 1.0.0.0
+-}
+chatPromptEvalTokensPerSecond :: ChatResponse -> Maybe Double
+chatPromptEvalTokensPerSecond ChatResponse {..} =
+  tokensPerSecond <$> crPromptEvalCount <*> crPromptEvalDuration

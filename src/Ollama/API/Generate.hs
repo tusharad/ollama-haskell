@@ -16,6 +16,8 @@ module Ollama.API.Generate (
   generateRequest,
   generate,
   generateStream,
+  evalTokensPerSecond,
+  promptEvalTokensPerSecond,
 ) where
 
 import Conduit (ConduitT)
@@ -30,7 +32,7 @@ import Ollama.Client (OllamaClient)
 import Ollama.Client.Internal (request, requestStreaming)
 import Ollama.Error (OllamaError)
 import Ollama.Streaming (HasDone (..))
-import Ollama.Types.Common (Base64Image, Duration, ModelName, Think)
+import Ollama.Types.Common (Base64Image, Duration, ModelName, Think, tokensPerSecond)
 import Ollama.Types.Format (Format)
 import Ollama.Types.Options (ModelOptions)
 
@@ -179,3 +181,19 @@ generate client req = request client "POST" "/api/generate" (Just req {genStream
 generateStream ::
   (MonadUnliftIO m) => OllamaClient -> GenerateRequest -> ConduitT () GenerateResponse m ()
 generateStream client req = requestStreaming client "/api/generate" (req {genStream = Just True})
+
+{- | Calculate generation throughput (eval tokens \/ second) from a 'GenerateResponse'.
+
+@since 1.0.0.0
+-}
+evalTokensPerSecond :: GenerateResponse -> Maybe Double
+evalTokensPerSecond GenerateResponse {..} =
+  tokensPerSecond <$> grEvalCount <*> grEvalDuration
+
+{- | Calculate prompt evaluation throughput (prompt tokens \/ second) from a 'GenerateResponse'.
+
+@since 1.0.0.0
+-}
+promptEvalTokensPerSecond :: GenerateResponse -> Maybe Double
+promptEvalTokensPerSecond GenerateResponse {..} =
+  tokensPerSecond <$> grPromptEvalCount <*> grPromptEvalDuration
