@@ -1,6 +1,6 @@
 cabal-version: 3.0
 name:          ollama-haskell
-version:       1.0.0.0
+version:       0.3.0.0
 synopsis:      Industry-grade Haskell client for the Ollama API
 description:
   A type-safe, well-tested Haskell client for interacting with
@@ -15,11 +15,12 @@ maintainer:    tusharadhatrao@gmail.com
 copyright:     2024-2026 Tushar Adhatrao
 homepage:      https://github.com/tusharad/ollama-haskell
 bug-reports:   https://github.com/tusharad/ollama-haskell/issues
-tested-with:   GHC == 9.4.8, GHC == 9.6.4, GHC == 9.8.2, GHC == 9.10.1
+tested-with:   GHC == 9.4.8, GHC == 9.6.7, GHC == 9.8.4, GHC == 9.10.3, GHC == 9.12.4
 stability:     stable
 extra-doc-files:
   README.md
   CHANGELOG.md
+  doc/COMPARISON.md
 
 source-repository head
   type: git
