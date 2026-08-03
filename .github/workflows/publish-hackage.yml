@@ -1,0 +1,63 @@
+name: Publish to Hackage
+
+on:
+  push:
+    branches:
+      - release
+      - 'release/**'
+
+jobs:
+  publish:
+    name: Build & Publish Package and Haddock Docs to Hackage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Haskell
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: '9.6.4'
+          cabal-version: '3.10.2.1'
+
+      - name: Cache Cabal store
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cabal/store
+            dist-newstyle
+          key: ${{ runner.os }}-ghc-9.6.4-${{ hashFiles('**/*.cabal') }}
+          restore-keys: |
+            ${{ runner.os }}-ghc-9.6.4-
+
+      - name: Verify package checks & tests
+        run: |
+          cabal check
+          cabal test
+
+      - name: Build Source Distribution Tarball
+        run: |
+          cabal sdist
+
+      - name: Build Haddock Documentation Tarball for Hackage
+        run: |
+          cabal haddock --haddock-for-hackage --enable-doc
+
+      - name: Upload Package to Hackage
+        env:
+          HACKAGE_USERNAME: ${{ secrets.HACKAGE_USERNAME }}
+          HACKAGE_PASSWORD: ${{ secrets.HACKAGE_PASSWORD }}
+        run: |
+          SDIST_FILE=$(ls dist-newstyle/sdist/ollama-haskell-*.tar.gz | head -n 1)
+          echo "Publishing package ${SDIST_FILE} to Hackage..."
+          cabal upload --publish -u "${HACKAGE_USERNAME}" -p "${HACKAGE_PASSWORD}" "${SDIST_FILE}"
+
+      - name: Upload Haddock Documentation to Hackage
+        env:
+          HACKAGE_USERNAME: ${{ secrets.HACKAGE_USERNAME }}
+          HACKAGE_PASSWORD: ${{ secrets.HACKAGE_PASSWORD }}
+        run: |
+          DOCS_FILE=$(ls dist-newstyle/ollama-haskell-*-docs.tar.gz | head -n 1)
+          echo "Publishing Haddock documentation ${DOCS_FILE} to Hackage..."
+          cabal upload --documentation --publish -u "${HACKAGE_USERNAME}" -p "${HACKAGE_PASSWORD}" "${DOCS_FILE}"
