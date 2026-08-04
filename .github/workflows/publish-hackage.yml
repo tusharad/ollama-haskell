@@ -53,7 +53,11 @@ jobs:
         run: |
           SDIST_FILE=$(ls dist-newstyle/sdist/ollama-haskell-*.tar.gz | head -n 1)
           echo "Publishing package ${SDIST_FILE} to Hackage..."
-          cabal upload --publish -u "${HACKAGE_USERNAME}" -p "${HACKAGE_PASSWORD}" "${SDIST_FILE}"
+          curl -X POST \
+            -u "${HACKAGE_USERNAME}:${HACKAGE_PASSWORD}" \
+            -H "Accept: text/plain" \
+            -F "package=@${SDIST_FILE}" \
+            https://hackage.haskell.org/packages/
 
       - name: Upload Haddock Documentation to Hackage
         env:
@@ -62,4 +66,10 @@ jobs:
         run: |
           DOCS_FILE=$(ls dist-newstyle/ollama-haskell-*-docs.tar.gz | head -n 1)
           echo "Publishing Haddock documentation ${DOCS_FILE} to Hackage..."
-          cabal upload --documentation --publish -u "${HACKAGE_USERNAME}" -p "${HACKAGE_PASSWORD}" "${DOCS_FILE}"
+          BASENAME=$(basename "${DOCS_FILE}" -docs.tar.gz)
+          curl -X PUT \
+            -u "${HACKAGE_USERNAME}:${HACKAGE_PASSWORD}" \
+            -H "Content-Type: application/x-tar" \
+            -H "Content-Encoding: gzip" \
+            --data-binary "@${DOCS_FILE}" \
+            "https://hackage.haskell.org/package/${BASENAME}/docs"
