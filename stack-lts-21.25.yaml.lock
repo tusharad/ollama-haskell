@@ -5,12 +5,33 @@
 
 packages:
 - completed:
-    hackage: tasty-1.5.3@sha256:9d56ea9dbc274fc853fc531373b2c91bfe360e21460c2c6a5838897d86e3f6d0,2923
+    hackage: resourcet-1.3.0@sha256:faa760fb28fb5c98fbe4867e375a775495cabc00926da81fa102dc991017d2c5,1739
     pantry-tree:
-      sha256: 3f4655ce81d6b50d9293ee3b2b15e1608e9b18b886d3463bb66c34a3a7c302f6
+      sha256: 7d8da7c8bcbab08f5de8a1d7964d5224aeb160ac0843757539d81f07d4315886
+      size: 648
+  original:
+    hackage: resourcet-1.3.0@sha256:faa760fb28fb5c98fbe4867e375a775495cabc00926da81fa102dc991017d2c5,1739
+- completed:
+    hackage: tasty-1.5.4@sha256:49f8307d78c7d6b1959d4448152858efe102ca5e9b289be082b9bf221e798084,2759
+    pantry-tree:
+      sha256: d9479e14b5686d64d38c6bf9fe12a13c0f368a9af4b5e35e4aafa39e160d2ab0
       size: 1944
   original:
-    hackage: tasty-1.5.3@sha256:9d56ea9dbc274fc853fc531373b2c91bfe360e21460c2c6a5838897d86e3f6d0,2923
+    hackage: tasty-1.5.4@sha256:49f8307d78c7d6b1959d4448152858efe102ca5e9b289be082b9bf221e798084,2759
+- completed:
+    hackage: mcp-server-0.2.0.1@sha256:7b09ac83c868f7a5b453aefd68c769e9cac5c5b60a0bac3cc418df1ba9587945,6795
+    pantry-tree:
+      sha256: 9f3773f7067eefd89a58954150ebff2a538a9d1f825dfd0515b0cd9b48981cac
+      size: 7850
+  original:
+    hackage: mcp-server-0.2.0.1@sha256:7b09ac83c868f7a5b453aefd68c769e9cac5c5b60a0bac3cc418df1ba9587945,6795
+- completed:
+    hackage: http-types-0.12.5@sha256:cb708ff8d2001dc7bcff615350a835a6dc1b2488829acfcc6d8bc7e13d423153,2927
+    pantry-tree:
+      sha256: 965919723c06fdbf823a194da320717219f080da390516d76e842287ddecac99
+      size: 1379
+  original:
+    hackage: http-types-0.12.5@sha256:cb708ff8d2001dc7bcff615350a835a6dc1b2488829acfcc6d8bc7e13d423153,2927
 snapshots:
 - completed:
     sha256: a81fb3877c4f9031e1325eb3935122e608d80715dc16b586eb11ddbff8671ecd
