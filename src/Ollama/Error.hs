@@ -55,6 +55,7 @@ instance Eq OllamaError where
 isRetryable :: OllamaError -> Bool
 isRetryable (HttpError _) = True
 isRetryable TimeoutError = True
+isRetryable (ApiError status _) | status >= 500 = True
 isRetryable _ = False
 
 {- | Helper to throw an 'OllamaError' as an exception.

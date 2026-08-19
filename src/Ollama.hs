@@ -140,6 +140,10 @@ module Ollama (
   ModelOptions (..),
   defaultOptions,
   Format (..),
+  ToSchema (..),
+  ToJsonType (..),
+  schemaFor,
+  formatFor,
 
   -- * Error Handling
   OllamaError (..),
@@ -168,6 +172,9 @@ module Ollama (
   loadConversationInMemory,
   listConversationsInMemory,
   deleteConversationInMemory,
+
+  -- * Model Context Protocol (MCP) Integration
+  module Ollama.MCP,
 ) where
 
 import Ollama.API.Blobs
@@ -184,6 +191,7 @@ import Ollama.Client
 import Ollama.Client.Config
 import Ollama.Conversation
 import Ollama.Error
+import Ollama.MCP
 import Ollama.Streaming
 import Ollama.Testing
 import Ollama.Types

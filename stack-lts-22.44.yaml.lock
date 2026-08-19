@@ -5,13 +5,6 @@
 
 packages:
 - completed:
-    hackage: resourcet-1.3.0@sha256:faa760fb28fb5c98fbe4867e375a775495cabc00926da81fa102dc991017d2c5,1739
-    pantry-tree:
-      sha256: 7d8da7c8bcbab08f5de8a1d7964d5224aeb160ac0843757539d81f07d4315886
-      size: 648
-  original:
-    hackage: resourcet-1.3.0@sha256:faa760fb28fb5c98fbe4867e375a775495cabc00926da81fa102dc991017d2c5,1739
-- completed:
     hackage: tasty-1.5.4@sha256:49f8307d78c7d6b1959d4448152858efe102ca5e9b289be082b9bf221e798084,2759
     pantry-tree:
       sha256: d9479e14b5686d64d38c6bf9fe12a13c0f368a9af4b5e35e4aafa39e160d2ab0
@@ -34,7 +27,7 @@ packages:
     hackage: http-types-0.12.5@sha256:cb708ff8d2001dc7bcff615350a835a6dc1b2488829acfcc6d8bc7e13d423153,2927
 snapshots:
 - completed:
-    sha256: a81fb3877c4f9031e1325eb3935122e608d80715dc16b586eb11ddbff8671ecd
-    size: 640086
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/21/25.yaml
-  original: lts-21.25
+    sha256: 238fa745b64f91184f9aa518fe04bdde6552533d169b0da5256670df83a0f1a9
+    size: 721141
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/44.yaml
+  original: lts-22.44

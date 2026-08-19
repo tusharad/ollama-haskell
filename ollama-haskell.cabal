@@ -1,9 +1,9 @@
 cabal-version: 3.0
 name:          ollama-haskell
 version:       0.3.0.0
-synopsis:      Industry-grade Haskell client for the Ollama API
+synopsis:      Haskell client for the Ollama
 description:
-  A type-safe, well-tested Haskell client for interacting with
+  A type-safe Haskell client for interacting with
   locally-running LLMs via the Ollama HTTP API. Supports chat,
   text generation, embeddings, model management, streaming via
   conduit, structured outputs, tool calling, and more.
@@ -85,11 +85,13 @@ library
     Ollama.Types.Options
     Ollama.Types.Format
     Ollama.Types.Format.SchemaBuilder
+    Ollama.Types.Format.SchemaDerive
     Ollama.Types.Common
     Ollama.Error
     Ollama.Streaming
     Ollama.Testing
     Ollama.Conversation
+    Ollama.MCP
   other-modules:
     Ollama.Client.Internal
   build-depends:
@@ -111,6 +113,8 @@ library
     , text             >= 2.0 && < 3
     , time             >= 1.11 && < 2
     , unliftio-core    >= 0.2 && < 0.3
+    , mcp-server       >= 0.2 && < 0.3
+    , network-uri      >= 2.6
 
 test-suite ollama-haskell-test
   import: warnings, lang
@@ -122,6 +126,7 @@ test-suite ollama-haskell-test
     Test.Ollama.Unit.Error
     Test.Ollama.Unit.Config
     Test.Ollama.Unit.SchemaBuilder
+    Test.Ollama.Unit.SchemaDerive
     Test.Ollama.Unit.Testing
     Test.Ollama.Property.Arbitrary
     Test.Ollama.Property.Roundtrip
@@ -129,12 +134,15 @@ test-suite ollama-haskell-test
     Test.Ollama.Golden.Generate
     Test.Ollama.Golden.Embed
     Test.Ollama.Golden.Models
+    Test.Ollama.Unit.MCP
   build-depends:
       base
     , ollama-haskell
     , aeson
     , bytestring
     , containers
+    , mcp-server
+    , text
     , QuickCheck       >= 2.14
     , tasty          >= 1.5
     , tasty-golden   >= 2.3
@@ -208,6 +216,7 @@ executable ollama-example-structured-output
   build-depends:
       base
     , ollama-haskell
+    , aeson
     , text
 
 executable ollama-example-embeddings

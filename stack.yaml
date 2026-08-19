@@ -1,3 +1,6 @@
 resolver: lts-24.52
 packages:
 - .
+
+extra-deps:
+  - mcp-server-0.2.0.1@sha256:7b09ac83c868f7a5b453aefd68c769e9cac5c5b60a0bac3cc418df1ba9587945,6795

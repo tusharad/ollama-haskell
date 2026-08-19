@@ -13,7 +13,7 @@ packages:
     hackage: mcp-server-0.2.0.1@sha256:7b09ac83c868f7a5b453aefd68c769e9cac5c5b60a0bac3cc418df1ba9587945,6795
 snapshots:
 - completed:
-    sha256: 74b41f766415e985473d1e27befeb0394ed62f95295da1ec630a48ba84751c1c
-    size: 732689
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/24/52.yaml
-  original: lts-24.52
+    sha256: 57dfdcf86afd355c5b97377f1ac32a138109b523bfdb9f55969b7afa0019bc33
+    size: 769878
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2026/8/3.yaml
+  original: nightly-2026-08-03
