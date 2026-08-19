@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RecordWildCards #-}
 
 {- |
@@ -20,14 +21,20 @@ module Ollama.MCP (
   -- * Re-exported MCP.Server Types & Functions
   Content (..),
   ContentImageData (..),
-  ContentResourceData (..),
+  ContentAudioData (..),
   ResourceContent (..),
   PromptDefinition (..),
   ResourceDefinition (..),
   ToolDefinition (..),
   ArgumentDefinition (..),
-  InputSchemaDefinition (..),
-  InputSchemaDefinitionProperty (..),
+  McpSchema,
+  pattern McpSchema,
+  SchemaType (..),
+  schema,
+  describedSchema,
+  mkToolDefinition,
+  mkPromptDefinition,
+  mkResourceDefinition,
   McpServerInfo (..),
   McpServerHandlers (..),
   ServerCapabilities (..),
@@ -61,13 +68,15 @@ module Ollama.MCP (
   mcpContentToToolOutput,
 ) where
 
+import Data.Aeson (Value (..), encode)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Text.Lazy qualified as TL
+import Data.Text.Lazy.Encoding qualified as TEncoding
 import MCP.Server (
   HttpConfig (..),
-  jsonValueToText,
   runMcpServerHttp,
   runMcpServerHttpWithConfig,
   runMcpServerStdio,
@@ -77,11 +86,9 @@ import MCP.Server.Types as ServerTypes (
   ArgumentName,
   ArgumentValue,
   Content (..),
+  ContentAudioData (..),
   ContentImageData (..),
-  ContentResourceData (..),
   Error (..),
-  InputSchemaDefinition (..),
-  InputSchemaDefinitionProperty (..),
   LoggingCapabilities (..),
   McpServerHandlers (..),
   McpServerInfo (..),
@@ -95,6 +102,8 @@ import MCP.Server.Types as ServerTypes (
   ResourceDefinition (..),
   ResourceListHandler,
   ResourceReadHandler,
+  Schema (..),
+  SchemaType (..),
   ServerCapabilities (..),
   ToolCallHandler,
   ToolCapabilities (..),
@@ -102,7 +111,12 @@ import MCP.Server.Types as ServerTypes (
   ToolListHandler,
   ToolName,
   URI,
+  describedSchema,
+  mkPromptDefinition,
+  mkResourceDefinition,
+  mkToolDefinition,
   parseURI,
+  schema,
  )
 import Ollama.Types.Tool (
   FunctionDef (..),
@@ -115,55 +129,104 @@ import Ollama.Types.Tool (
 -- | Alias for 'MCP.Server.Types.Error' to prevent collisions with 'Ollama.Error'.
 type McpProtocolError = ServerTypes.Error
 
+-- | Alias for 'MCP.Server.Types.Schema' to avoid name collision with 'Ollama.Types.Format.SchemaBuilder.Schema'.
+type McpSchema = ServerTypes.Schema
+
+-- | Pattern synonym for matching or constructing an 'McpSchema'.
+pattern McpSchema :: Maybe Text -> SchemaType -> McpSchema
+pattern McpSchema desc shape = ServerTypes.Schema desc shape
+
+-- | Convert an Aeson 'Value' to 'Text'. Strings are returned unquoted, while other JSON values are serialized.
+jsonValueToText :: Value -> Text
+jsonValueToText (String t) = t
+jsonValueToText v = TL.toStrict (TEncoding.decodeUtf8 (encode v))
+
 -- | Convert an Ollama 'Tool' into an MCP 'ToolDefinition' from @mcp-server@.
 toolToMcpDefinition :: Tool -> ToolDefinition
 toolToMcpDefinition Tool {toolFunction = FunctionDef {..}} =
   let desc = fromMaybe "" fnDescription
-      props = case fnParameters of
-        Just FunctionParameters {fpProperties = Just propMap} ->
-          [ (k, InputSchemaDefinitionProperty (fpType p) (fromMaybe "" (fpDescription p)))
-          | (k, p) <- Map.toList propMap
-          ]
-        _ -> []
-      req = case fnParameters of
-        Just FunctionParameters {fpRequired = Just r} -> r
-        _ -> []
-      inputSchema = InputSchemaDefinitionObject props req
-   in ToolDefinition
-        { toolDefinitionName = fnName
-        , toolDefinitionDescription = desc
-        , toolDefinitionInputSchema = inputSchema
-        , toolDefinitionTitle = Nothing
-        }
+      convertParam :: FunctionParameters -> ServerTypes.Schema
+      convertParam p =
+        let pDesc = fpDescription p
+            shape = case fpType p of
+              "string" -> SchemaString (fpEnum p)
+              "integer" -> SchemaInteger
+              "number" -> SchemaNumber
+              "boolean" -> SchemaBoolean
+              "array" -> SchemaArray (ServerTypes.Schema Nothing (SchemaString Nothing))
+              "object" ->
+                let props = maybe [] (\pm -> [(k, convertParam v) | (k, v) <- Map.toList pm]) (fpProperties p)
+                    req = fromMaybe [] (fpRequired p)
+                 in SchemaObject props req
+              _ -> SchemaString Nothing
+         in ServerTypes.Schema pDesc shape
+      inputSchema = case fnParameters of
+        Just p -> convertParam p
+        Nothing -> ServerTypes.Schema Nothing (SchemaObject [] [])
+   in mkToolDefinition fnName desc inputSchema
 
 -- | Convert an MCP 'ToolDefinition' from @mcp-server@ into an Ollama 'Tool'.
 mcpDefinitionToTool :: ToolDefinition -> Tool
 mcpDefinitionToTool ToolDefinition {..} =
-  let (propsList, reqList) = case toolDefinitionInputSchema of
-        InputSchemaDefinitionObject ps rs -> (ps, rs)
-      propMap =
-        Map.fromList
-          [ ( k
-            , FunctionParameters
-                { fpType = propertyType
-                , fpProperties = Nothing
-                , fpRequired = Nothing
-                , fpAdditionalProperties = Nothing
-                , fpDescription = if T.null propertyDescription then Nothing else Just propertyDescription
-                , fpEnum = Nothing
-                }
-            )
-          | (k, InputSchemaDefinitionProperty {..}) <- propsList
-          ]
-      params =
-        FunctionParameters
-          { fpType = "object"
-          , fpProperties = Just propMap
-          , fpRequired = if null reqList then Nothing else Just reqList
-          , fpAdditionalProperties = Nothing
-          , fpDescription = Nothing
-          , fpEnum = Nothing
-          }
+  let convertSchema :: ServerTypes.Schema -> FunctionParameters
+      convertSchema (ServerTypes.Schema mDesc shape) =
+        case shape of
+          SchemaString mEnum ->
+            FunctionParameters
+              { fpType = "string"
+              , fpProperties = Nothing
+              , fpRequired = Nothing
+              , fpAdditionalProperties = Nothing
+              , fpDescription = mDesc
+              , fpEnum = mEnum
+              }
+          SchemaInteger ->
+            FunctionParameters
+              { fpType = "integer"
+              , fpProperties = Nothing
+              , fpRequired = Nothing
+              , fpAdditionalProperties = Nothing
+              , fpDescription = mDesc
+              , fpEnum = Nothing
+              }
+          SchemaNumber ->
+            FunctionParameters
+              { fpType = "number"
+              , fpProperties = Nothing
+              , fpRequired = Nothing
+              , fpAdditionalProperties = Nothing
+              , fpDescription = mDesc
+              , fpEnum = Nothing
+              }
+          SchemaBoolean ->
+            FunctionParameters
+              { fpType = "boolean"
+              , fpProperties = Nothing
+              , fpRequired = Nothing
+              , fpAdditionalProperties = Nothing
+              , fpDescription = mDesc
+              , fpEnum = Nothing
+              }
+          SchemaArray _itemSchema ->
+            FunctionParameters
+              { fpType = "array"
+              , fpProperties = Nothing
+              , fpRequired = Nothing
+              , fpAdditionalProperties = Nothing
+              , fpDescription = mDesc
+              , fpEnum = Nothing
+              }
+          SchemaObject props req ->
+            let propMap = Map.fromList [(k, convertSchema s) | (k, s) <- props]
+             in FunctionParameters
+                  { fpType = "object"
+                  , fpProperties = if Map.null propMap then Nothing else Just propMap
+                  , fpRequired = if null req then Nothing else Just req
+                  , fpAdditionalProperties = Nothing
+                  , fpDescription = mDesc
+                  , fpEnum = Nothing
+                  }
+      params = convertSchema toolDefinitionInputSchema
    in Tool
         { toolType = "function"
         , toolFunction =
@@ -184,5 +247,9 @@ toolCallToMcpArgs (ToolCall (ToolCallFunction name args)) =
 mcpContentToToolOutput :: Content -> Text
 mcpContentToToolOutput (ContentText t) = t
 mcpContentToToolOutput (ContentImage (ContentImageData _ mime)) = "[Image: " <> mime <> "]"
-mcpContentToToolOutput (ContentResource (ContentResourceData uri _)) =
-  "[Resource: " <> T.pack (show uri) <> "]"
+mcpContentToToolOutput (ContentAudio (ContentAudioData _ mime)) = "[Audio: " <> mime <> "]"
+mcpContentToToolOutput (ContentEmbeddedResource res) =
+  "[Resource: " <> T.pack (show (resourceUri res)) <> "]"
+mcpContentToToolOutput (ContentResourceLink resDef) =
+  "[Resource: " <> resourceDefinitionURI resDef <> "]"
+mcpContentToToolOutput (ContentAnnotated _ inner) = mcpContentToToolOutput inner

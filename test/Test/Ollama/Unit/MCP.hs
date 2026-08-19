@@ -1,4 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Test.Ollama.Unit.MCP (tests) where
 
@@ -6,17 +8,21 @@ import Data.Map.Strict qualified as Map
 import MCP.Server.Types (
   Content (..),
   ContentImageData (..),
-  ContentResourceData (..),
-  InputSchemaDefinition (..),
-  InputSchemaDefinitionProperty (..),
+  ResourceContent (..),
   ToolDefinition (..),
+  describedSchema,
+  mkToolDefinition,
   parseURI,
+  schema,
  )
 import Ollama.MCP (
+  McpSchema,
+  SchemaType (..),
   mcpContentToToolOutput,
   mcpDefinitionToTool,
   toolCallToMcpArgs,
   toolToMcpDefinition,
+  pattern McpSchema,
  )
 import Ollama.Types.Tool (
   FunctionDef (..),
@@ -44,18 +50,23 @@ tests =
 
         toolDefinitionName mcpDef @?= "search"
         toolDefinitionDescription mcpDef @?= "Search codebase"
-        case toolDefinitionInputSchema mcpDef of
-          InputSchemaDefinitionObject props req -> do
+        case schemaShape (toolDefinitionInputSchema mcpDef) of
+          SchemaObject props req -> do
             req @?= ["query"]
             length props @?= 2
-            lookup "query" props @?= Just (InputSchemaDefinitionProperty "string" "Search query")
+            case lookup "query" props of
+              Just (McpSchema desc shape) -> do
+                desc @?= Just "Search query"
+                shape @?= SchemaString Nothing
+              Nothing -> assertFailure "Expected query in props"
+          _ -> assertFailure "Expected SchemaObject"
     , testCase "mcpDefinitionToTool converts mcp-server ToolDefinition to Ollama Tool" $ do
         let props =
-              [ ("path", InputSchemaDefinitionProperty "string" "File path")
-              , ("content", InputSchemaDefinitionProperty "string" "File content")
+              [ ("path", describedSchema "File path" (SchemaString Nothing))
+              , ("content", describedSchema "File content" (SchemaString Nothing))
               ]
-            schema = InputSchemaDefinitionObject props ["path", "content"]
-            mcpDef = ToolDefinition "write_file" "Write file to disk" schema Nothing
+            s = schema (SchemaObject props ["path", "content"])
+            mcpDef = mkToolDefinition "write_file" "Write file to disk" s
             ollamaTool = mcpDefinitionToTool mcpDef
 
         toolType ollamaTool @?= "function"
@@ -84,7 +95,7 @@ tests =
 
         case parseURI "file:///workspace/test.txt" of
           Just uri -> do
-            let resContent = ContentResource (ContentResourceData uri (Just "text/plain"))
+            let resContent = ContentEmbeddedResource (ResourceText uri "text/plain" "file contents")
             mcpContentToToolOutput resContent @?= "[Resource: file:///workspace/test.txt]"
           Nothing -> assertFailure "Failed to parse URI"
     ]

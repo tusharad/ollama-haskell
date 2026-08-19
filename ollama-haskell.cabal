@@ -113,7 +113,7 @@ library
     , text             >= 2.0 && < 3
     , time             >= 1.11 && < 2
     , unliftio-core    >= 0.2 && < 0.3
-    , mcp-server       >= 0.1
+    , mcp-server       >= 0.2 && < 0.3
     , network-uri      >= 2.6
 
 test-suite ollama-haskell-test
