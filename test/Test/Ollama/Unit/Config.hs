@@ -10,7 +10,7 @@ tests =
     "Unit Config Tests"
     [ testCase "defaultConfig settings" $ do
         assertEqual "Default base URL" "http://127.0.0.1:11434" (configBaseUrl defaultConfig)
-        assertEqual "Default timeout" 90 (configTimeout defaultConfig)
+        assertEqual "Default timeout" 300 (configTimeout defaultConfig)
         assertEqual "Default retry policy" NoRetry (configRetry defaultConfig)
     , testCase "RetryPolicy smart constructors" $ do
         assertEqual "noRetry" NoRetry noRetry

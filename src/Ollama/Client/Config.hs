@@ -91,7 +91,7 @@ defaultConfig :: OllamaClientConfig
 defaultConfig =
   OllamaClientConfig
     { configBaseUrl = "http://127.0.0.1:11434"
-    , configTimeout = 90
+    , configTimeout = 300
     , configRetry = NoRetry
     , configManager = Nothing
     , configHeaders = []
