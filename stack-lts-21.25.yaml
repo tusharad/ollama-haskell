@@ -2,6 +2,8 @@ resolver: lts-21.25
 packages:
 - .
 
+allow-newer: true
+
 extra-deps:
   - resourcet-1.3.0@sha256:faa760fb28fb5c98fbe4867e375a775495cabc00926da81fa102dc991017d2c5,1739
   - tasty-1.5.4@sha256:49f8307d78c7d6b1959d4448152858efe102ca5e9b289be082b9bf221e798084,2759

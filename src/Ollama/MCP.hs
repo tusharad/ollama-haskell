@@ -30,6 +30,8 @@ module Ollama.MCP (
   McpSchema,
   pattern McpSchema,
   SchemaType (..),
+  schemaDescription,
+  schemaShape,
   schema,
   describedSchema,
   mkToolDefinition,

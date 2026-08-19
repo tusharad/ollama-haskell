@@ -20,6 +20,7 @@ import Ollama.MCP (
   SchemaType (..),
   mcpContentToToolOutput,
   mcpDefinitionToTool,
+  schemaShape,
   toolCallToMcpArgs,
   toolToMcpDefinition,
   pattern McpSchema,
