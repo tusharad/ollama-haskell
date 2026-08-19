@@ -138,6 +138,8 @@ type McpSchema = ServerTypes.Schema
 pattern McpSchema :: Maybe Text -> SchemaType -> McpSchema
 pattern McpSchema desc shape = ServerTypes.Schema desc shape
 
+{-# COMPLETE McpSchema #-}
+
 -- | Convert an Aeson 'Value' to 'Text'. Strings are returned unquoted, while other JSON values are serialized.
 jsonValueToText :: Value -> Text
 jsonValueToText (String t) = t

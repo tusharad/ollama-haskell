@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Test.Ollama.Unit.MCP (tests) where
@@ -16,14 +15,13 @@ import MCP.Server.Types (
   schema,
  )
 import Ollama.MCP (
-  McpSchema,
   SchemaType (..),
   mcpContentToToolOutput,
   mcpDefinitionToTool,
+  schemaDescription,
   schemaShape,
   toolCallToMcpArgs,
   toolToMcpDefinition,
-  pattern McpSchema,
  )
 import Ollama.Types.Tool (
   FunctionDef (..),
@@ -56,9 +54,9 @@ tests =
             req @?= ["query"]
             length props @?= 2
             case lookup "query" props of
-              Just (McpSchema desc shape) -> do
-                desc @?= Just "Search query"
-                shape @?= SchemaString Nothing
+              Just s -> do
+                schemaDescription s @?= Just "Search query"
+                schemaShape s @?= SchemaString Nothing
               Nothing -> assertFailure "Expected query in props"
           _ -> assertFailure "Expected SchemaObject"
     , testCase "mcpDefinitionToTool converts mcp-server ToolDefinition to Ollama Tool" $ do
