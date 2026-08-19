@@ -85,6 +85,7 @@ library
     Ollama.Types.Options
     Ollama.Types.Format
     Ollama.Types.Format.SchemaBuilder
+    Ollama.Types.Format.SchemaDerive
     Ollama.Types.Common
     Ollama.Error
     Ollama.Streaming
@@ -125,6 +126,7 @@ test-suite ollama-haskell-test
     Test.Ollama.Unit.Error
     Test.Ollama.Unit.Config
     Test.Ollama.Unit.SchemaBuilder
+    Test.Ollama.Unit.SchemaDerive
     Test.Ollama.Unit.Testing
     Test.Ollama.Property.Arbitrary
     Test.Ollama.Property.Roundtrip
@@ -214,6 +216,7 @@ executable ollama-example-structured-output
   build-depends:
       base
     , ollama-haskell
+    , aeson
     , text
 
 executable ollama-example-embeddings
