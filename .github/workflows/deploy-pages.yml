@@ -1,7 +1,8 @@
 name: Deploy Documentation to GitHub Pages
 
 on:
-  tags:
+  push:
+    tags:
       - 'v*'
   release:
     types:
