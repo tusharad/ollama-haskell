@@ -1,12 +1,13 @@
 cabal-version: 3.0
 name:          ollama-haskell
-version:       0.3.0.0
-synopsis:      Haskell client for the Ollama
+version:       0.4.0.0
+synopsis:      Industry-grade Haskell client for Ollama local LLMs
 description:
   A type-safe Haskell client for interacting with
   locally-running LLMs via the Ollama HTTP API. Supports chat,
   text generation, embeddings, model management, streaming via
-  conduit, structured outputs, tool calling, and more.
+  conduit, structured outputs, tool calling, Model Context Protocol (MCP),
+  and generic JSON schema derivation.
 category:      Web, AI, Network
 license:       MIT
 license-file:  LICENSE
@@ -20,7 +21,6 @@ stability:     stable
 extra-doc-files:
   README.md
   CHANGELOG.md
-  doc/COMPARISON.md
 
 source-repository head
   type: git
@@ -42,6 +42,7 @@ common warnings
     -Wmissing-home-modules
     -Wpartial-fields
     -Wredundant-constraints
+    -Wunused-packages
 
 common lang
   default-language: GHC2021
@@ -114,7 +115,6 @@ library
     , time             >= 1.11 && < 2
     , unliftio-core    >= 0.2 && < 0.3
     , mcp-server       >= 0.2 && < 0.3
-    , network-uri      >= 2.6
 
 test-suite ollama-haskell-test
   import: warnings, lang
@@ -142,7 +142,6 @@ test-suite ollama-haskell-test
     , bytestring
     , containers
     , mcp-server
-    , text
     , QuickCheck       >= 2.14
     , tasty          >= 1.5
     , tasty-golden   >= 2.3
@@ -207,16 +206,15 @@ executable ollama-example-tool-calling
   build-depends:
       base
     , ollama-haskell
-    , text
 
 executable ollama-example-structured-output
   import: warnings, lang
   main-is: StructuredOutput.hs
   hs-source-dirs: examples
   build-depends:
-      base
+      aeson
+    , base
     , ollama-haskell
-    , aeson
     , text
 
 executable ollama-example-embeddings
@@ -226,7 +224,6 @@ executable ollama-example-embeddings
   build-depends:
       base
     , ollama-haskell
-    , text
 
 executable ollama-example-model-management
   import: warnings, lang
@@ -235,7 +232,6 @@ executable ollama-example-model-management
   build-depends:
       base
     , ollama-haskell
-    , text
 
 executable ollama-example-all-features
   import: warnings, lang
@@ -244,7 +240,6 @@ executable ollama-example-all-features
   build-depends:
       base
     , ollama-haskell
-    , aeson
     , text
     , time
 

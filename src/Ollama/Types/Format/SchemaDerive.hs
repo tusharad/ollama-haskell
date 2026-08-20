@@ -16,7 +16,7 @@ Generic derivation of JSON 'Schema' from Haskell record types.
 This module provides the 'ToSchema' typeclass, which can automatically
 derive a JSON Schema ('Schema') from any Haskell data type that has a
 'GHC.Generics.Generic' instance.  This eliminates the need to manually
-construct schemas using the 'SchemaBuilder' DSL when working with
+construct schemas using the 'Ollama.Types.Format.SchemaBuilder.SchemaBuilder' DSL when working with
 Ollama's structured output API.
 
 == Usage
@@ -32,7 +32,7 @@ data Person = Person
 
 \-\- Use it:
 \-\- >>> 'schemaFor' \@Person
-\-\- >>> 'formatFor' \@Person
+\-\- >>> 'Ollama.Types.Format.formatFor' \@Person
 @
 
 == Supported types
@@ -55,6 +55,12 @@ module Ollama.Types.Format.SchemaDerive (
 
   -- * Convenience functions
   schemaFor,
+
+  -- * Generic Machinery (internal)
+  GToSchema (..),
+  GCollectFields (..),
+  GEnumConstructors (..),
+  GToSchemaDispatch (..),
 ) where
 
 import Data.Int (Int16, Int32, Int64, Int8)

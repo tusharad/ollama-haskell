@@ -6,6 +6,30 @@ and this project adheres to [PVP (Haskell Package Versioning Policy)](https://pv
 
 ---
 
+## [0.4.0.0] - 2026-08-20
+
+### Added
+- **Model Context Protocol (MCP) Integration (`Ollama.MCP`)**:
+  - Full bidirectional integration with the Hackage `mcp-server` package (`mcp-server >= 0.2 && < 0.3`).
+  - Seamless conversion between Ollama function calling definitions (`Tool`, `ToolCall`) and MCP definitions (`ToolDefinition`, `ArgumentDefinition`, `Content`, `McpSchema`).
+  - Bridge functions: `toolToMcpDefinition`, `mcpDefinitionToTool`, `toolCallToMcpArgs`, `mcpContentToToolOutput`.
+  - Re-exported MCP server runners (`runMcpServerStdio`, `runMcpServerHttp`, `runMcpServerHttpWithConfig`).
+  - Dedicated unit test suite in `Test.Ollama.Unit.MCP`.
+- **Automatic JSON Schema Derivation (`Ollama.Types.Format.SchemaDerive`)**:
+  - Typeclasses `ToSchema` and `ToJsonType` enabling generic derivation of JSON schemas directly from Haskell record types via `GHC.Generics`.
+  - Smart handling of optional fields (`Maybe a` omitted from `required`), nested records (`JObject`), lists (`JArray`), and simple sum enums (`string` enum).
+  - Helper functions `schemaFor` and `formatFor` for effortless integration with `chat` / `generate` structured outputs.
+  - Dedicated unit test suite in `Test.Ollama.Unit.SchemaDerive`.
+- **Configurable Client Timeout**:
+  - Support for custom request timeout intervals in `OllamaClientConfig` (`configTimeout`).
+
+### Changed
+- **PVP Compliance & Upper Bounds**:
+  - Added strict upper bounds for `network-uri` (`>= 2.6 && < 2.8`) and `mcp-server` (`>= 0.2 && < 0.3`).
+  - Upgraded Stack resolvers and snapshot dependencies (`lts-21.25`, `lts-22.44`, `lts-23.28`, `lts-24.52`, `nightly`).
+
+---
+
 ## [0.3.0.0] - 2026-08-04
 
 ### Added

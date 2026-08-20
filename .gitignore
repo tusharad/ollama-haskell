@@ -9,6 +9,12 @@ dist-newstyle/
 *.chi
 *.chs.h
 
+# Hakyll build artifacts
+docs/_site/
+docs/_cache/
+docs/.stack-work/
+docs/dist-newstyle/
+
 # Cabal local overrides
 cabal.project.local
 cabal.project.local*

@@ -9,12 +9,14 @@ Industry-grade, feature-complete, modern Haskell client library for the [Ollama]
 
 - **Client-Centric Architecture**: Thread-safe `OllamaClient` handle with connection pooling and resource management (`newClient`, `defaultClient`, `clientFromEnv`, `withClient`).
 - **First-Class Streaming**: `conduit`-based response streaming (`chatStream`, `generateStream`, `pullStream`, `pushStream`, `createModelStream`).
+- **Model Context Protocol (MCP) Bridge**: Bidirectional integration with `mcp-server` for converting between Ollama tools and MCP tools, running MCP servers via stdio or HTTP (`Ollama.MCP`).
+- **Generic JSON Schema Derivation**: Automatically derive JSON schemas from Haskell data types via `GHC.Generics` with `ToSchema` and `formatFor`.
 - **Complete API Surface**: Text generation, chat completions, vector embeddings, model management (list, show, copy, delete, pull, push, create), and system endpoints.
-- **Structured Outputs**: Powerful `SchemaBuilder` DSL (`|+`, `|++`, `|!`, `|!!`) for type-safe JSON Schema structured responses.
+- **Structured Outputs DSL**: Powerful `SchemaBuilder` DSL (`|+`, `|++`, `|!`, `|!!`) for type-safe JSON Schema structured responses.
 - **Function / Tool Calling**: Full support for tool definitions (`Tool`), tool calls (`ToolCall`), and execution results (`toolResultMessage`).
 - **Thinking Models Support**: Native support for reasoning models (`qwen3.5`, `deepseek-r1`) with `Think` / `ThinkingLevel` types.
 - **Environment & Auth Integration**: Robust URL normalization for `OLLAMA_HOST` and bearer token support for `OLLAMA_API_KEY`.
-- **Configurable Resilience**: Flexible retry policies (`NoRetry`, `ConstantRetry`, `ExponentialRetry`), lifecycle callbacks, and structured logging.
+- **Configurable Resilience**: Flexible retry policies (`NoRetry`, `ConstantRetry`, `ExponentialRetry`), custom timeouts, lifecycle callbacks, and structured logging.
 - **Conversation Store**: Transactional STM-backed `InMemoryStore` and `ConversationStore` typeclass for managing multi-turn chat sessions.
 - **SDK Comparison Matrix**: Detailed feature comparison against Python, JS/TS, and Go SDKs in [doc/COMPARISON.md](doc/COMPARISON.md).
 
@@ -27,14 +29,14 @@ Add `ollama-haskell` to your `.cabal` file:
 ```cabal
 build-depends:
     base >= 4.17 && < 5
-  , ollama-haskell >= 0.3.0.0
+  , ollama-haskell >= 0.4.0.0
 ```
 
 Or using Stack in `package.yaml`:
 
 ```yaml
 dependencies:
-  - ollama-haskell >= 0.3.0.0
+  - ollama-haskell >= 0.4.0.0
 ```
 
 ---
@@ -169,7 +171,6 @@ main = withClient customConfig $ \client -> do
 ## Documentation & SDK Comparison
 
 - [doc/COMPARISON.md](doc/COMPARISON.md) — SDK Feature Matrix comparing `ollama-haskell` with Python, JS/TS, and Go SDKs.
-- [ARCHITECTURE.md](ARCHITECTURE.md) — Detailed internal module design and extension guide.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — Development setup, testing guidelines, and code style.
 - [CHANGELOG.md](CHANGELOG.md) — Release notes and changelog.
 - [Hackage Documentation](https://hackage.haskell.org/package/ollama-haskell) — Full Haddock reference.

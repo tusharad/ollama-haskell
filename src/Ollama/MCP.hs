@@ -1,3 +1,4 @@
+{-# LANGUAGE ExplicitNamespaces #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -15,7 +16,7 @@ Provides direct bidirectional conversion between Ollama function calling definit
 and Model Context Protocol ('ToolDefinition', 'Content', etc.) directly using the official
 Hackage @mcp-server@ package.
 
-@since 0.3.0.0
+@since 0.4.0.0
 -}
 module Ollama.MCP (
   -- * Re-exported MCP.Server Types & Functions
@@ -27,7 +28,7 @@ module Ollama.MCP (
   ResourceDefinition (..),
   ToolDefinition (..),
   ArgumentDefinition (..),
-  McpSchema,
+  type McpSchema,
   pattern McpSchema,
   SchemaType (..),
   schemaDescription,
@@ -134,7 +135,7 @@ type McpProtocolError = ServerTypes.Error
 -- | Alias for 'MCP.Server.Types.Schema' to avoid name collision with 'Ollama.Types.Format.SchemaBuilder.Schema'.
 type McpSchema = ServerTypes.Schema
 
--- | Pattern synonym for matching or constructing an 'McpSchema'.
+-- | Pattern synonym for matching or constructing an 'McpSchema' ('ServerTypes.Schema').
 pattern McpSchema :: Maybe Text -> SchemaType -> McpSchema
 pattern McpSchema desc shape = ServerTypes.Schema desc shape
 

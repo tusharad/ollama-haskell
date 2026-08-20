@@ -8,7 +8,7 @@ Portability : portable
 
 Client configuration settings, retry policies, and logging thresholds.
 
-@since 3.0.0.0
+@since 0.3.0.0
 -}
 module Ollama.Client.Config (
   OllamaClientConfig (..),
@@ -27,14 +27,14 @@ import Network.HTTP.Client (Manager)
 
 {- | Logging levels for structured client events.
 
-@since 3.0.0.0
+@since 0.3.0.0
 -}
 data LogLevel = Debug | Info | Warn | Error
   deriving stock (Eq, Ord, Show, Bounded, Enum)
 
 {- | Configurable retry strategy for recoverable network errors.
 
-@since 3.0.0.0
+@since 0.3.0.0
 -}
 data RetryPolicy
   = -- | Disable all retries
@@ -47,28 +47,28 @@ data RetryPolicy
 
 {- | Helper constructor for 'NoRetry'.
 
-@since 3.0.0.0
+@since 0.3.0.0
 -}
 noRetry :: RetryPolicy
 noRetry = NoRetry
 
 {- | Helper constructor for 'ConstantRetry'.
 
-@since 3.0.0.0
+@since 0.3.0.0
 -}
 constantRetry :: Int -> Int -> RetryPolicy
 constantRetry = ConstantRetry
 
 {- | Helper constructor for 'ExponentialRetry'.
 
-@since 3.0.0.0
+@since 0.3.0.0
 -}
 exponentialRetry :: Int -> Int -> RetryPolicy
 exponentialRetry = ExponentialRetry
 
-{- | Configuration settings for an 'OllamaClient'.
+{- | Configuration settings for an 'Ollama.Client.OllamaClient'.
 
-@since 3.0.0.0
+@since 0.3.0.0
 -}
 data OllamaClientConfig = OllamaClientConfig
   { configBaseUrl :: !Text
@@ -83,9 +83,9 @@ data OllamaClientConfig = OllamaClientConfig
   , configOnError :: !(Maybe (IO ()))
   }
 
-{- | Default configuration connecting to @http://127.0.0.1:11434@ with 90s timeout and 'NoRetry'.
+{- | Default configuration connecting to @http://127.0.0.1:11434@ with 300s timeout and 'NoRetry'.
 
-@since 3.0.0.0
+@since 0.3.0.0
 -}
 defaultConfig :: OllamaClientConfig
 defaultConfig =

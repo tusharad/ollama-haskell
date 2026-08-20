@@ -1,4 +1,4 @@
-.PHONY: build test check lint format format-check docs clean help
+.PHONY: build test check lint format format-check docs docs-site docs-serve docs-clean clean help
 
 .DEFAULT_GOAL := help
 
@@ -24,15 +24,28 @@ format:
 
 ## Check code formatting with Fourmolu
 format-check:
-	fourmolu --check src/ test/
+	fourmolu -m check src/ test/
 
 ## Build Haddock documentation
 docs:
 	cabal haddock
 
+## Build static Hakyll documentation website
+docs-site:
+	cd docs && cabal run site -- clean && cabal run site -- build
+
+## Serve Hakyll documentation website locally with live reload
+docs-serve:
+	cd docs && cabal run site -- watch
+
+## Clean Hakyll site cache and generated output
+docs-clean:
+	cd docs && cabal run site -- clean
+
 ## Clean build artifacts
 clean:
 	cabal clean
+	cd docs && cabal run site -- clean || true
 
 e2e:
 	cabal run ollama-haskell-integration --flags="+integration-tests"
@@ -47,4 +60,7 @@ help:
 	@echo "  format        Format Haskell source files with fourmolu"
 	@echo "  format-check  Verify code formatting with fourmolu"
 	@echo "  docs          Generate Haddock documentation"
+	@echo "  docs-site     Generate static Hakyll documentation site"
+	@echo "  docs-serve    Run local Hakyll preview server (http://127.0.0.1:8000)"
+	@echo "  docs-clean    Clean Hakyll build cache and output"
 	@echo "  clean         Remove dist-newstyle build directory"

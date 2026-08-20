@@ -2,9 +2,6 @@ name: Publish to Hackage
 
 on:
   push:
-    branches:
-      - release
-      - 'release/**'
     tags:
       - 'v*'
   workflow_dispatch:
@@ -25,7 +22,7 @@ jobs:
           cabal-version: '3.10.2.1'
 
       - name: Cache Cabal store
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cabal/store
@@ -54,7 +51,7 @@ jobs:
         run: |
           SDIST_FILE=$(ls dist-newstyle/sdist/ollama-haskell-*.tar.gz | head -n 1)
           echo "Publishing package ${SDIST_FILE} to Hackage..."
-          curl -X POST \
+          curl --fail-with-body -X POST \
             -u "${HACKAGE_USERNAME}:${HACKAGE_PASSWORD}" \
             -H "Accept: text/plain" \
             -F "package=@${SDIST_FILE}" \
@@ -68,7 +65,7 @@ jobs:
           DOCS_FILE=$(ls dist-newstyle/ollama-haskell-*-docs.tar.gz | head -n 1)
           echo "Publishing Haddock documentation ${DOCS_FILE} to Hackage..."
           BASENAME=$(basename "${DOCS_FILE}" -docs.tar.gz)
-          curl -X PUT \
+          curl --fail-with-body -X PUT \
             -u "${HACKAGE_USERNAME}:${HACKAGE_PASSWORD}" \
             -H "Content-Type: application/x-tar" \
             -H "Content-Encoding: gzip" \
