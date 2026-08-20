@@ -2,6 +2,8 @@ name: Deploy Documentation to GitHub Pages
 
 on:
   push:
+    branches:
+      - develop
     tags:
       - 'v*'
   release:
