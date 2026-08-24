@@ -6,6 +6,38 @@ and this project adheres to [PVP (Haskell Package Versioning Policy)](https://pv
 
 ---
 
+## [0.4.1.0] - 2026-08-25
+
+### Fixed
+- **Conduit Streaming Socket Lifetime (`Ollama.Client.Internal`)**:
+  - Fixed premature connection closure in `requestStreaming` by replacing `transPipe runResourceT` with exception-safe generator cleanup, ensuring streaming responses stream token-by-token across the full response without truncation.
+- **Documentation & Tutorial Code Snippets**:
+  - Corrected STM conversation storage documentation in `docs/tutorials/chat.markdown` and `docs/motivation.markdown` to align with the actual `Conversation` API.
+  - Replaced `runConduitRes` with `runConduit` in streaming examples.
+  - Fixed missing `toolName` parameter in `toolResultMessage` in `docs/tutorials/tool-calling.markdown`.
+  - Corrected field names (`models` / `runningModels`) in `docs/tutorials/model-management.markdown`.
+  - Fixed lazy/strict text encoding in `docs/tutorials/structured-outputs.markdown`.
+  - Corrected `newMockClient` serialized `ByteString` usage in `docs/tutorials/testing.markdown`.
+  - Replaced `collectStream` with genuine real-time Conduit streaming in `README.md`.
+
+### Added
+- **Model Capabilities Field (`Ollama.Types.Model`)**:
+  - Added `capabilities :: !(Maybe [Text])` to `ModelInfo` and updated `FromJSON`/`ToJSON` instances to support capability discovery from `/api/tags` (e.g. `["completion", "tools", "thinking"]`).
+- **Direct SchemaBuilder Re-export (`Ollama`)**:
+  - Re-exported the full `SchemaBuilder` DSL (`buildSchema`, `emptyObject`, `|+`, `|++`, `|!`, `|!!`, `JsonType(..)`, `Property`, `Schema`, `objectOf`, `arrayOf`, `printSchema`) directly from the top-level `Ollama` umbrella module.
+- **End-to-End Live LLM Integration Test Suite**:
+  - 15 comprehensive live test cases in `test-integration/Main.hs` covering version, model inspection, non-streaming & streaming chat, structured JSON verification, tool calling round-trip, thinking models, embeddings, model lifecycle, and multi-turn STM memory persistence.
+- **SDK Feature Matrix**:
+  - Multi-language SDK feature matrix embedded directly in `README.md`.
+
+### Changed
+- **Dependency Cleanliness**:
+  - Removed unused `resourcet` package from library `build-depends`.
+- **Documentation Redesign**:
+  - Completely restyled Hakyll documentation site with a minimal, restrained engineering aesthetic.
+
+---
+
 ## [0.4.0.0] - 2026-08-20
 
 ### Added

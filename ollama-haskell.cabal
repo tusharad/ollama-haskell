@@ -1,6 +1,6 @@
 cabal-version: 3.0
 name:          ollama-haskell
-version:       0.4.0.0
+version:       0.4.1.0
 synopsis:      Industry-grade Haskell client for Ollama local LLMs
 description:
   A type-safe Haskell client for interacting with

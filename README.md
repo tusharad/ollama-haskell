@@ -29,14 +29,14 @@ Add `ollama-haskell` to your `.cabal` file:
 ```cabal
 build-depends:
     base >= 4.17 && < 5
-  , ollama-haskell >= 0.4.0.0
+  , ollama-haskell >= 0.4.1.0
 ```
 
 Or using Stack in `package.yaml`:
 
 ```yaml
 dependencies:
-  - ollama-haskell >= 0.4.0.0
+  - ollama-haskell >= 0.4.1.0
 ```
 
 ---
