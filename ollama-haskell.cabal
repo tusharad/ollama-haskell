@@ -161,6 +161,8 @@ test-suite ollama-haskell-integration
       base
     , ollama-haskell
     , aeson
+    , bytestring
+    , containers
     , tasty
     , tasty-hunit
     , text

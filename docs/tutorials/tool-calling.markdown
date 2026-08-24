@@ -85,8 +85,8 @@ main = do
             -- 3. Execute custom Haskell logic
             let resultText = "AAPL is currently trading at $234.50 USD (+1.8%)"
 
-            -- 4. Send tool result back to the model
-            let toolRespMsg = toolResultMessage resultText
+            -- 4. Send tool result back to the model (content and tool name)
+            let toolRespMsg = toolResultMessage resultText (tcfName fn)
                 followUpHistory = userMsg :| [assistantMsg, toolRespMsg]
                 followUpReq = chatRequest "qwen3.5:2b" followUpHistory
 

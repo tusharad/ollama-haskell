@@ -67,11 +67,13 @@ main = do
   let req = chatRequest "qwen3.5:2b" (userMessage "Write a poem about functional programming." :| [])
 
   -- Stream tokens directly to stdout
-  runConduitRes $
+  runConduit $
     chatStream client req
     .| mapM_C (\chunk -> do
         case crMessage chunk of
-          Just msg -> liftIO $ TIO.putStr (messageContent msg)
+          Just msg -> liftIO $ do
+            TIO.putStr (messageContent msg)
+            hFlush stdout
           Nothing  -> pure ()
       )
 

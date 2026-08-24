@@ -15,66 +15,66 @@
         <!-- Header -->
         <header class="site-header">
             <a href="/" class="header-brand">
-                <span class="logo-badge">λ</span>
-                <span>ollama-haskell</span>
-                <span class="version-pill">v0.4.0.0</span>
+                <span class="logo-symbol">λ</span>
+                <span class="logo-title">ollama-haskell</span>
+                <span class="version-badge">v0.4.0</span>
             </a>
             <nav class="header-nav">
-                <a href="/ollama-101.html">Ollama 101</a>
+                <a href="/ollama-101.html">Guide</a>
                 <a href="/tutorials/chat.html">Tutorials</a>
-                <a href="/benchmarks.html">Benchmarks</a>
                 <a href="/comparison.html">Comparison</a>
-                <a href="/api-reference.html">API Docs</a>
+                <a href="/benchmarks.html">Benchmarks</a>
+                <a href="/api-reference.html">API</a>
             </nav>
             <div class="header-actions">
-                <a href="https://hackage.haskell.org/package/ollama-haskell" target="_blank" class="btn-github" style="border-color: rgba(99,102,241,0.4); color: #a5b4fc;">
-                    📦 Hackage
+                <a href="https://hackage.haskell.org/package/ollama-haskell" target="_blank" class="nav-btn">
+                    Hackage
                 </a>
-                <a href="https://github.com/tusharad/ollama-haskell" target="_blank" class="btn-github">
-                    <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                <a href="https://github.com/tusharad/ollama-haskell" target="_blank" class="nav-btn nav-btn-primary">
+                    <svg height="15" width="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
                     GitHub
                 </a>
             </div>
         </header>
 
-        <!-- 3-Column Layout Container -->
+        <!-- Main Documentation Layout -->
         <div class="docs-container">
-            <!-- Left Sidebar Navigation -->
+            <!-- Sidebar -->
             <aside class="docs-sidebar">
                 <div class="sidebar-section">
                     <div class="sidebar-title">Getting Started</div>
                     <ul class="sidebar-list">
-                        <li class="sidebar-item"><a href="/" class="sidebar-link"><span class="icon">🏠</span> Overview</a></li>
-                        <li class="sidebar-item"><a href="/ollama-101.html" class="sidebar-link"><span class="icon">🚀</span> Ollama 101 Beginner Guide</a></li>
-                        <li class="sidebar-item"><a href="/motivation.html" class="sidebar-link"><span class="icon">💡</span> Motivation & Architecture</a></li>
+                        <li><a href="/" class="sidebar-link">Overview</a></li>
+                        <li><a href="/ollama-101.html" class="sidebar-link">Ollama 101 Guide</a></li>
+                        <li><a href="/motivation.html" class="sidebar-link">Architecture & Design</a></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-title">Feature Tutorials</div>
+                    <div class="sidebar-title">Tutorials</div>
                     <ul class="sidebar-list">
-                        <li class="sidebar-item"><a href="/tutorials/chat.html" class="sidebar-link"><span class="icon">💬</span> Chat & Streaming (Conduit)</a></li>
-                        <li class="sidebar-item"><a href="/tutorials/structured-outputs.html" class="sidebar-link"><span class="icon">📐</span> Structured Outputs (ToSchema)</a></li>
-                        <li class="sidebar-item"><a href="/tutorials/tool-calling.html" class="sidebar-link"><span class="icon">🛠️</span> Tool & Function Calling</a></li>
-                        <li class="sidebar-item"><a href="/tutorials/mcp.html" class="sidebar-link"><span class="icon">🔌</span> Model Context Protocol (MCP)</a></li>
-                        <li class="sidebar-item"><a href="/tutorials/embeddings.html" class="sidebar-link"><span class="icon">🧬</span> Embeddings & Vector Search</a></li>
-                        <li class="sidebar-item"><a href="/tutorials/thinking-models.html" class="sidebar-link"><span class="icon">🧠</span> Reasoning Models (Thinking)</a></li>
-                        <li class="sidebar-item"><a href="/tutorials/model-management.html" class="sidebar-link"><span class="icon">📦</span> Model Management (Pull/Push)</a></li>
-                        <li class="sidebar-item"><a href="/tutorials/testing.html" class="sidebar-link"><span class="icon">🧪</span> Testing & Mocking</a></li>
+                        <li><a href="/tutorials/chat.html" class="sidebar-link">Chat & Streaming</a></li>
+                        <li><a href="/tutorials/structured-outputs.html" class="sidebar-link">Structured Outputs</a></li>
+                        <li><a href="/tutorials/tool-calling.html" class="sidebar-link">Function & Tool Calling</a></li>
+                        <li><a href="/tutorials/mcp.html" class="sidebar-link">Model Context Protocol</a></li>
+                        <li><a href="/tutorials/embeddings.html" class="sidebar-link">Embeddings & Search</a></li>
+                        <li><a href="/tutorials/thinking-models.html" class="sidebar-link">Reasoning Models</a></li>
+                        <li><a href="/tutorials/model-management.html" class="sidebar-link">Model Management</a></li>
+                        <li><a href="/tutorials/testing.html" class="sidebar-link">Mock Testing</a></li>
                     </ul>
                 </div>
 
                 <div class="sidebar-section">
-                    <div class="sidebar-title">Deep Dives & Comparisons</div>
+                    <div class="sidebar-title">Reference</div>
                     <ul class="sidebar-list">
-                        <li class="sidebar-item"><a href="/benchmarks.html" class="sidebar-link"><span class="icon">⚡</span> Benchmarks & Throughput</a></li>
-                        <li class="sidebar-item"><a href="/comparison.html" class="sidebar-link"><span class="icon">📊</span> Multi-Language SDK Matrix</a></li>
-                        <li class="sidebar-item"><a href="/api-reference.html" class="sidebar-link"><span class="icon">📖</span> API Module Map</a></li>
+                        <li><a href="/comparison.html" class="sidebar-link">Feature Matrix</a></li>
+                        <li><a href="/benchmarks.html" class="sidebar-link">Performance & Benchmarks</a></li>
+                        <li><a href="/api-reference.html" class="sidebar-link">API Module Map</a></li>
                     </ul>
                 </div>
             </aside>
 
-            <!-- Center Main Content -->
+            <!-- Center Content -->
             <main class="docs-main">
                 <article class="prose">
                     <header class="article-header">
@@ -87,7 +87,7 @@
                 </article>
             </main>
 
-            <!-- Right Sidebar: Subheadings Table of Contents -->
+            <!-- Table of Contents -->
             <aside class="docs-toc">
                 <div class="toc-heading">On This Page</div>
                 <nav class="toc-nav" id="page-toc">
@@ -95,34 +95,28 @@
                         $toc$
                     $else$
                         <ul>
-                            <li><a href="#">Top of Page</a></li>
+                            <li><a href="#">Top</a></li>
                         </ul>
                     $endif$
                 </nav>
 
-                <div class="toc-community">
-                    <div class="toc-heading">Resources</div>
-                    <a href="https://github.com/tusharad/ollama-haskell" target="_blank">
-                        ⭐ Star on GitHub
-                    </a>
-                    <a href="https://github.com/tusharad/ollama-haskell/issues" target="_blank">
-                        🐛 Report an Issue
-                    </a>
-                    <a href="https://hackage.haskell.org/package/ollama-haskell" target="_blank">
-                        📚 Hackage Package
-                    </a>
+                <div class="toc-links">
+                    <div class="toc-heading">Links</div>
+                    <a href="https://github.com/tusharad/ollama-haskell" target="_blank">GitHub Repository</a>
+                    <a href="https://hackage.haskell.org/package/ollama-haskell" target="_blank">Hackage Package</a>
+                    <a href="https://github.com/tusharad/ollama-haskell/issues" target="_blank">Issue Tracker</a>
                 </div>
             </aside>
         </div>
 
         <!-- Footer -->
         <footer class="site-footer">
-            <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div class="footer-inner">
                 <div>
-                    <strong>ollama-haskell</strong> · Released under the <a href="https://opensource.org/licenses/MIT" target="_blank">MIT License</a>
+                    <span>ollama-haskell</span> · MIT License
                 </div>
                 <div>
-                    Created & Maintained by <a href="https://github.com/tusharad" target="_blank">Tushar Adhatrao</a> · Built with <a href="https://jaspervdj.be/hakyll" target="_blank">Hakyll</a>
+                    Created by <a href="https://github.com/tusharad" target="_blank">Tushar Adhatrao</a>
                 </div>
             </div>
         </footer>
