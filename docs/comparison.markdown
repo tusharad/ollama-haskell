@@ -32,8 +32,3 @@ description: Comprehensive feature matrix comparing ollama-haskell with Python, 
 
 - **`ollama-haskell`**: Type declarations (`data Weather = ... deriving (Generic, ToSchema)`) produce exact JSON schema definitions without requiring external schema generators or runtime reflection.
 - **Python / JS**: Rely on heavy third-party dependencies (Pydantic / Zod) that add runtime overhead and potential schema drift.
-
-### 3. Testing in CI/CD
-
-- **`ollama-haskell`**: Offers `Ollama.Testing` to test AI application logic completely offline in CI pipelines with mock client handles.
-- **Other SDKs**: Require spinning up live Docker containers with Ollama or mocking HTTP at the socket layer.

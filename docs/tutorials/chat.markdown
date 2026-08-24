@@ -89,8 +89,8 @@ If you want to consume stream results into a list or accumulate text without set
 chunks <- collectStream (chatStream client req)
 
 -- Or fold text tokens into a single Text string
-fullText <- foldStream (chatStream client req) "" (\acc chunk ->
-  acc <> maybe "" messageContent (crMessage chunk))
+fullText <- foldStream (\acc chunk ->
+  acc <> maybe "" messageContent (crMessage chunk)) "" (chatStream client req) 
 ```
 
 ---
@@ -103,6 +103,8 @@ For interactive chatbots, `Ollama.Conversation` provides a thread-safe transacti
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
+import Data.List.NonEmpty (NonEmpty ((:|)))
+import Data.Time (getCurrentTime)
 import Ollama
 import Ollama.Conversation
 
@@ -110,29 +112,37 @@ main :: IO ()
 main = do
   client <- defaultClient
   store  <- initInMemoryStore
+  now    <- getCurrentTime
 
-  let sessionId = "user-session-101"
+  let sessionId = "101"
+      initialConv = Conversation sessionId [userMessage "My favorite language is Haskell."] "qwen3.5:9b" now now
 
-  -- Save user message
-  saveConversationInMemory store sessionId [userMessage "My favorite language is Haskell."]
+  -- Save initial conversation
+  saveConversationInMemory store initialConv
 
-  -- Later in another request:
-  prevMsgs <- loadConversationInMemory store sessionId
-  let newMsg  = userMessage "What is my favorite programming language?"
-      allMsgs = prevMsgs <> [newMsg]
+  -- Later in another request, load existing history:
+  prevConv <- loadConversationInMemory store sessionId
+  case prevConv of
+    Nothing -> putStrLn "No conversation found"
+    Just prev -> do
+      let newMsg  = userMessage "What is my favorite language?"
+          allMsgs = messages prev <> [newMsg]
 
-  case allMsgs of
-    (firstMsg : rest) -> do
-      let req = chatRequest "qwen3.5:2b" (firstMsg :| rest)
-      res <- chat client req
-      case res of
-        Right resp -> do
-          case crMessage resp of
-            Just botMsg -> do
-              -- Persist assistant response back to store
-              saveConversationInMemory store sessionId (allMsgs <> [botMsg])
-              putStrLn "History saved!"
-            Nothing -> pure ()
-        Left err -> print err
-    [] -> pure ()
+      case allMsgs of
+        (firstMsg : rest) -> do
+          let req = chatRequest "qwen3.5:9b" (firstMsg :| rest)
+          res <- chat client req
+          case res of
+            Left err -> print err
+            Right resp -> case crMessage resp of
+              Nothing -> pure ()
+              Just botMsg -> do
+                updatedTime <- getCurrentTime
+                let updatedConvo = prev
+                      { messages    = allMsgs <> [assistantMessage (messageContent botMsg)]
+                      , lastUpdated = updatedTime
+                      }
+                saveConversationInMemory store updatedConvo
+                putStrLn "History Saved!"
+        [] -> pure ()
 ```
