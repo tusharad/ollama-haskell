@@ -71,6 +71,7 @@ data ModelInfo = ModelInfo
   , miSize :: !Int64
   , miDigest :: !Digest
   , miDetails :: !ModelDetails
+  , miCapabilities :: !(Maybe [Text])
   }
   deriving stock (Eq, Show, Generic)
 
@@ -83,6 +84,7 @@ instance FromJSON ModelInfo where
       <*> v .: "size"
       <*> v .: "digest"
       <*> v .: "details"
+      <*> v .:? "capabilities"
 
 instance ToJSON ModelInfo where
   toJSON ModelInfo {..} =
@@ -93,6 +95,7 @@ instance ToJSON ModelInfo where
       , "size" .= miSize
       , "digest" .= miDigest
       , "details" .= miDetails
+      , "capabilities" .= miCapabilities
       ]
 
 {- | Response listing available local models.

@@ -27,17 +27,17 @@ main = do
   -- 1. List all available models on disk
   listRes <- listModels client
   case listRes of
-    Right resp -> do
+    Right (ListResponse ms) -> do
       putStrLn "--- Local Models ---"
-      mapM_ (\m -> putStrLn $ "• " <> show (miName m) <> " (" <> show (miSize m `div` 1000000) <> " MB)") (lrModels resp)
+      mapM_ (\m -> putStrLn $ "• " <> show (miName m) <> " (" <> show (miSize m `div` 1000000) <> " MB)") ms
     Left err -> print err
 
   -- 2. Check models currently loaded in GPU VRAM
   psRes <- listRunning client
   case psRes of
-    Right psResp -> do
+    Right (RunningModelsResponse rms) -> do
       putStrLn "\n--- Active Models in VRAM ---"
-      mapM_ (\rm -> putStrLn $ "• " <> show (rmName rm) <> " [VRAM: " <> show (rmSizeVram rm `div` 1000000) <> " MB]") (rmrModels psResp)
+      mapM_ (\rm -> putStrLn $ "• " <> show (rmName rm) <> " [VRAM: " <> show (rmSizeVram rm `div` 1000000) <> " MB]") rms
     Left err -> print err
 ```
 
@@ -53,20 +53,25 @@ module Main where
 
 import Conduit
 import Ollama
+import System.IO (hFlush, stdout)
 
 main :: IO ()
 main = do
   client <- defaultClient
 
   putStrLn "Pulling 'qwen3.5:2b'..."
-  runConduitRes $
+  runConduit $
     pullStream client "qwen3.5:2b"
     .| mapM_C (\chunk -> do
         case (prTotal chunk, prCompleted chunk) of
           (Just total, Just completed) -> do
             let pct = (completed * 100) `div` total
-            liftIO $ putStr $ "\rStatus: " <> show (prStatus chunk) <> " [" <> show pct <> "%]"
-          _ -> liftIO $ putStr $ "\rStatus: " <> show (prStatus chunk)
+            liftIO $ do
+              putStr $ "\rStatus: " <> show (prStatus chunk) <> " [" <> show pct <> "%]"
+              hFlush stdout
+          _ -> liftIO $ do
+            putStr $ "\rStatus: " <> show (prStatus chunk)
+            hFlush stdout
       )
 
   putStrLn "\nPull complete!"

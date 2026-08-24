@@ -51,30 +51,7 @@ curl http://127.0.0.1:11434/api/version
 
 ---
 
-## Step 3: Recommended Models & Hardware Guidance
-
-Ollama automatically detects and utilizes your GPU (Apple Silicon Metal, NVIDIA CUDA, AMD ROCm). Here are the recommended models for different hardware tiers:
-
-| Model Tag | Parameters | RAM / VRAM Needed | Best For |
-| :--- | :--- | :--- | :--- |
-| `qwen3.5:2b` | 2 Billion | ~1.5 GB | Ultra-fast chat, testing, lightweight devices |
-| `llama3.2:3b` | 3 Billion | ~2.2 GB | General conversational AI & reasoning |
-| `qwen3.5:7b` | 7 Billion | ~5.0 GB | Structured output, coding, tool calling |
-| `deepseek-r1:8b` | 8 Billion | ~5.5 GB | Deep math, logic & reasoning with thinking tokens |
-| `nomic-embed-text` | 137 Million | ~300 MB | Vector embeddings & semantic search |
-
-Pull a model to your local machine:
-```bash
-# Pull lightweight fast model
-ollama pull qwen3.5:2b
-
-# Pull embeddings model
-ollama pull nomic-embed-text
-```
-
----
-
-## Step 4: Your First Haskell Program with Ollama
+## Step 3: Your First Haskell Program with Ollama
 
 Create a new Haskell file or run in GHCi:
 
@@ -109,7 +86,7 @@ main = do
 
 ---
 
-## Step 5: Essential Ollama CLI Commands
+## Step 4: Essential Ollama CLI Commands
 
 Keep these CLI commands handy while developing:
 

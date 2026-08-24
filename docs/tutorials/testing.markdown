@@ -20,6 +20,8 @@ Use `newMockClient` or `withMockClient`:
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
+import Data.Aeson (encode)
+import Data.ByteString.Lazy qualified as BSL
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Ollama
 import Ollama.Testing
@@ -35,9 +37,9 @@ askAssistant client = do
 
 testMockChat :: TestTree
 testMockChat = testCase "askAssistant returns mocked response" $ do
-  -- 1. Create mock client with predefined response
-  let expectedMessage = assistantMessage "Pong from mock!"
-  client <- newMockClient (mockChatResponse expectedMessage)
+  -- 1. Create mock client with predefined serialized response
+  let mockResp = mockChatResponse "qwen3.5:2b" "Pong from mock!"
+  client <- newMockClient (BSL.toStrict (encode mockResp))
 
   -- 2. Execute business logic
   result <- askAssistant client

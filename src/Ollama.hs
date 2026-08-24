@@ -145,6 +145,25 @@ module Ollama (
   schemaFor,
   formatFor,
 
+  -- ** Schema Builder DSL
+  JsonType (..),
+  Property (..),
+  Schema (..),
+  SchemaBuilder,
+  emptyObject,
+  addProperty,
+  addObjectProperty,
+  requireField,
+  requireFields,
+  buildSchema,
+  objectOf,
+  arrayOf,
+  printSchema,
+  (|+),
+  (|++),
+  (|!),
+  (|!!),
+
   -- * Error Handling
   OllamaError (..),
   isRetryable,

@@ -20,7 +20,7 @@ The `Ollama.MCP` module provides native bidirectional interoperability between O
 | :--- | :--- | :--- | :--- |
 | `toolToMcpDefinition` | Ollama `Tool` | MCP `ToolDefinition` | Converts an Ollama tool schema into an MCP server tool |
 | `mcpDefinitionToTool` | MCP `ToolDefinition` | Ollama `Tool` | Converts an MCP tool definition for use in `chatTools` |
-| `toolCallToMcpArgs` | Ollama `ToolCall` | `[(Text, Value)]` | Extracts argument key-value pairs from an Ollama tool call |
+| `toolCallToMcpArgs` | Ollama `ToolCall` | `(Text, [(Text, Text)])` | Extracts tool name and argument pairs from an Ollama tool call |
 | `mcpContentToToolOutput`| MCP `Content` | `Text` | Extracts text from MCP tool execution content |
 
 ---
@@ -33,6 +33,7 @@ Fetch tool definitions from an MCP server and expose them directly to Ollama:
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
+import Data.List.NonEmpty (NonEmpty ((:|)))
 import Ollama
 import Ollama.MCP
 

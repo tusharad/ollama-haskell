@@ -22,9 +22,10 @@ The easiest way to enforce structured outputs is by deriving `ToSchema` via `GHC
 module Main where
 
 import Data.Aeson (FromJSON, eitherDecode)
+import Data.ByteString.Lazy qualified as BSL
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.Text (Text)
-import Data.Text.Lazy.Encoding qualified as TLE
+import Data.Text.Encoding qualified as TE
 import GHC.Generics (Generic)
 import Ollama
 
@@ -55,7 +56,7 @@ main = do
         putStrLn $ "Raw JSON from LLM: " <> show rawJson
 
         -- 3. Decode JSON directly into your strongly typed Haskell data
-        case eitherDecode (TLE.encodeUtf8 (messageContent msg)) of
+        case eitherDecode (BSL.fromStrict (TE.encodeUtf8 rawJson)) of
           Left decodeErr -> putStrLn $ "JSON Parse Error: " <> decodeErr
           Right weather  -> do
             putStrLn "Successfully decoded Haskell record:"
@@ -82,10 +83,10 @@ main = do
 
 ## Method 2: Manual `SchemaBuilder` DSL
 
-For dynamic schemas or when you do not wish to define a dedicated Haskell record type, use the `SchemaBuilder` DSL:
+For dynamic schemas or when you do not wish to define a dedicated Haskell record type, use the `SchemaBuilder` DSL (available directly from `Ollama`):
 
 ```haskell
-import Ollama.Types.Format.SchemaBuilder
+import Ollama
 
 personSchema :: Schema
 personSchema = buildSchema $ emptyObject

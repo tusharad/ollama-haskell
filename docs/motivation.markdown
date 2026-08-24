@@ -94,7 +94,9 @@ Managing conversation history in multi-threaded web servers is simplified with `
 ```haskell
 -- Thread-safe STM in-memory store
 store <- initInMemoryStore
-saveConversationInMemory store "session-42" [userMessage "Hello!"]
+now   <- getCurrentTime
+let conv = Conversation "session-42" [userMessage "Hello!"] "qwen3.5:9b" now now
+saveConversationInMemory store conv
 ```
 
 The transactional nature of STM ensures that concurrent requests to the same session will never result in corrupted history or race conditions.

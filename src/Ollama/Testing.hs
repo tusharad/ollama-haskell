@@ -159,4 +159,5 @@ mockListModelsResponse names =
               , parameterSize = "7B"
               , quantizationLevel = "Q4_K_M"
               }
+        , miCapabilities = Just ["completion"]
         }

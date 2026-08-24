@@ -3,7 +3,7 @@
 [![Hackage](https://img.shields.io/hackage/v/ollama-haskell.svg)](https://hackage.haskell.org/package/ollama-haskell)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Industry-grade, feature-complete, modern Haskell client library for the [Ollama](https://ollama.com) local LLM engine.
+Modern Haskell client library for the [Ollama](https://ollama.com) local LLM engine.
 
 ## Features
 
@@ -18,7 +18,7 @@ Industry-grade, feature-complete, modern Haskell client library for the [Ollama]
 - **Environment & Auth Integration**: Robust URL normalization for `OLLAMA_HOST` and bearer token support for `OLLAMA_API_KEY`.
 - **Configurable Resilience**: Flexible retry policies (`NoRetry`, `ConstantRetry`, `ExponentialRetry`), custom timeouts, lifecycle callbacks, and structured logging.
 - **Conversation Store**: Transactional STM-backed `InMemoryStore` and `ConversationStore` typeclass for managing multi-turn chat sessions.
-- **SDK Comparison Matrix**: Detailed feature comparison against Python, JS/TS, and Go SDKs in [doc/COMPARISON.md](doc/COMPARISON.md).
+- **SDK Comparison Matrix**: Detailed feature comparison against Python, JS/TS, and Go SDKs in [COMPARISON.md](docs/comparison.markdown).
 
 ---
 
@@ -29,14 +29,14 @@ Add `ollama-haskell` to your `.cabal` file:
 ```cabal
 build-depends:
     base >= 4.17 && < 5
-  , ollama-haskell >= 0.4.0.0
+  , ollama-haskell >= 0.4.1.0
 ```
 
 Or using Stack in `package.yaml`:
 
 ```yaml
 dependencies:
-  - ollama-haskell >= 0.4.0.0
+  - ollama-haskell >= 0.4.1.0
 ```
 
 ---
@@ -59,24 +59,42 @@ main = do
 
 ---
 
+---
+
 ## Streaming Responses with Conduit
 
-Stream LLM responses token-by-token as they generate:
+Stream LLM responses token-by-token in real time:
 
 ```haskell
+import Conduit (mapM_C, runConduit, (.|))
+import Control.Monad.IO.Class (liftIO)
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.Text.IO qualified as TIO
 import Ollama
+import System.IO (hFlush, stdout)
 
 main :: IO ()
 main = do
   client <- defaultClient
   let req = chatRequest "qwen3.5:2b" (userMessage "Count from 1 to 5." :| [])
-  
-  -- Stream chunks directly into stdout or collect them
-  chunks <- collectStream (chatStream client req)
-  mapM_ (TIO.putStr . maybe "" messageContent . crMessage) chunks
+
+  -- Stream tokens to stdout as they arrive
+  runConduit $
+    chatStream client req .| mapM_C (\chunk -> liftIO $ do
+      mapM_ (TIO.putStr . messageContent) (crMessage chunk)
+      hFlush stdout
+    )
   putStrLn ""
+```
+
+You can also accumulate all chunks at once with `collectStream`, or fold text with `foldStream`:
+
+```haskell
+-- Collect all chunks:
+chunks <- collectStream (chatStream client req)
+
+-- Or fold into a single Text value:
+fullText <- foldStream (\acc c -> acc <> maybe "" messageContent (crMessage c)) "" (chatStream client req)
 ```
 
 ---
@@ -112,12 +130,11 @@ main = do
 
 ## Structured Outputs (JSON Schema DSL)
 
-Enforce structured JSON output formats using `SchemaBuilder`:
+Enforce structured JSON output formats using `SchemaBuilder` (re-exported directly from `Ollama`):
 
 ```haskell
 import Data.Text.IO qualified as TIO
 import Ollama
-import Ollama.Types.Format.SchemaBuilder
 
 personSchema :: Schema
 personSchema = buildSchema $ emptyObject
@@ -157,7 +174,7 @@ customConfig :: OllamaClientConfig
 customConfig = defaultConfig
   { configBaseUrl = "http://my-ollama-server:11434"
   , configTimeout = 120
-  , configRetry   = ExponentialRetry 3 1 -- 3 retries with exponential backoff
+  , configRetry   = ExponentialRetry 3 1000000 -- 3 retries with exponential backoff
   , configLogger  = Just (\level msg -> putStrLn $ "[" <> show level <> "] " <> show msg)
   }
 
@@ -168,15 +185,33 @@ main = withClient customConfig $ \client -> do
 
 ---
 
-## Documentation & SDK Comparison
+## Feature Matrix
 
-- [doc/COMPARISON.md](doc/COMPARISON.md) — SDK Feature Matrix comparing `ollama-haskell` with Python, JS/TS, and Go SDKs.
+| Feature | Haskell (`ollama-haskell`) | Official Python (`ollama-python`) | Official JS/TS (`ollama-js`) | Community Go (`ollama/ollama`) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Strict Type Safety** | ✅ Compile-time (PVP, Smart Constructors) | ⚠️ Type hints (Runtime) | ⚠️ TypeScript (Erased at runtime) | ✅ Go Structs |
+| **Response Streaming** | ✅ `conduit` ($O(1)$ constant memory) | ⚠️ Python Generator | ⚠️ Async Iterator | ⚠️ Go Channels |
+| **Structured Output Derivation** | ✅ `GHC.Generics` (`ToSchema`) | ⚠️ Pydantic BaseModel | ⚠️ Zod / JSON Schema | ⚠️ Manual JSON Schema |
+| **Model Context Protocol (MCP)** | ✅ Native `mcp-server` Bridge | ❌ Manual | ❌ Manual | ❌ Manual |
+| **Thinking / Reasoning Models** | ✅ Dedicated `Think` ADT | ⚠️ Dict parameters | ⚠️ Object properties | ⚠️ Raw parameters |
+| **Transactional Chat Store** | ✅ STM `InMemoryStore` | ❌ None | ❌ None | ❌ None |
+| **Built-in Mock Testing** | ✅ `Ollama.Testing` (Pure) | ❌ None | ❌ None | ❌ None |
+| **Configurable Retry & Backoff** | ✅ Exponential & Constant ADT | ❌ Manual | ❌ Manual | ❌ Manual |
+| **Token Throughput Metrics** | ✅ Native Calculation Helpers | ⚠️ Raw nanoseconds | ⚠️ Raw nanoseconds | ⚠️ Raw nanoseconds |
+| **Environment Auto-Discovery** | ✅ `clientFromEnv` | ✅ Default client | ✅ Default client | ✅ Default client |
+
+---
+
+## Documentation & References
+
+- [Comparison Deep Dive](docs/comparison.markdown) — Detailed architectural comparison across language ecosystems.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — Development setup, testing guidelines, and code style.
-- [CHANGELOG.md](CHANGELOG.md) — Release notes and changelog.
-- [Hackage Documentation](https://hackage.haskell.org/package/ollama-haskell) — Full Haddock reference.
+- [CHANGELOG.md](CHANGELOG.md) — Release notes and version changelog.
+- [Hackage Documentation](https://hackage.haskell.org/package/ollama-haskell) — Full Haddock API reference.
 
 ---
 
 ## License
 
 MIT © 2024–2026 Tushar Adhatrao
+
