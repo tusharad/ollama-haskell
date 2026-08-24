@@ -22,17 +22,15 @@ module Ollama.Client.Internal (
 import Conduit (
   ConduitT,
   awaitForever,
-  bracketP,
+  catchC,
   filterC,
   takeWhileC,
-  transPipe,
   yield,
   (.|),
  )
-import Control.Exception (SomeException, catch, try)
+import Control.Exception (SomeException, catch, throwIO, try)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.IO.Unlift (MonadUnliftIO)
-import Control.Monad.Trans.Resource (runResourceT)
 import Control.Retry qualified as Retry
 import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
 import Data.ByteString (ByteString)
@@ -124,16 +122,13 @@ requestStreaming OllamaClient {..} endpoint payload = do
                 ++ configHeaders cfg
           , requestBody = RequestBodyLBS (encode payload)
           }
-  transPipe runResourceT $
-    bracketP
-      (responseOpen req clientManager)
-      responseClose
-      ( \resp -> do
-          let bodyReader = responseBody resp
-              readChunk = liftIO $ brRead bodyReader `catch` \(_ :: HttpException) -> pure BS.empty
-              source = repeatM readChunk .| takeWhileC (not . BS.null)
-          source .| CB.lines .| filterC (not . BS.null) .| parseAndYield
-      )
+  resp <- liftIO $ responseOpen req clientManager
+  let bodyReader = responseBody resp
+      readChunk = liftIO $ brRead bodyReader `catch` \(_ :: HttpException) -> pure BS.empty
+      source = repeatM readChunk .| takeWhileC (not . BS.null)
+  (source .| CB.lines .| filterC (not . BS.null) .| parseAndYield)
+    `catchC` (\(e :: SomeException) -> liftIO (responseClose resp >> throwIO e))
+  liftIO $ responseClose resp
   where
     parseAndYield = awaitForever $ \line -> do
       case eitherDecode (BSL.fromStrict line) of

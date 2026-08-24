@@ -3,7 +3,7 @@
 [![Hackage](https://img.shields.io/hackage/v/ollama-haskell.svg)](https://hackage.haskell.org/package/ollama-haskell)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Industry-grade, feature-complete, modern Haskell client library for the [Ollama](https://ollama.com) local LLM engine.
+Modern Haskell client library for the [Ollama](https://ollama.com) local LLM engine.
 
 ## Features
 
@@ -18,7 +18,7 @@ Industry-grade, feature-complete, modern Haskell client library for the [Ollama]
 - **Environment & Auth Integration**: Robust URL normalization for `OLLAMA_HOST` and bearer token support for `OLLAMA_API_KEY`.
 - **Configurable Resilience**: Flexible retry policies (`NoRetry`, `ConstantRetry`, `ExponentialRetry`), custom timeouts, lifecycle callbacks, and structured logging.
 - **Conversation Store**: Transactional STM-backed `InMemoryStore` and `ConversationStore` typeclass for managing multi-turn chat sessions.
-- **SDK Comparison Matrix**: Detailed feature comparison against Python, JS/TS, and Go SDKs in [doc/COMPARISON.md](doc/COMPARISON.md).
+- **SDK Comparison Matrix**: Detailed feature comparison against Python, JS/TS, and Go SDKs in [COMPARISON.md](docs/comparison.markdown).
 
 ---
 
@@ -170,7 +170,7 @@ main = withClient customConfig $ \client -> do
 
 ## Documentation & SDK Comparison
 
-- [doc/COMPARISON.md](doc/COMPARISON.md) — SDK Feature Matrix comparing `ollama-haskell` with Python, JS/TS, and Go SDKs.
+- [COMPARISON.md](docs/comparison.markdown) — SDK Feature Matrix comparing `ollama-haskell` with Python, JS/TS, and Go SDKs.
 - [CONTRIBUTING.md](CONTRIBUTING.md) — Development setup, testing guidelines, and code style.
 - [CHANGELOG.md](CHANGELOG.md) — Release notes and changelog.
 - [Hackage Documentation](https://hackage.haskell.org/package/ollama-haskell) — Full Haddock reference.
