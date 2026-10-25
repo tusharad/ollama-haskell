@@ -14,44 +14,24 @@ The model does not run the code itself; instead, it returns a structured `ToolCa
 
 ## 1. Define a Tool in Haskell
 
-Use the `Tool` and `FunctionDef` types to declare your tool signature:
+Use the ergonomic smart constructors `toolDef`, `objectParams`, and `stringParam` (or `numberParam`, `intParam`, `boolParam`, `enumParam`):
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Data.Aeson (Value (..), decode)
 import Data.List.NonEmpty (NonEmpty ((:|)))
-import Data.Map.Strict qualified as Map
+import qualified Data.Map.Strict as Map
 import Data.Text (Text)
-import Data.Text.Lazy qualified as TL
-import Data.Text.Lazy.Encoding qualified as TLE
 import Ollama
 
--- 1. Define the Calculator Tool
-calculatorTool :: Tool
-calculatorTool = Tool "function" $ FunctionDef
-  { fnName = "get_stock_price"
-  , fnDescription = Just "Fetch the current stock price for a given ticker symbol."
-  , fnParameters = Just FunctionParameters
-      { fpType = "object"
-      , fpProperties = Just $ Map.fromList
-          [ ( "symbol"
-            , FunctionParameters
-                { fpType = "string"
-                , fpProperties = Nothing
-                , fpRequired = Nothing
-                , fpDescription = Just "Stock ticker symbol (e.g. AAPL, GOOGL)"
-                , fpEnum = Nothing
-                }
-            )
-          ]
-      , fpRequired = Just ["symbol"]
-      , fpDescription = Nothing
-      , fpEnum = Nothing
-      }
-  , fnStrict = Just True
-  }
+-- 1. Define the Stock Price Tool using smart constructors
+stockTool :: Tool
+stockTool =
+  toolDef "get_stock_price" "Fetch the current stock price for a given ticker symbol." $
+    objectParams
+      [ ("symbol", stringParam (Just "Stock ticker symbol (e.g. AAPL, GOOGL)")) ]
+      ["symbol"]
 ```
 
 ---
@@ -66,8 +46,8 @@ main = do
   client <- defaultClient
 
   let userMsg = userMessage "What is the stock price of AAPL?"
-      req = (chatRequest "qwen3.5:2b" (userMsg :| []))
-        { chatTools = Just [calculatorTool] }
+      req = (chatRequest "llama3.2:latest" (userMsg :| []))
+        { chatTools = Just [stockTool] }
 
   putStrLn "Sending user prompt to model..."
   res <- chat client req
@@ -79,23 +59,28 @@ main = do
         case messageToolCalls assistantMsg of
           Just (toolCall : _) -> do
             let fn = tcFunction toolCall
+                callId = tcId toolCall
             putStrLn $ "LLM requested tool call: " <> show (tcfName fn)
+            putStrLn $ "Call ID: " <> show callId
             putStrLn $ "With arguments: " <> show (tcfArguments fn)
 
             -- 3. Execute custom Haskell logic
             let resultText = "AAPL is currently trading at $234.50 USD (+1.8%)"
 
-            -- 4. Send tool result back to the model (content and tool name)
-            let toolRespMsg = toolResultMessage resultText (tcfName fn)
+            -- 4. Send tool result back to the model (with optional call ID)
+            let toolRespMsg = case callId of
+                  Just cid -> toolResultMessageWithId resultText (tcfName fn) cid
+                  Nothing  -> toolResultMessage resultText (tcfName fn)
                 followUpHistory = userMsg :| [assistantMsg, toolRespMsg]
-                followUpReq = chatRequest "qwen3.5:2b" followUpHistory
+                followUpReq = (chatRequest "llama3.2:latest" followUpHistory)
+                  { chatTools = Just [stockTool] }
 
             finalRes <- chat client followUpReq
             case finalRes of
-              Right finalResp -> mapM_ (print . messageContent) (crMessage finalResp)
+              Right finalResp -> mapM_ (print . messageFullText) (crMessage finalResp)
               Left err        -> print err
 
-          Nothing ->
-            putStrLn $ "Model responded directly: " <> show (messageContent assistantMsg)
+          _ ->
+            putStrLn $ "Model responded directly: " <> show (messageFullText assistantMsg)
       Nothing -> putStrLn "No message returned"
 ```

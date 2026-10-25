@@ -50,6 +50,7 @@ instance Arbitrary Message where
       <*> pure Nothing
       <*> pure Nothing
       <*> pure Nothing
+      <*> pure Nothing
 
 instance Arbitrary Format where
   arbitrary = pure JsonFormat

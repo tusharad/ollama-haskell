@@ -15,6 +15,8 @@ module Ollama.Types.Common (
   mkModelName,
   Digest (..),
   Base64Image (..),
+  encodeBase64Image,
+  readImageBase64,
   Duration (..),
   durationToSeconds,
   durationToMillis,
@@ -38,12 +40,16 @@ import Data.Aeson (
   (.=),
  )
 import Data.Aeson.Types (typeMismatch)
+import qualified Data.ByteString as BS
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Base64 as B64
 import Data.Hashable (Hashable)
 import Data.Int (Int64)
 import Data.Maybe (catMaybes)
 import Data.String (IsString)
 import Data.Text (Text)
-import Data.Text qualified as T
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import GHC.Generics (Generic)
 
 {- | Model name following the @model:tag@ format.
@@ -75,6 +81,20 @@ newtype Digest = Digest {unDigest :: Text}
 -}
 newtype Base64Image = Base64Image {unBase64Image :: Text}
   deriving newtype (Eq, Show, ToJSON, FromJSON)
+
+{- | Encode raw binary image data into a 'Base64Image'.
+
+@since 0.4.2.0
+-}
+encodeBase64Image :: ByteString -> Base64Image
+encodeBase64Image bs = Base64Image (TE.decodeUtf8 (B64.encode bs))
+
+{- | Read a local image file from disk and encode it as a 'Base64Image'.
+
+@since 0.4.2.0
+-}
+readImageBase64 :: FilePath -> IO Base64Image
+readImageBase64 path = encodeBase64Image <$> BS.readFile path
 
 {- | Duration in nanoseconds as returned by the Ollama API.
 

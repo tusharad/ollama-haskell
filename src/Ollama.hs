@@ -61,6 +61,7 @@ module Ollama (
   generateRequest,
   evalTokensPerSecond,
   promptEvalTokensPerSecond,
+  generateFullText,
 
   -- ** Embeddings
   embed,
@@ -75,10 +76,12 @@ module Ollama (
   listModels,
   showModel,
   showModelWith,
+  ShowRequest (..),
   copyModel,
   deleteModel,
   ListResponse (..),
   ModelInfo (..),
+  ModelDetails (..),
   RunningModel (..),
   ShowResponse (..),
 
@@ -119,6 +122,8 @@ module Ollama (
   mkModelName,
   Digest (..),
   Base64Image (..),
+  encodeBase64Image,
+  readImageBase64,
   Duration (..),
   durationToSeconds,
   durationToMillis,
@@ -137,7 +142,9 @@ module Ollama (
   assistantMessage,
   toolMessage,
   toolResultMessage,
+  toolResultMessageWithId,
   imageMessage,
+  messageFullText,
 
   -- ** Tools & Functions
   Tool (..),
@@ -145,6 +152,17 @@ module Ollama (
   FunctionParameters (..),
   ToolCall (..),
   ToolCallFunction (..),
+  mkToolCall,
+  toolCallWithId,
+  mkToolCallFunction,
+  objectParams,
+  stringParam,
+  numberParam,
+  intParam,
+  boolParam,
+  enumParam,
+  functionDef,
+  toolDef,
 
   -- ** Options & Format
   ModelOptions (..),

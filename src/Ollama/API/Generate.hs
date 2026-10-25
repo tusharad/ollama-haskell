@@ -18,6 +18,7 @@ module Ollama.API.Generate (
   generateStream,
   evalTokensPerSecond,
   promptEvalTokensPerSecond,
+  generateFullText,
 ) where
 
 import Conduit (ConduitT)
@@ -25,6 +26,7 @@ import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Aeson
 import Data.Maybe (catMaybes)
+import qualified Data.Text as Text
 import Data.Text (Text)
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
@@ -212,3 +214,18 @@ evalTokensPerSecond GenerateResponse {..} =
 promptEvalTokensPerSecond :: GenerateResponse -> Maybe Double
 promptEvalTokensPerSecond GenerateResponse {..} =
   tokensPerSecond <$> grPromptEvalCount <*> grPromptEvalDuration
+
+{- | Retrieve the complete text representation of a generate response, combining
+thinking content and final response content if both are present.
+
+This is especially helpful for reasoning models (e.g., DeepSeek-R1, Qwen 2.5/3.5)
+where intermediate tokens are streamed or stored in 'grThinking'.
+
+@since 0.4.2.0
+-}
+generateFullText :: GenerateResponse -> Text
+generateFullText resp = case (grThinking resp, grResponse resp) of
+  (Just th, r)
+    | not (Text.null th) && not (Text.null r) -> th <> "\n\n" <> r
+    | not (Text.null th) -> th
+  (_, r) -> r

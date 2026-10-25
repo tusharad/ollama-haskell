@@ -19,7 +19,7 @@ data Person = Person
 main :: IO ()
 main = do
   client <- defaultClient
-  let opts = Just (defaultOptions {optNumPredict = Just 20})
+  let opts = Just (defaultOptions {optNumPredict = Just 60})
       req =
         (generateRequest "qwen3.5:2b" "Generate a person profile.")
           { genFormat = Just (formatFor @Person)

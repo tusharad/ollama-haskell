@@ -110,35 +110,20 @@ main = do
   thinkRes <- generate client thinkReq
   case thinkRes of
     Left err -> putStrLn $ "Generate error: " <> show err
-    Right resp -> putStrLn $ "Result: " <> T.unpack (grResponse resp)
+    Right resp -> do
+      case grThinking resp of
+        Just th | not (T.null th) -> putStrLn $ "Thinking output: " <> T.unpack th
+        _ -> pure ()
+      putStrLn $ "Full response: " <> T.unpack (generateFullText resp)
 
   -- 7. Tool / Function Calling
   putStrLn "\n[7] Tool / Function Calling..."
   let calcTool =
-        Tool
-          { toolType = "function"
-          , toolFunction =
-              FunctionDef
-                { fnName = "calculator"
-                , fnDescription = Just "Perform basic math calculations"
-                , fnParameters =
-                    Just
-                      FunctionParameters
-                        { fpType = "object"
-                        , fpProperties = Nothing
-                        , fpRequired = Just ["expression"]
-                        , fpAdditionalProperties = Nothing
-                        , fpDescription = Nothing
-                        , fpEnum = Nothing
-                        }
-                , fnStrict = Just True
-                }
-          }
+        toolDef "calculator" "Perform basic math calculations" $
+          objectParams [("expression", stringParam (Just "The mathematical expression"))] ["expression"]
       toolReq =
-        (chatRequest model (userMessage "Calculate 42 * 8" :| []))
+        (chatRequest "llama3.2:latest" (userMessage "Calculate 42 * 8" :| []))
           { chatTools = Just [calcTool]
-          , chatOptions = fastOptions
-          , chatThink = Just ThinkDisabled
           }
   toolRes <- chat client toolReq
   case toolRes of
@@ -146,12 +131,12 @@ main = do
     Right resp -> case crMessage resp of
       Just msg -> case messageToolCalls msg of
         Just calls -> putStrLn $ "Model requested tool execution: " <> show calls
-        Nothing -> putStrLn $ "Response: " <> T.unpack (messageContent msg)
+        Nothing -> putStrLn $ "Response: " <> T.unpack (messageFullText msg)
       Nothing -> putStrLn "No message returned."
 
   -- 8. Vector Embeddings
   putStrLn "\n[8] Vector Embeddings..."
-  let embReq = embedRequest model ["Haskell AI development", "Ollama LLM client"]
+  let embReq = embedRequest "nomic-embed-text" ["Haskell AI development", "Ollama LLM client"]
   embRes <- embed client embReq
   case embRes of
     Left err -> putStrLn $ "Embed error: " <> show err

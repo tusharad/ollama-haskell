@@ -20,7 +20,8 @@ In `Ollama.Types.Message` and `Ollama.Types.Common`:
 data Think
   = ThinkEnabled                  -- Enable default model thinking
   | ThinkDisabled                 -- Suppress reasoning tokens for faster response
-  | ThinkLevel !ThinkingLevel     -- Specify exact reasoning effort level
+  | ThinkLevel !ThinkingLevel     -- Specify standard reasoning effort level
+  | ThinkCustom !Text             -- Pass custom model-specific thinking level/budget
 
 data ThinkingLevel
   = ThinkLow
@@ -40,7 +41,7 @@ Configure `chatThink` or `genThink` in your requests:
 module Main where
 
 import Data.List.NonEmpty (NonEmpty ((:|)))
-import Data.Text.IO qualified as TIO
+import qualified Data.Text.IO as TIO
 import Ollama
 
 main :: IO ()
@@ -58,15 +59,19 @@ main = do
     Left err   -> print err
     Right resp -> case crMessage resp of
       Just msg -> do
-        putStrLn "--- LLM Response ---"
-        TIO.putStrLn (messageContent msg)
-
-        -- If thinking tokens are captured separately by the model
+        -- Inspect thoughts separately
         case messageThinking msg of
           Just thoughts -> do
-            putStrLn "\n--- Chain-of-Thought Reasoning ---"
+            putStrLn "--- Chain-of-Thought Reasoning ---"
             TIO.putStrLn thoughts
           Nothing -> pure ()
+
+        putStrLn "\n--- Final Content ---"
+        TIO.putStrLn (messageContent msg)
+
+        -- Or use messageFullText to retrieve both thinking and final content safely
+        putStrLn "\n--- Complete Output (via messageFullText) ---"
+        TIO.putStrLn (messageFullText msg)
       Nothing -> putStrLn "No message returned"
 ```
 
@@ -79,3 +84,4 @@ When building autocomplete or simple conversational agents where latency is crit
 ```haskell
 let fastReq = req { chatThink = Just ThinkDisabled }
 ```
+

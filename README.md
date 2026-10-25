@@ -102,30 +102,91 @@ fullText <- foldStream (\acc c -> acc <> maybe "" messageContent (crMessage c)) 
 
 ## Function & Tool Calling
 
-Define function signatures and let the LLM execute structured tool calls:
+Define function signatures with zero boilerplate using `toolDef`, `objectParams`, and typed parameters:
 
 ```haskell
 import Data.List.NonEmpty (NonEmpty ((:|)))
+import qualified Data.Map.Strict as Map
 import Ollama
 
 calculatorTool :: Tool
-calculatorTool = Tool "function" $ FunctionDef
-  { fnName = "add"
-  , fnDescription = Just "Add two numbers"
-  , fnParameters = Just (FunctionParameters "object" Nothing (Just ["a", "b"]) Nothing Nothing Nothing)
-  , fnStrict = Just True
-  }
+calculatorTool =
+  toolDef "add" "Add two numbers" $
+    objectParams
+      [ ("a", numberParam (Just "First number"))
+      , ("b", numberParam (Just "Second number"))
+      ]
+      ["a", "b"]
 
 main :: IO ()
 main = do
   client <- defaultClient
-  let req = (chatRequest "qwen3.5:2b" (userMessage "What is 40 + 2?" :| []))
+  let req = (chatRequest "llama3.2:latest" (userMessage "What is 25 + 17?" :| []))
         { chatTools = Just [calculatorTool] }
   res <- chat client req
   case res of
     Left err   -> print err
-    Right resp -> print (crMessage resp)
+    Right resp -> case crMessage resp of
+      Just msg -> case messageToolCalls msg of
+        Just (call : _) -> do
+          putStrLn $ "Tool called: " <> show (tcfName (tcFunction call))
+          putStrLn $ "Arguments: " <> show (tcfArguments (tcFunction call))
+        _ -> putStrLn "No tool called."
+      Nothing -> putStrLn "No message returned."
 ```
+
+---
+
+## Multimodal Vision
+
+Load local images directly and send them to vision models (`gemma3`, `qwen3.5:2b`, etc.):
+
+```haskell
+main :: IO ()
+main = do
+  client <- defaultClient
+  img <- readImageBase64 "chart.png"
+  let msg = imageMessage "Describe the chart in 2 sentences." [img]
+  res <- chat client (chatRequest "gemma3:latest" (msg :| []))
+  case res of
+    Right resp -> mapM_ (putStrLn . messageFullText) (crMessage resp)
+    Left err   -> print err
+```
+
+---
+
+## Thinking / Reasoning Models
+
+Control chain-of-thought tokens on reasoning models (e.g. DeepSeek-R1, Qwen 3.5):
+
+```haskell
+let req = (chatRequest "qwen3.5:2b" (userMessage "Which is larger: 9.11 or 9.9?" :| []))
+      { chatThink = Just ThinkEnabled } -- or ThinkDisabled, ThinkLevel ThinkHigh, ThinkCustom "..."
+res <- chat client req
+case res of
+  Right resp -> case crMessage resp of
+    Just msg -> do
+      case messageThinking msg of
+        Just th -> putStrLn $ "Thinking trace:\n" <> th
+        Nothing -> pure ()
+      putStrLn $ "Answer:\n" <> messageContent msg
+    Nothing -> pure ()
+  Left err -> print err
+```
+
+---
+
+## System One Decision Models
+
+Evaluate high-speed classification, probability (`noul`), and scoring with `/v1/systemone`:
+
+```haskell
+let q1 = choiceQuestion "Customer eligibility" (Map.fromList [("eligible", Just "Standard"), ("ineligible", Nothing)])
+    q2 = noulQuestion "Will this cause churn?"
+    req = systemOneRequest "nimble" "Customer account history..." (Map.fromList [("q1", q1), ("q2", q2)])
+res <- systemOne client req
+```
+
 
 ---
 
@@ -182,6 +243,38 @@ customConfig = defaultConfig
 main :: IO ()
 main = withClient customConfig $ \client -> do
   ...
+```
+
+---
+
+## Runnable Examples
+
+The repository includes complete, tested runnable examples for every library feature:
+
+| Target | Source File | Description |
+| :--- | :--- | :--- |
+| `ollama-example-basic-chat` | [`examples/BasicChat.hs`](examples/BasicChat.hs) | Non-streaming chat, system messages, and throughput metrics. |
+| `ollama-example-streaming-chat` | [`examples/StreamingChat.hs`](examples/StreamingChat.hs) | Conduit-based real-time response streaming. |
+| `ollama-example-tool-calling` | [`examples/ToolCalling.hs`](examples/ToolCalling.hs) | Multi-turn tool execution loop with `toolDef` and `objectParams`. |
+| `ollama-example-structured-output` | [`examples/StructuredOutput.hs`](examples/StructuredOutput.hs) | Typed record JSON schema derivation via `ToSchema` and `formatFor`. |
+| `ollama-example-embeddings` | [`examples/Embeddings.hs`](examples/Embeddings.hs) | Modern batch embeddings (`/api/embed`) and legacy embeddings. |
+| `ollama-example-model-management` | [`examples/ModelManagement.hs`](examples/ModelManagement.hs) | Version inspection, model listing, details, and active VRAM ps. |
+| `ollama-example-generate` | [`examples/GenerateText.hs`](examples/GenerateText.hs) | Single-turn text completion, streaming, and throughput metrics. |
+| `ollama-example-vision` | [`examples/Vision.hs`](examples/Vision.hs) | Multimodal chat and generation with local images (`readImageBase64`). |
+| `ollama-example-logprobs` | [`examples/Logprobs.hs`](examples/Logprobs.hs) | Token log probability inspection and alternative candidate analysis. |
+| `ollama-example-thinking` | [`examples/Thinking.hs`](examples/Thinking.hs) | Reasoning models with `ThinkDisabled`, `ThinkEnabled`, and `ThinkCustom`. |
+| `ollama-example-model-lifecycle` | [`examples/ModelLifecycle.hs`](examples/ModelLifecycle.hs) | Model copying, creation, blob checking, and deletion lifecycle. |
+| `ollama-example-conversation-store` | [`examples/ConversationStore.hs`](examples/ConversationStore.hs) | STM-backed in-memory multi-turn conversation persistence. |
+| `ollama-example-client-lifecycle` | [`examples/ClientLifecycle.hs`](examples/ClientLifecycle.hs) | `clientFromEnv`, `withClient`, retry backoff, and error taxonomy. |
+| `ollama-example-mcp-bridge` | [`examples/MCPBridge.hs`](examples/MCPBridge.hs) | Bidirectional conversion between Ollama tools and MCP definitions. |
+| `ollama-example-system-one` | [`examples/SystemOne.hs`](examples/SystemOne.hs) | Specialized decision evaluation questions (`/v1/systemone`). |
+| `ollama-example-mock-testing` | [`examples/MockTesting.hs`](examples/MockTesting.hs) | Offline unit testing with `withMockClient` without a running server. |
+| `ollama-example-all-features` | [`examples/AllFeatures.hs`](examples/AllFeatures.hs) | End-to-end showcase combining multiple library features. |
+
+Run any example with Stack:
+
+```bash
+stack run ollama-example-tool-calling
 ```
 
 ---

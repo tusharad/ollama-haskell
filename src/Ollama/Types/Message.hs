@@ -18,11 +18,14 @@ module Ollama.Types.Message (
   assistantMessage,
   toolMessage,
   toolResultMessage,
+  toolResultMessageWithId,
   imageMessage,
+  messageFullText,
 ) where
 
 import Data.Aeson
 import Data.Maybe (catMaybes)
+import qualified Data.Text as Text
 import Data.Text (Text)
 import GHC.Generics (Generic)
 import Ollama.Types.Common (Base64Image)
@@ -60,6 +63,7 @@ data Message = Message
   , messageToolCalls :: !(Maybe [ToolCall])
   , messageToolName :: !(Maybe Text)
   , messageThinking :: !(Maybe Text)
+  , messageToolCallId :: !(Maybe Text)
   }
   deriving stock (Eq, Show, Generic)
 
@@ -73,6 +77,7 @@ instance ToJSON Message where
         , ("tool_calls" .=) <$> messageToolCalls
         , ("tool_name" .=) <$> messageToolName
         , ("thinking" .=) <$> messageThinking
+        , ("tool_call_id" .=) <$> messageToolCallId
         ]
 
 instance FromJSON Message where
@@ -84,34 +89,35 @@ instance FromJSON Message where
       <*> v .:? "tool_calls"
       <*> v .:? "tool_name"
       <*> v .:? "thinking"
+      <*> v .:? "tool_call_id"
 
 {- | Create a 'User' role message.
 
 @since 3.0.0.0
 -}
 userMessage :: Text -> Message
-userMessage t = Message User t Nothing Nothing Nothing Nothing
+userMessage t = Message User t Nothing Nothing Nothing Nothing Nothing
 
 {- | Create a 'System' role message.
 
 @since 3.0.0.0
 -}
 systemMessage :: Text -> Message
-systemMessage t = Message System t Nothing Nothing Nothing Nothing
+systemMessage t = Message System t Nothing Nothing Nothing Nothing Nothing
 
 {- | Create an 'Assistant' role message.
 
 @since 3.0.0.0
 -}
 assistantMessage :: Text -> Message
-assistantMessage t = Message Assistant t Nothing Nothing Nothing Nothing
+assistantMessage t = Message Assistant t Nothing Nothing Nothing Nothing Nothing
 
 {- | Create a 'Tool' role message.
 
 @since 3.0.0.0
 -}
 toolMessage :: Text -> Message
-toolMessage t = Message Tool t Nothing Nothing Nothing Nothing
+toolMessage t = Message Tool t Nothing Nothing Nothing Nothing Nothing
 
 {- | Create a 'Tool' role message with specific @tool_name@ informing the model of tool execution.
 
@@ -119,11 +125,34 @@ toolMessage t = Message Tool t Nothing Nothing Nothing Nothing
 -}
 toolResultMessage :: Text -> Text -> Message
 toolResultMessage content toolName =
-  Message Tool content Nothing Nothing (Just toolName) Nothing
+  Message Tool content Nothing Nothing (Just toolName) Nothing Nothing
+
+{- | Create a 'Tool' role message with specific @tool_name@ and @tool_call_id@.
+
+@since 0.4.2.0
+-}
+toolResultMessageWithId :: Text -> Text -> Text -> Message
+toolResultMessageWithId content toolName callId =
+  Message Tool content Nothing Nothing (Just toolName) Nothing (Just callId)
 
 {- | Create a 'User' message with attached Base64 image data.
 
 @since 3.0.0.0
 -}
 imageMessage :: Text -> [Base64Image] -> Message
-imageMessage t imgs = Message User t (Just imgs) Nothing Nothing Nothing
+imageMessage t imgs = Message User t (Just imgs) Nothing Nothing Nothing Nothing
+
+{- | Retrieve the complete text representation of a message, combining
+thinking content and final response content if both are present.
+
+This is especially helpful for reasoning models (e.g., DeepSeek-R1, Qwen 2.5/3.5)
+where intermediate tokens are streamed or stored in 'messageThinking'.
+
+@since 0.4.2.0
+-}
+messageFullText :: Message -> Text
+messageFullText msg = case (messageThinking msg, messageContent msg) of
+  (Just th, c)
+    | not (Text.null th) && not (Text.null c) -> th <> "\n\n" <> c
+    | not (Text.null th) -> th
+  (_, c) -> c
