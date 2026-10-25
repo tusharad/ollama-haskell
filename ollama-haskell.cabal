@@ -1,6 +1,6 @@
 cabal-version: 3.0
 name:          ollama-haskell
-version:       0.4.1.0
+version:       0.4.2.0
 synopsis:      Industry-grade Haskell client for Ollama local LLMs
 description:
   A type-safe Haskell client for interacting with
@@ -113,7 +113,7 @@ library
     , text             >= 2.0 && < 3
     , time             >= 1.11 && < 2
     , unliftio-core    >= 0.2 && < 0.3
-    , mcp-server       >= 0.2 && < 0.3
+    , mcp-server       >= 0.3 && < 0.4
 
 test-suite ollama-haskell-test
   import: warnings, lang

@@ -4,6 +4,13 @@ All notable changes to `ollama-haskell` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PVP (Haskell Package Versioning Policy)](https://pvp.haskell.org/).
 
+## [0.4.2.0] - 2026-10-25
+
+### Changed
+- **Model Context Protocol (`Ollama.MCP`)**:
+  - Enforced `mcp-server >= 0.3 && < 0.4` dependency bounds (addressing Stackage issue [#8143](https://github.com/commercialhaskell/stackage/issues/8143)).
+  - Supported `SchemaRaw` constructor introduced in `mcp-server-0.3.0.0` within `mcpDefinitionToTool`.
+
 ---
 
 ## [0.4.1.0] - 2026-08-25
