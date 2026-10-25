@@ -211,7 +211,7 @@ executable ollama-example-tool-calling
     , base
     , containers
     , ollama-haskell
-    , scientific
+    , scientific >= 0.3 && < 0.4
     , text
 
 executable ollama-example-structured-output
