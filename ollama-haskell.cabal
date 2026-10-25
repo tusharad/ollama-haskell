@@ -79,6 +79,7 @@ library
     Ollama.API.Blobs
     Ollama.API.Ps
     Ollama.API.Version
+    Ollama.API.SystemOne
     Ollama.Types
     Ollama.Types.Message
     Ollama.Types.Tool

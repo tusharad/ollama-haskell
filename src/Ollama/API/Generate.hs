@@ -32,7 +32,7 @@ import Ollama.Client (OllamaClient)
 import Ollama.Client.Internal (request, requestStreaming)
 import Ollama.Error (OllamaError)
 import Ollama.Streaming (HasDone (..))
-import Ollama.Types.Common (Base64Image, Duration, ModelName, Think, tokensPerSecond)
+import Ollama.Types.Common (Base64Image, Duration, Logprob, ModelName, Think, tokensPerSecond)
 import Ollama.Types.Format (Format)
 import Ollama.Types.Options (ModelOptions)
 
@@ -56,6 +56,8 @@ data GenerateRequest = GenerateRequest
   , genWidth :: !(Maybe Int)
   , genHeight :: !(Maybe Int)
   , genSteps :: !(Maybe Int)
+  , genLogprobs :: !(Maybe Bool)
+  , genTopLogprobs :: !(Maybe Int)
   }
   deriving stock (Eq, Show, Generic)
 
@@ -78,6 +80,8 @@ instance ToJSON GenerateRequest where
         , ("width" .=) <$> genWidth
         , ("height" .=) <$> genHeight
         , ("steps" .=) <$> genSteps
+        , ("logprobs" .=) <$> genLogprobs
+        , ("top_logprobs" .=) <$> genTopLogprobs
         ]
 
 {- | Create a default 'GenerateRequest' for a model and prompt.
@@ -102,6 +106,8 @@ generateRequest model prompt =
     , genWidth = Nothing
     , genHeight = Nothing
     , genSteps = Nothing
+    , genLogprobs = Nothing
+    , genTopLogprobs = Nothing
     }
 
 {- | Response payload returned by text generation.
@@ -123,6 +129,9 @@ data GenerateResponse = GenerateResponse
   , grEvalDuration :: !(Maybe Duration)
   , grThinking :: !(Maybe Text)
   , grImage :: !(Maybe Base64Image)
+  , grLogprobs :: !(Maybe [Logprob])
+  , grCompleted :: !(Maybe Int)
+  , grTotal :: !(Maybe Int)
   }
   deriving stock (Eq, Show, Generic)
 
@@ -131,7 +140,7 @@ instance FromJSON GenerateResponse where
     GenerateResponse
       <$> v .: "model"
       <*> v .: "created_at"
-      <*> v .: "response"
+      <*> v .:? "response" .!= ""
       <*> v .: "done"
       <*> v .:? "done_reason"
       <*> v .:? "context"
@@ -143,6 +152,9 @@ instance FromJSON GenerateResponse where
       <*> v .:? "eval_duration"
       <*> v .:? "thinking"
       <*> v .:? "image"
+      <*> v .:? "logprobs"
+      <*> v .:? "completed"
+      <*> v .:? "total"
 
 instance ToJSON GenerateResponse where
   toJSON GenerateResponse {..} =
@@ -161,6 +173,9 @@ instance ToJSON GenerateResponse where
       , "eval_duration" .= grEvalDuration
       , "thinking" .= grThinking
       , "image" .= grImage
+      , "logprobs" .= grLogprobs
+      , "completed" .= grCompleted
+      , "total" .= grTotal
       ]
 
 instance HasDone GenerateResponse where

@@ -74,6 +74,7 @@ module Ollama (
   -- ** Model Management
   listModels,
   showModel,
+  showModelWith,
   copyModel,
   deleteModel,
   ListResponse (..),
@@ -91,9 +92,13 @@ module Ollama (
 
   -- ** Pull & Push
   pull,
+  pullWith,
   pullStream,
+  pullStreamWith,
   push,
+  pushWith,
   pushStream,
+  pushStreamWith,
   PullResponse (..),
   PushResponse (..),
 
@@ -101,10 +106,13 @@ module Ollama (
   checkBlob,
   pushBlob,
 
-  -- ** System
+  -- ** System & Diagnostics
   getVersion,
   listRunning,
   RunningModelsResponse (..),
+
+  -- ** System One Decision API
+  module Ollama.API.SystemOne,
 
   -- * Types & Primitives
   ModelName (..),
@@ -118,6 +126,8 @@ module Ollama (
   Version (..),
   Think (..),
   ThinkingLevel (..),
+  TokenLogprob (..),
+  Logprob (..),
 
   -- ** Messages
   Role (..),
@@ -205,6 +215,7 @@ import Ollama.API.Models.Create
 import Ollama.API.Models.Pull
 import Ollama.API.Models.Push
 import Ollama.API.Ps
+import Ollama.API.SystemOne
 import Ollama.API.Version
 import Ollama.Client
 import Ollama.Client.Config

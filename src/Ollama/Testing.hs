@@ -97,6 +97,9 @@ mockGenerateResponse model text =
     , grEvalDuration = Just (Duration 700000000)
     , grThinking = Nothing
     , grImage = Nothing
+    , grLogprobs = Nothing
+    , grCompleted = Nothing
+    , grTotal = Nothing
     }
 
 {- | Construct a mock 'ChatResponse'.
@@ -117,6 +120,7 @@ mockChatResponse model text =
     , crPromptEvalDuration = Just (Duration 200000000)
     , crEvalCount = Just 20
     , crEvalDuration = Just (Duration 700000000)
+    , crLogprobs = Nothing
     }
 
 {- | Construct a mock 'EmbedResponse'.

@@ -79,7 +79,7 @@ instance FromJSON Message where
   parseJSON = withObject "Message" $ \v ->
     Message
       <$> v .: "role"
-      <*> v .: "content"
+      <*> v .:? "content" .!= ""
       <*> v .:? "images"
       <*> v .:? "tool_calls"
       <*> v .:? "tool_name"

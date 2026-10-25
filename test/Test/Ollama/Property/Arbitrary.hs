@@ -27,7 +27,11 @@ instance Arbitrary Duration where
   arbitrary = Duration <$> choose (1, 1000000000)
 
 instance Arbitrary ThinkingLevel where
-  arbitrary = elements [ThinkLow, ThinkMedium, ThinkHigh, ThinkMax]
+  arbitrary =
+    oneof
+      [ elements [ThinkLow, ThinkMedium, ThinkHigh, ThinkMax]
+      , ThinkCustom <$> elements ["xhigh", "deep", "ultra"]
+      ]
 
 instance Arbitrary Think where
   arbitrary =

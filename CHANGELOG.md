@@ -6,10 +6,35 @@ and this project adheres to [PVP (Haskell Package Versioning Policy)](https://pv
 
 ## [0.4.2.0] - 2026-10-25
 
+### Added
+- **System One Decision API (`Ollama.API.SystemOne`)**:
+  - Added native client support for Ollama's high-speed decision evaluation endpoint (`POST /v1/systemone`), matching `ollama-python` and `ollama-rs`.
+  - Supported question formats: `ChoiceQuestion` (multiple choice with class probabilities and confidence), `NoulQuestion` (binary true/false probability), and `ScoreQuestion` (ordinal scoring with expected fractional score, legend, and confidence).
+  - Provided ergonomic smart constructors (`choiceQuestion`, `noulQuestion`, `noulQuestionWithCriteria`, `scoreQuestion`, `systemOneRequest`) and flexible state input via `SystemOneContent` (text or JSON `Value`).
+- **Logprobs Support**:
+  - Added `TokenLogprob` and `Logprob` domain types in `Ollama.Types.Common` (re-exported in `Ollama`).
+  - Added `chatLogprobs :: Maybe Bool` and `chatTopLogprobs :: Maybe Int` to `ChatRequest`, and `crLogprobs :: Maybe [Logprob]` to `ChatResponse`.
+  - Added `genLogprobs :: Maybe Bool` and `genTopLogprobs :: Maybe Int` to `GenerateRequest`, and `grLogprobs :: Maybe [Logprob]` to `GenerateResponse`.
+- **Extended Request Convenience Methods**:
+  - Added `showModelWith` to `Ollama.API.Models` to support verbose model inspection (`srqVerbose = Just True`).
+  - Added `pullWith` and `pullStreamWith` to `Ollama.API.Models.Pull` for custom pull options (`insecure`, etc.).
+  - Added `pushWith` and `pushStreamWith` to `Ollama.API.Models.Push` for custom push options (`insecure`, etc.).
+- **Model-Defined Custom Thinking Levels**:
+  - Added `ThinkCustom !Text` constructor to `ThinkingLevel` to support arbitrary reasoning effort levels (e.g. `"xhigh"`, `"ultra"`, or model-defined strings) matching official `ollama-python` v0.6.3 behavior.
+- **Image Generation Diffusion Progress Tracking**:
+  - Added `grCompleted :: Maybe Int` and `grTotal :: Maybe Int` to `GenerateResponse` to monitor diffusion step progression during image generation streaming.
+
+### Fixed
+- **Image Generation `GenerateResponse` JSON Parsing**:
+  - Fixed a critical crash where image generation progress updates (`{ "completed": 5, "total": 20 }`) and final responses (`{ "image": "..." }`) fail to decode with `key "response" not found`. Made `response` gracefully default to empty string (`.!= ""`) when omitted by the server.
+- **Tool Call `Message` JSON Parsing**:
+  - Fixed JSON decoding failure when the assistant returns tool calls without a `"content"` field (or with null content) by defaulting `content` to `""`.
+
 ### Changed
 - **Model Context Protocol (`Ollama.MCP`)**:
   - Enforced `mcp-server >= 0.3 && < 0.4` dependency bounds (addressing Stackage issue [#8143](https://github.com/commercialhaskell/stackage/issues/8143)).
   - Supported `SchemaRaw` constructor introduced in `mcp-server-0.3.0.0` within `mcpDefinitionToTool`.
+  - Updated all Stack snapshots (`stack.yaml`, `stack-nightly.yaml`, `stack-lts-24.52.yaml`, `stack-lts-23.28.yaml`, `stack-lts-22.44.yaml`, `stack-lts-21.25.yaml`) to `mcp-server-0.3.0.0`.
 
 ---
 
