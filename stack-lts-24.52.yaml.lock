@@ -5,12 +5,12 @@
 
 packages:
 - completed:
-    hackage: mcp-server-0.2.0.1@sha256:7b09ac83c868f7a5b453aefd68c769e9cac5c5b60a0bac3cc418df1ba9587945,6795
+    hackage: mcp-server-0.3.0.0@sha256:85d633f42bbd3110f3f55d8b02bc567a2b5fa8c11a506875a206f8ca60c0b4a3,6880
     pantry-tree:
-      sha256: 9f3773f7067eefd89a58954150ebff2a538a9d1f825dfd0515b0cd9b48981cac
-      size: 7850
+      sha256: 84289c82beaa2482bde8c4094375b8713cf5fb3857a2f9ed5c97a9241ea2ad52
+      size: 8051
   original:
-    hackage: mcp-server-0.2.0.1@sha256:7b09ac83c868f7a5b453aefd68c769e9cac5c5b60a0bac3cc418df1ba9587945,6795
+    hackage: mcp-server-0.3.0.0@sha256:85d633f42bbd3110f3f55d8b02bc567a2b5fa8c11a506875a206f8ca60c0b4a3,6880
 snapshots:
 - completed:
     sha256: 74b41f766415e985473d1e27befeb0394ed62f95295da1ec630a48ba84751c1c

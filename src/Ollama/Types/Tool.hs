@@ -1,3 +1,5 @@
+{-# LANGUAGE PatternSynonyms #-}
+
 {- |
 Module      : Ollama.Types.Tool
 Copyright   : (c) 2024-2026 Tushar Adhatrao
@@ -14,12 +16,24 @@ module Ollama.Types.Tool (
   Tool (..),
   FunctionDef (..),
   FunctionParameters (..),
-  ToolCall (..),
-  ToolCallFunction (..),
+  ToolCall (.., ToolCall),
+  ToolCallFunction (.., ToolCallFunction),
+  mkToolCall,
+  toolCallWithId,
+  mkToolCallFunction,
+  objectParams,
+  stringParam,
+  numberParam,
+  intParam,
+  boolParam,
+  enumParam,
+  functionDef,
+  toolDef,
 ) where
 
 import Data.Aeson
 import Data.Map.Strict (Map)
+import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
@@ -112,37 +126,208 @@ instance FromJSON FunctionParameters where
 
 @since 3.0.0.0
 -}
-newtype ToolCall = ToolCall
-  { tcFunction :: ToolCallFunction
+data ToolCall = ToolCall'
+  { tcFunction :: !ToolCallFunction
+  , tcId :: !(Maybe Text)
+  , tcType :: !(Maybe Text)
   }
   deriving stock (Eq, Show, Generic)
 
+{- | Pattern synonym providing backwards compatibility with 1-argument construction
+and pattern matching.
+
+@since 0.4.2.0
+-}
+pattern ToolCall :: ToolCallFunction -> ToolCall
+pattern ToolCall fn <- ToolCall' fn _ _
+  where
+    ToolCall fn = ToolCall' fn Nothing Nothing
+
+{-# COMPLETE ToolCall #-}
+
+{- | Construct a 'ToolCall' with only the function payload.
+
+@since 0.4.2.0
+-}
+mkToolCall :: ToolCallFunction -> ToolCall
+mkToolCall fn = ToolCall' fn Nothing Nothing
+
+{- | Construct a 'ToolCall' with an identifier, type, and function payload.
+
+@since 0.4.2.0
+-}
+toolCallWithId :: Text -> ToolCallFunction -> ToolCall
+toolCallWithId callId fn = ToolCall' fn (Just callId) (Just "function")
+
 instance ToJSON ToolCall where
-  toJSON ToolCall {..} = object ["function" .= tcFunction]
+  toJSON ToolCall' {..} =
+    object $
+      ["function" .= tcFunction]
+        ++ maybe [] (\i -> ["id" .= i]) tcId
+        ++ maybe [] (\t -> ["type" .= t]) tcType
 
 instance FromJSON ToolCall where
   parseJSON = withObject "ToolCall" $ \v ->
-    ToolCall <$> v .: "function"
+    ToolCall'
+      <$> v .: "function"
+      <*> v .:? "id"
+      <*> v .:? "type"
 
 {- | Function invocation payload inside a tool call.
 
 @since 3.0.0.0
 -}
-data ToolCallFunction = ToolCallFunction
+data ToolCallFunction = ToolCallFunction'
   { tcfName :: !Text
   , tcfArguments :: !(Map Text Value)
+  , tcfIndex :: !(Maybe Int)
   }
   deriving stock (Eq, Show, Generic)
 
+{- | Pattern synonym providing backwards compatibility with 2-argument construction
+and pattern matching.
+
+@since 0.4.2.0
+-}
+pattern ToolCallFunction :: Text -> Map Text Value -> ToolCallFunction
+pattern ToolCallFunction name args <- ToolCallFunction' name args _
+  where
+    ToolCallFunction name args = ToolCallFunction' name args Nothing
+
+{-# COMPLETE ToolCallFunction #-}
+
+{- | Construct a 'ToolCallFunction' with name and arguments map.
+
+@since 0.4.2.0
+-}
+mkToolCallFunction :: Text -> Map Text Value -> ToolCallFunction
+mkToolCallFunction name args = ToolCallFunction' name args Nothing
+
 instance ToJSON ToolCallFunction where
-  toJSON ToolCallFunction {..} =
-    object
+  toJSON ToolCallFunction' {..} =
+    object $
       [ "name" .= tcfName
       , "arguments" .= tcfArguments
       ]
+        ++ maybe [] (\i -> ["index" .= i]) tcfIndex
 
 instance FromJSON ToolCallFunction where
   parseJSON = withObject "ToolCallFunction" $ \v ->
-    ToolCallFunction
+    ToolCallFunction'
       <$> v .: "name"
-      <*> v .: "arguments"
+      <*> v .:? "arguments" .!= mempty
+      <*> v .:? "index"
+
+{- | Smart constructor for a function parameter representing an object with properties.
+
+@since 0.4.2.0
+-}
+objectParams :: [(Text, FunctionParameters)] -> [Text] -> FunctionParameters
+objectParams props req =
+  FunctionParameters
+    { fpType = "object"
+    , fpProperties = Just (Map.fromList props)
+    , fpRequired = if null req then Nothing else Just req
+    , fpAdditionalProperties = Nothing
+    , fpDescription = Nothing
+    , fpEnum = Nothing
+    }
+
+{- | Smart constructor for a string parameter.
+
+@since 0.4.2.0
+-}
+stringParam :: Maybe Text -> FunctionParameters
+stringParam mdesc =
+  FunctionParameters
+    { fpType = "string"
+    , fpProperties = Nothing
+    , fpRequired = Nothing
+    , fpAdditionalProperties = Nothing
+    , fpDescription = mdesc
+    , fpEnum = Nothing
+    }
+
+{- | Smart constructor for a number (floating point) parameter.
+
+@since 0.4.2.0
+-}
+numberParam :: Maybe Text -> FunctionParameters
+numberParam mdesc =
+  FunctionParameters
+    { fpType = "number"
+    , fpProperties = Nothing
+    , fpRequired = Nothing
+    , fpAdditionalProperties = Nothing
+    , fpDescription = mdesc
+    , fpEnum = Nothing
+    }
+
+{- | Smart constructor for an integer parameter.
+
+@since 0.4.2.0
+-}
+intParam :: Maybe Text -> FunctionParameters
+intParam mdesc =
+  FunctionParameters
+    { fpType = "integer"
+    , fpProperties = Nothing
+    , fpRequired = Nothing
+    , fpAdditionalProperties = Nothing
+    , fpDescription = mdesc
+    , fpEnum = Nothing
+    }
+
+{- | Smart constructor for a boolean parameter.
+
+@since 0.4.2.0
+-}
+boolParam :: Maybe Text -> FunctionParameters
+boolParam mdesc =
+  FunctionParameters
+    { fpType = "boolean"
+    , fpProperties = Nothing
+    , fpRequired = Nothing
+    , fpAdditionalProperties = Nothing
+    , fpDescription = mdesc
+    , fpEnum = Nothing
+    }
+
+{- | Smart constructor for an enum parameter with predefined string choices.
+
+@since 0.4.2.0
+-}
+enumParam :: [Text] -> Maybe Text -> FunctionParameters
+enumParam choices mdesc =
+  FunctionParameters
+    { fpType = "string"
+    , fpProperties = Nothing
+    , fpRequired = Nothing
+    , fpAdditionalProperties = Nothing
+    , fpDescription = mdesc
+    , fpEnum = Just choices
+    }
+
+{- | Smart constructor for a 'FunctionDef'.
+
+@since 0.4.2.0
+-}
+functionDef :: Text -> Text -> FunctionParameters -> FunctionDef
+functionDef name desc params =
+  FunctionDef
+    { fnName = name
+    , fnDescription = Just desc
+    , fnParameters = Just params
+    , fnStrict = Just True
+    }
+
+{- | Smart constructor for a 'Tool'.
+
+@since 0.4.2.0
+-}
+toolDef :: Text -> Text -> FunctionParameters -> Tool
+toolDef name desc params =
+  Tool
+    { toolType = "function"
+    , toolFunction = functionDef name desc params
+    }

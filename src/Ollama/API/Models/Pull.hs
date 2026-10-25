@@ -14,7 +14,9 @@ module Ollama.API.Models.Pull (
   PullRequest (..),
   PullResponse (..),
   pull,
+  pullWith,
   pullStream,
+  pullStreamWith,
 ) where
 
 import Conduit (ConduitT)
@@ -88,13 +90,25 @@ instance HasDone PullResponse where
 @since 1.0.0.0
 -}
 pull :: (MonadIO m) => OllamaClient -> ModelName -> m (Either OllamaError PullResponse)
-pull client model =
-  request client "POST" "/api/pull" (Just $ PullRequest model Nothing (Just False))
+pull client model = pullWith client (PullRequest model Nothing (Just False))
+
+{- | Download / pull a model with custom request options (e.g. insecure) (non-streaming).
+
+@since 0.4.2.0
+-}
+pullWith :: (MonadIO m) => OllamaClient -> PullRequest -> m (Either OllamaError PullResponse)
+pullWith client req = request client "POST" "/api/pull" (Just req {prqStream = Just False})
 
 {- | Download / pull a model streaming progress updates.
 
 @since 1.0.0.0
 -}
 pullStream :: (MonadUnliftIO m) => OllamaClient -> ModelName -> ConduitT () PullResponse m ()
-pullStream client model =
-  requestStreaming client "/api/pull" (PullRequest model Nothing (Just True))
+pullStream client model = pullStreamWith client (PullRequest model Nothing (Just True))
+
+{- | Download / pull a model with custom request options streaming progress updates.
+
+@since 0.4.2.0
+-}
+pullStreamWith :: (MonadUnliftIO m) => OllamaClient -> PullRequest -> ConduitT () PullResponse m ()
+pullStreamWith client req = requestStreaming client "/api/pull" (req {prqStream = Just True})

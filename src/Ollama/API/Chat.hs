@@ -33,7 +33,7 @@ import Ollama.Client (OllamaClient)
 import Ollama.Client.Internal (request, requestStreaming)
 import Ollama.Error (OllamaError)
 import Ollama.Streaming (HasDone (..))
-import Ollama.Types.Common (Duration, ModelName, Think, tokensPerSecond)
+import Ollama.Types.Common (Duration, Logprob, ModelName, Think, tokensPerSecond)
 import Ollama.Types.Format (Format)
 import Ollama.Types.Message (Message)
 import Ollama.Types.Options (ModelOptions)
@@ -52,6 +52,8 @@ data ChatRequest = ChatRequest
   , chStream :: !(Maybe Bool)
   , chatKeepAlive :: !(Maybe Text)
   , chatThink :: !(Maybe Think)
+  , chatLogprobs :: !(Maybe Bool)
+  , chatTopLogprobs :: !(Maybe Int)
   }
   deriving stock (Eq, Show, Generic)
 
@@ -67,6 +69,8 @@ instance ToJSON ChatRequest where
         , ("stream" .=) <$> chStream
         , ("keep_alive" .=) <$> chatKeepAlive
         , ("think" .=) <$> chatThink
+        , ("logprobs" .=) <$> chatLogprobs
+        , ("top_logprobs" .=) <$> chatTopLogprobs
         ]
 
 {- | Create a default 'ChatRequest' for a model and message history.
@@ -84,6 +88,8 @@ chatRequest model msgs =
     , chStream = Just False
     , chatKeepAlive = Nothing
     , chatThink = Nothing
+    , chatLogprobs = Nothing
+    , chatTopLogprobs = Nothing
     }
 
 {- | Chat completion response payload.
@@ -102,6 +108,7 @@ data ChatResponse = ChatResponse
   , crPromptEvalDuration :: !(Maybe Duration)
   , crEvalCount :: !(Maybe Int)
   , crEvalDuration :: !(Maybe Duration)
+  , crLogprobs :: !(Maybe [Logprob])
   }
   deriving stock (Eq, Show, Generic)
 
@@ -119,6 +126,7 @@ instance FromJSON ChatResponse where
       <*> v .:? "prompt_eval_duration"
       <*> v .:? "eval_count"
       <*> v .:? "eval_duration"
+      <*> v .:? "logprobs"
 
 instance ToJSON ChatResponse where
   toJSON ChatResponse {..} =
@@ -134,6 +142,7 @@ instance ToJSON ChatResponse where
       , "prompt_eval_duration" .= crPromptEvalDuration
       , "eval_count" .= crEvalCount
       , "eval_duration" .= crEvalDuration
+      , "logprobs" .= crLogprobs
       ]
 
 instance HasDone ChatResponse where

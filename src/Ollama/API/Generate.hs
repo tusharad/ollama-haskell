@@ -18,6 +18,7 @@ module Ollama.API.Generate (
   generateStream,
   evalTokensPerSecond,
   promptEvalTokensPerSecond,
+  generateFullText,
 ) where
 
 import Conduit (ConduitT)
@@ -26,13 +27,14 @@ import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Aeson
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
+import Data.Text qualified as Text
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import Ollama.Client (OllamaClient)
 import Ollama.Client.Internal (request, requestStreaming)
 import Ollama.Error (OllamaError)
 import Ollama.Streaming (HasDone (..))
-import Ollama.Types.Common (Base64Image, Duration, ModelName, Think, tokensPerSecond)
+import Ollama.Types.Common (Base64Image, Duration, Logprob, ModelName, Think, tokensPerSecond)
 import Ollama.Types.Format (Format)
 import Ollama.Types.Options (ModelOptions)
 
@@ -56,6 +58,8 @@ data GenerateRequest = GenerateRequest
   , genWidth :: !(Maybe Int)
   , genHeight :: !(Maybe Int)
   , genSteps :: !(Maybe Int)
+  , genLogprobs :: !(Maybe Bool)
+  , genTopLogprobs :: !(Maybe Int)
   }
   deriving stock (Eq, Show, Generic)
 
@@ -78,6 +82,8 @@ instance ToJSON GenerateRequest where
         , ("width" .=) <$> genWidth
         , ("height" .=) <$> genHeight
         , ("steps" .=) <$> genSteps
+        , ("logprobs" .=) <$> genLogprobs
+        , ("top_logprobs" .=) <$> genTopLogprobs
         ]
 
 {- | Create a default 'GenerateRequest' for a model and prompt.
@@ -102,6 +108,8 @@ generateRequest model prompt =
     , genWidth = Nothing
     , genHeight = Nothing
     , genSteps = Nothing
+    , genLogprobs = Nothing
+    , genTopLogprobs = Nothing
     }
 
 {- | Response payload returned by text generation.
@@ -123,6 +131,9 @@ data GenerateResponse = GenerateResponse
   , grEvalDuration :: !(Maybe Duration)
   , grThinking :: !(Maybe Text)
   , grImage :: !(Maybe Base64Image)
+  , grLogprobs :: !(Maybe [Logprob])
+  , grCompleted :: !(Maybe Int)
+  , grTotal :: !(Maybe Int)
   }
   deriving stock (Eq, Show, Generic)
 
@@ -131,7 +142,7 @@ instance FromJSON GenerateResponse where
     GenerateResponse
       <$> v .: "model"
       <*> v .: "created_at"
-      <*> v .: "response"
+      <*> v .:? "response" .!= ""
       <*> v .: "done"
       <*> v .:? "done_reason"
       <*> v .:? "context"
@@ -143,6 +154,9 @@ instance FromJSON GenerateResponse where
       <*> v .:? "eval_duration"
       <*> v .:? "thinking"
       <*> v .:? "image"
+      <*> v .:? "logprobs"
+      <*> v .:? "completed"
+      <*> v .:? "total"
 
 instance ToJSON GenerateResponse where
   toJSON GenerateResponse {..} =
@@ -161,6 +175,9 @@ instance ToJSON GenerateResponse where
       , "eval_duration" .= grEvalDuration
       , "thinking" .= grThinking
       , "image" .= grImage
+      , "logprobs" .= grLogprobs
+      , "completed" .= grCompleted
+      , "total" .= grTotal
       ]
 
 instance HasDone GenerateResponse where
@@ -197,3 +214,18 @@ evalTokensPerSecond GenerateResponse {..} =
 promptEvalTokensPerSecond :: GenerateResponse -> Maybe Double
 promptEvalTokensPerSecond GenerateResponse {..} =
   tokensPerSecond <$> grPromptEvalCount <*> grPromptEvalDuration
+
+{- | Retrieve the complete text representation of a generate response, combining
+thinking content and final response content if both are present.
+
+This is especially helpful for reasoning models (e.g., DeepSeek-R1, Qwen 2.5/3.5)
+where intermediate tokens are streamed or stored in 'grThinking'.
+
+@since 0.4.2.0
+-}
+generateFullText :: GenerateResponse -> Text
+generateFullText resp = case (grThinking resp, grResponse resp) of
+  (Just th, r)
+    | not (Text.null th) && not (Text.null r) -> th <> "\n\n" <> r
+    | not (Text.null th) -> th
+  (_, r) -> r

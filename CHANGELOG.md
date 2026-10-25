@@ -4,6 +4,54 @@ All notable changes to `ollama-haskell` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PVP (Haskell Package Versioning Policy)](https://pvp.haskell.org/).
 
+## [0.4.2.0] - 2026-10-25
+
+### Added
+- **Ergonomic Tool Calling & Parameter DSL (`Ollama.Types.Tool`)**:
+  - Added smart constructors for zero-boilerplate tool and schema definitions: `toolDef`, `functionDef`, `objectParams`, `stringParam`, `numberParam`, `intParam`, `boolParam`, and `enumParam`.
+  - Added `tcId :: Maybe Text` and `tcType :: Maybe Text` to `ToolCall` with backwards-compatible pattern synonyms (`pattern ToolCall`) and constructors (`mkToolCall`, `toolCallWithId`).
+  - Added `tcfIndex :: Maybe Int` to `ToolCallFunction` with backwards-compatible pattern synonyms (`pattern ToolCallFunction`) and constructor (`mkToolCallFunction`).
+  - Added `messageToolCallId :: Maybe Text` and `toolResultMessageWithId :: Text -> Text -> Text -> Message` to `Message` for multi-turn tool calling correlation.
+- **Multimodal Image Helpers (`Ollama.Types.Common`)**:
+  - Added `readImageBase64 :: FilePath -> IO Base64Image` to read local image files from disk and encode them as base64 without third-party boilerplate.
+  - Added `encodeBase64Image :: ByteString -> Base64Image` to encode raw byte buffers.
+- **Reasoning Model Response Helpers**:
+  - Added `messageFullText :: Message -> Text` to `Ollama.Types.Message` (re-exported in `Ollama`).
+  - Added `generateFullText :: GenerateResponse -> Text` to `Ollama.API.Generate` (re-exported in `Ollama`).
+  - Both safely combine reasoning/thinking tokens (`messageThinking` / `grThinking`) and final content (`messageContent` / `grResponse`), preventing empty strings when all tokens are consumed in the thinking phase.
+- **Top-Level Umbrella Re-exports (`Ollama`)**:
+  - Re-exported `ModelDetails (..)`, `ShowRequest (..)`, `readImageBase64`, `encodeBase64Image`, `messageFullText`, `generateFullText`, and all tool smart constructors directly from `Ollama`.
+- **System One Decision API (`Ollama.API.SystemOne`)**:
+  - Added native client support for Ollama's high-speed decision evaluation endpoint (`POST /v1/systemone`), matching `ollama-python` and `ollama-rs`.
+  - Supported question formats: `ChoiceQuestion` (multiple choice with class probabilities and confidence), `NoulQuestion` (binary true/false probability), and `ScoreQuestion` (ordinal scoring with expected fractional score, legend, and confidence).
+  - Provided ergonomic smart constructors (`choiceQuestion`, `noulQuestion`, `noulQuestionWithCriteria`, `scoreQuestion`, `systemOneRequest`) and flexible state input via `SystemOneContent` (text or JSON `Value`).
+- **Logprobs Support**:
+  - Added `TokenLogprob` and `Logprob` domain types in `Ollama.Types.Common` (re-exported in `Ollama`).
+  - Added `chatLogprobs :: Maybe Bool` and `chatTopLogprobs :: Maybe Int` to `ChatRequest`, and `crLogprobs :: Maybe [Logprob]` to `ChatResponse`.
+  - Added `genLogprobs :: Maybe Bool` and `genTopLogprobs :: Maybe Int` to `GenerateRequest`, and `grLogprobs :: Maybe [Logprob]` to `GenerateResponse`.
+- **Extended Request Convenience Methods**:
+  - Added `showModelWith` to `Ollama.API.Models` to support verbose model inspection (`srqVerbose = Just True`).
+  - Added `pullWith` and `pullStreamWith` to `Ollama.API.Models.Pull` for custom pull options (`insecure`, etc.).
+  - Added `pushWith` and `pushStreamWith` to `Ollama.API.Models.Push` for custom push options (`insecure`, etc.).
+- **Model-Defined Custom Thinking Levels**:
+  - Added `ThinkCustom !Text` constructor to `ThinkingLevel` to support arbitrary reasoning effort levels (e.g. `"xhigh"`, `"ultra"`, or model-defined strings) matching official `ollama-python` v0.6.3 behavior.
+- **Image Generation Diffusion Progress Tracking**:
+  - Added `grCompleted :: Maybe Int` and `grTotal :: Maybe Int` to `GenerateResponse` to monitor diffusion step progression during image generation streaming.
+- **Comprehensive Runnable Examples**:
+  - Added 10 new runnable example executables (`ollama-example-generate`, `ollama-example-vision`, `ollama-example-logprobs`, `ollama-example-thinking`, `ollama-example-model-lifecycle`, `ollama-example-conversation-store`, `ollama-example-client-lifecycle`, `ollama-example-mcp-bridge`, `ollama-example-system-one`, `ollama-example-mock-testing`), ensuring every single library API and type is verified running against a live Ollama server.
+
+### Fixed
+- **Image Generation `GenerateResponse` JSON Parsing**:
+  - Fixed a critical crash where image generation progress updates (`{ "completed": 5, "total": 20 }`) and final responses (`{ "image": "..." }`) fail to decode with `key "response" not found`. Made `response` gracefully default to empty string (`.!= ""`) when omitted by the server.
+- **Tool Call `Message` JSON Parsing**:
+  - Fixed JSON decoding failure when the assistant returns tool calls without a `"content"` field (or with null content) by defaulting `content` to `""`.
+
+### Changed
+- **Model Context Protocol (`Ollama.MCP`)**:
+  - Enforced `mcp-server >= 0.3 && < 0.4` dependency bounds (addressing Stackage issue [#8143](https://github.com/commercialhaskell/stackage/issues/8143)).
+  - Supported `SchemaRaw` constructor introduced in `mcp-server-0.3.0.0` within `mcpDefinitionToTool`.
+  - Updated all Stack snapshots (`stack.yaml`, `stack-nightly.yaml`, `stack-lts-24.52.yaml`, `stack-lts-23.28.yaml`, `stack-lts-22.44.yaml`, `stack-lts-21.25.yaml`) to `mcp-server-0.3.0.0`.
+
 ---
 
 ## [0.4.1.0] - 2026-08-25

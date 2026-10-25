@@ -61,6 +61,7 @@ module Ollama (
   generateRequest,
   evalTokensPerSecond,
   promptEvalTokensPerSecond,
+  generateFullText,
 
   -- ** Embeddings
   embed,
@@ -74,10 +75,13 @@ module Ollama (
   -- ** Model Management
   listModels,
   showModel,
+  showModelWith,
+  ShowRequest (..),
   copyModel,
   deleteModel,
   ListResponse (..),
   ModelInfo (..),
+  ModelDetails (..),
   RunningModel (..),
   ShowResponse (..),
 
@@ -91,9 +95,13 @@ module Ollama (
 
   -- ** Pull & Push
   pull,
+  pullWith,
   pullStream,
+  pullStreamWith,
   push,
+  pushWith,
   pushStream,
+  pushStreamWith,
   PullResponse (..),
   PushResponse (..),
 
@@ -101,16 +109,21 @@ module Ollama (
   checkBlob,
   pushBlob,
 
-  -- ** System
+  -- ** System & Diagnostics
   getVersion,
   listRunning,
   RunningModelsResponse (..),
+
+  -- ** System One Decision API
+  module Ollama.API.SystemOne,
 
   -- * Types & Primitives
   ModelName (..),
   mkModelName,
   Digest (..),
   Base64Image (..),
+  encodeBase64Image,
+  readImageBase64,
   Duration (..),
   durationToSeconds,
   durationToMillis,
@@ -118,6 +131,8 @@ module Ollama (
   Version (..),
   Think (..),
   ThinkingLevel (..),
+  TokenLogprob (..),
+  Logprob (..),
 
   -- ** Messages
   Role (..),
@@ -127,7 +142,9 @@ module Ollama (
   assistantMessage,
   toolMessage,
   toolResultMessage,
+  toolResultMessageWithId,
   imageMessage,
+  messageFullText,
 
   -- ** Tools & Functions
   Tool (..),
@@ -135,6 +152,17 @@ module Ollama (
   FunctionParameters (..),
   ToolCall (..),
   ToolCallFunction (..),
+  mkToolCall,
+  toolCallWithId,
+  mkToolCallFunction,
+  objectParams,
+  stringParam,
+  numberParam,
+  intParam,
+  boolParam,
+  enumParam,
+  functionDef,
+  toolDef,
 
   -- ** Options & Format
   ModelOptions (..),
@@ -205,6 +233,7 @@ import Ollama.API.Models.Create
 import Ollama.API.Models.Pull
 import Ollama.API.Models.Push
 import Ollama.API.Ps
+import Ollama.API.SystemOne
 import Ollama.API.Version
 import Ollama.Client
 import Ollama.Client.Config

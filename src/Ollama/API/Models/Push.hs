@@ -14,7 +14,9 @@ module Ollama.API.Models.Push (
   PushRequest (..),
   PushResponse (..),
   push,
+  pushWith,
   pushStream,
+  pushStreamWith,
 ) where
 
 import Conduit (ConduitT)
@@ -88,13 +90,25 @@ instance HasDone PushResponse where
 @since 1.0.0.0
 -}
 push :: (MonadIO m) => OllamaClient -> ModelName -> m (Either OllamaError PushResponse)
-push client model =
-  request client "POST" "/api/push" (Just $ PushRequest model Nothing (Just False))
+push client model = pushWith client (PushRequest model Nothing (Just False))
+
+{- | Push a model with custom request options (e.g. insecure) (non-streaming).
+
+@since 0.4.2.0
+-}
+pushWith :: (MonadIO m) => OllamaClient -> PushRequest -> m (Either OllamaError PushResponse)
+pushWith client req = request client "POST" "/api/push" (Just req {psqStream = Just False})
 
 {- | Push a model streaming upload progress updates.
 
 @since 1.0.0.0
 -}
 pushStream :: (MonadUnliftIO m) => OllamaClient -> ModelName -> ConduitT () PushResponse m ()
-pushStream client model =
-  requestStreaming client "/api/push" (PushRequest model Nothing (Just True))
+pushStream client model = pushStreamWith client (PushRequest model Nothing (Just True))
+
+{- | Push a model with custom request options streaming upload progress updates.
+
+@since 0.4.2.0
+-}
+pushStreamWith :: (MonadUnliftIO m) => OllamaClient -> PushRequest -> ConduitT () PushResponse m ()
+pushStreamWith client req = requestStreaming client "/api/push" (req {psqStream = Just True})

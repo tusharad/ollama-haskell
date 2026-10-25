@@ -3,6 +3,8 @@
 
 module Test.Ollama.Unit.MCP (tests) where
 
+import Data.Aeson ((.=))
+import Data.Aeson.KeyMap qualified as KM
 import Data.Map.Strict qualified as Map
 import MCP.Server.Types (
   Content (..),
@@ -97,4 +99,24 @@ tests =
             let resContent = ContentEmbeddedResource (ResourceText uri "text/plain" "file contents")
             mcpContentToToolOutput resContent @?= "[Resource: file:///workspace/test.txt]"
           Nothing -> assertFailure "Failed to parse URI"
+    , testCase "mcpDefinitionToTool handles SchemaRaw from mcp-server >= 0.3" $ do
+        let rawKeywords =
+              KM.fromList
+                [ "type" .= ("object" :: String)
+                , "description" .= ("Inner description" :: String)
+                , "required" .= (["input"] :: [String])
+                ]
+            s = describedSchema "Outer description" (SchemaRaw rawKeywords)
+            mcpDef = mkToolDefinition "raw_tool" "Tool with raw schema" s
+            ollamaTool = mcpDefinitionToTool mcpDef
+            fn = toolFunction ollamaTool
+
+        fnName fn @?= "raw_tool"
+        fnDescription fn @?= Just "Tool with raw schema"
+        case fnParameters fn of
+          Just FunctionParameters {..} -> do
+            fpType @?= "object"
+            fpRequired @?= Just ["input"]
+            fpDescription @?= Just "Outer description"
+          Nothing -> assertFailure "Expected parameters from SchemaRaw"
     ]

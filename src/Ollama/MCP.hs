@@ -71,7 +71,9 @@ module Ollama.MCP (
   mcpContentToToolOutput,
 ) where
 
-import Data.Aeson (Value (..), encode)
+import Control.Applicative ((<|>))
+import Data.Aeson (Result (..), Value (..), encode, fromJSON)
+import Data.Aeson.KeyMap qualified as KM
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
@@ -231,6 +233,29 @@ mcpDefinitionToTool ToolDefinition {..} =
                   , fpDescription = mDesc
                   , fpEnum = Nothing
                   }
+          SchemaRaw rawObj ->
+            let rawDesc = case KM.lookup "description" rawObj of
+                  Just (String d) -> Just d
+                  _ -> Nothing
+                effectiveDesc = mDesc <|> rawDesc
+                rawObjWithType =
+                  if KM.member "type" rawObj
+                    then rawObj
+                    else KM.insert "type" (String "object") rawObj
+             in case fromJSON (Object rawObjWithType) of
+                  Success fp ->
+                    case mDesc of
+                      Just d -> fp {fpDescription = Just d}
+                      Nothing -> fp
+                  Error _ ->
+                    FunctionParameters
+                      { fpType = "object"
+                      , fpProperties = Nothing
+                      , fpRequired = Nothing
+                      , fpAdditionalProperties = Nothing
+                      , fpDescription = effectiveDesc
+                      , fpEnum = Nothing
+                      }
       params = convertSchema toolDefinitionInputSchema
    in Tool
         { toolType = "function"

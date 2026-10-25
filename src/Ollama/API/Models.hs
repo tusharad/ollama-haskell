@@ -17,6 +17,7 @@ module Ollama.API.Models (
 
   -- * Show Info
   showModel,
+  showModelWith,
   ShowRequest (..),
   ShowResponse (..),
   ShowModelInfo (..),
@@ -154,7 +155,14 @@ listModels client = request client "GET" "/api/tags" (Nothing :: Maybe Value)
 @since 1.0.0.0
 -}
 showModel :: (MonadIO m) => OllamaClient -> ModelName -> m (Either OllamaError ShowResponse)
-showModel client model = request client "POST" "/api/show" (Just $ ShowRequest model Nothing)
+showModel client model = showModelWith client (ShowRequest model Nothing)
+
+{- | Fetch detailed model inspection with custom request options (e.g. verbose) (@POST /api/show@).
+
+@since 0.4.2.0
+-}
+showModelWith :: (MonadIO m) => OllamaClient -> ShowRequest -> m (Either OllamaError ShowResponse)
+showModelWith client req = request client "POST" "/api/show" (Just req)
 
 {- | Duplicate an existing model under a new tag (@POST /api/copy@).
 

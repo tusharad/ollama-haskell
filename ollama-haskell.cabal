@@ -1,6 +1,6 @@
 cabal-version: 3.0
 name:          ollama-haskell
-version:       0.4.1.0
+version:       0.4.2.0
 synopsis:      Industry-grade Haskell client for Ollama local LLMs
 description:
   A type-safe Haskell client for interacting with
@@ -79,6 +79,7 @@ library
     Ollama.API.Blobs
     Ollama.API.Ps
     Ollama.API.Version
+    Ollama.API.SystemOne
     Ollama.Types
     Ollama.Types.Message
     Ollama.Types.Tool
@@ -98,6 +99,7 @@ library
   build-depends:
       aeson            >= 2.0 && < 3
     , base             >= 4.17 && < 5
+    , base64-bytestring >= 1.0 && < 1.3
     , bytestring       >= 0.10 && < 0.13
     , case-insensitive >= 1.2 && < 1.3
     , conduit          >= 1.3 && < 1.4
@@ -113,7 +115,7 @@ library
     , text             >= 2.0 && < 3
     , time             >= 1.11 && < 2
     , unliftio-core    >= 0.2 && < 0.3
-    , mcp-server       >= 0.2 && < 0.3
+    , mcp-server       >= 0.3 && < 0.4
 
 test-suite ollama-haskell-test
   import: warnings, lang
@@ -205,8 +207,12 @@ executable ollama-example-tool-calling
   main-is: ToolCalling.hs
   hs-source-dirs: examples
   build-depends:
-      base
+      aeson
+    , base
+    , containers
     , ollama-haskell
+    , scientific
+    , text
 
 executable ollama-example-structured-output
   import: warnings, lang
@@ -233,6 +239,7 @@ executable ollama-example-model-management
   build-depends:
       base
     , ollama-haskell
+    , text
 
 executable ollama-example-all-features
   import: warnings, lang
@@ -243,4 +250,98 @@ executable ollama-example-all-features
     , ollama-haskell
     , text
     , time
+
+executable ollama-example-generate
+  import: warnings, lang
+  main-is: GenerateText.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-vision
+  import: warnings, lang
+  main-is: Vision.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-logprobs
+  import: warnings, lang
+  main-is: Logprobs.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-thinking
+  import: warnings, lang
+  main-is: Thinking.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-model-lifecycle
+  import: warnings, lang
+  main-is: ModelLifecycle.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+
+executable ollama-example-conversation-store
+  import: warnings, lang
+  main-is: ConversationStore.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+    , time
+
+executable ollama-example-client-lifecycle
+  import: warnings, lang
+  main-is: ClientLifecycle.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+
+executable ollama-example-mcp-bridge
+  import: warnings, lang
+  main-is: MCPBridge.hs
+  hs-source-dirs: examples
+  build-depends:
+      aeson
+    , base
+    , containers
+    , ollama-haskell
+    , text
+
+executable ollama-example-system-one
+  import: warnings, lang
+  main-is: SystemOne.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , containers
+    , ollama-haskell
+    , text
+
+executable ollama-example-mock-testing
+  import: warnings, lang
+  main-is: MockTesting.hs
+  hs-source-dirs: examples
+  build-depends:
+      aeson
+    , base
+    , bytestring
+    , ollama-haskell
+    , text
 

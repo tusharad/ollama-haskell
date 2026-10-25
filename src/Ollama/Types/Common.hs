@@ -15,6 +15,8 @@ module Ollama.Types.Common (
   mkModelName,
   Digest (..),
   Base64Image (..),
+  encodeBase64Image,
+  readImageBase64,
   Duration (..),
   durationToSeconds,
   durationToMillis,
@@ -22,15 +24,32 @@ module Ollama.Types.Common (
   Version (..),
   Think (..),
   ThinkingLevel (..),
+  TokenLogprob (..),
+  Logprob (..),
 ) where
 
-import Data.Aeson (FromJSON (..), ToJSON (..), Value (..), object, withText, (.:), (.=))
+import Data.Aeson (
+  FromJSON (..),
+  ToJSON (..),
+  Value (..),
+  object,
+  withObject,
+  withText,
+  (.:),
+  (.:?),
+  (.=),
+ )
 import Data.Aeson.Types (typeMismatch)
+import Data.ByteString (ByteString)
+import Data.ByteString qualified as BS
+import Data.ByteString.Base64 qualified as B64
 import Data.Hashable (Hashable)
 import Data.Int (Int64)
+import Data.Maybe (catMaybes)
 import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Text.Encoding qualified as TE
 import GHC.Generics (Generic)
 
 {- | Model name following the @model:tag@ format.
@@ -62,6 +81,20 @@ newtype Digest = Digest {unDigest :: Text}
 -}
 newtype Base64Image = Base64Image {unBase64Image :: Text}
   deriving newtype (Eq, Show, ToJSON, FromJSON)
+
+{- | Encode raw binary image data into a 'Base64Image'.
+
+@since 0.4.2.0
+-}
+encodeBase64Image :: ByteString -> Base64Image
+encodeBase64Image bs = Base64Image (TE.decodeUtf8 (B64.encode bs))
+
+{- | Read a local image file from disk and encode it as a 'Base64Image'.
+
+@since 0.4.2.0
+-}
+readImageBase64 :: FilePath -> IO Base64Image
+readImageBase64 path = encodeBase64Image <$> BS.readFile path
 
 {- | Duration in nanoseconds as returned by the Ollama API.
 
@@ -109,18 +142,25 @@ instance FromJSON Version where
 instance ToJSON Version where
   toJSON (Version s) = object ["version" .= s]
 
-{- | Thinking level settings for reasoning models.
+{- | Thinking level settings for reasoning models. Supports standard levels
+as well as model-defined custom thinking levels.
 
 @since 3.0.0.0
 -}
-data ThinkingLevel = ThinkLow | ThinkMedium | ThinkHigh | ThinkMax
-  deriving stock (Eq, Show, Bounded, Enum, Generic)
+data ThinkingLevel
+  = ThinkLow
+  | ThinkMedium
+  | ThinkHigh
+  | ThinkMax
+  | ThinkCustom !Text
+  deriving stock (Eq, Show, Generic)
 
 instance ToJSON ThinkingLevel where
   toJSON ThinkLow = String "low"
   toJSON ThinkMedium = String "medium"
   toJSON ThinkHigh = String "high"
   toJSON ThinkMax = String "max"
+  toJSON (ThinkCustom custom) = String custom
 
 instance FromJSON ThinkingLevel where
   parseJSON = withText "ThinkingLevel" $ \case
@@ -128,7 +168,7 @@ instance FromJSON ThinkingLevel where
     "medium" -> pure ThinkMedium
     "high" -> pure ThinkHigh
     "max" -> pure ThinkMax
-    other -> fail $ "Unknown thinking level: " <> T.unpack other
+    other -> pure (ThinkCustom other)
 
 {- | Controls whether a thinking/reasoning model outputs its thoughts.
 
@@ -150,3 +190,53 @@ instance FromJSON Think where
   parseJSON (Bool False) = pure ThinkDisabled
   parseJSON (String s) = ThinkLevel <$> parseJSON (String s)
   parseJSON v = typeMismatch "Think" v
+
+{- | Individual token log probability.
+
+@since 0.4.2.0
+-}
+data TokenLogprob = TokenLogprob
+  { tlpToken :: !Text
+  , tlpLogprob :: !Double
+  }
+  deriving stock (Eq, Show, Generic)
+
+instance ToJSON TokenLogprob where
+  toJSON TokenLogprob {..} =
+    object
+      [ "token" .= tlpToken
+      , "logprob" .= tlpLogprob
+      ]
+
+instance FromJSON TokenLogprob where
+  parseJSON = withObject "TokenLogprob" $ \v ->
+    TokenLogprob
+      <$> v .: "token"
+      <*> v .: "logprob"
+
+{- | Log probability information for a generated token and optional top alternatives.
+
+@since 0.4.2.0
+-}
+data Logprob = Logprob
+  { lpToken :: !Text
+  , lpLogprob :: !Double
+  , lpTopLogprobs :: !(Maybe [TokenLogprob])
+  }
+  deriving stock (Eq, Show, Generic)
+
+instance ToJSON Logprob where
+  toJSON Logprob {..} =
+    object $
+      catMaybes
+        [ Just ("token" .= lpToken)
+        , Just ("logprob" .= lpLogprob)
+        , ("top_logprobs" .=) <$> lpTopLogprobs
+        ]
+
+instance FromJSON Logprob where
+  parseJSON = withObject "Logprob" $ \v ->
+    Logprob
+      <$> v .: "token"
+      <*> v .: "logprob"
+      <*> v .:? "top_logprobs"
