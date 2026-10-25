@@ -11,10 +11,11 @@ Modern Haskell client library for the [Ollama](https://ollama.com) local LLM eng
 - **First-Class Streaming**: `conduit`-based response streaming (`chatStream`, `generateStream`, `pullStream`, `pushStream`, `createModelStream`).
 - **Model Context Protocol (MCP) Bridge**: Bidirectional integration with `mcp-server` for converting between Ollama tools and MCP tools, running MCP servers via stdio or HTTP (`Ollama.MCP`).
 - **Generic JSON Schema Derivation**: Automatically derive JSON schemas from Haskell data types via `GHC.Generics` with `ToSchema` and `formatFor`.
-- **Complete API Surface**: Text generation, chat completions, vector embeddings, model management (list, show, copy, delete, pull, push, create), and system endpoints.
+- **Complete API Surface**: Text generation, chat completions, vector embeddings, model management (list, show, copy, delete, pull, push, create), system endpoints, and System One decision evaluation.
+- **System One Decision Models**: Native support for `/v1/systemone` fast classification, binary probability (`noul`), and scoring (`choiceQuestion`, `noulQuestion`, `scoreQuestion`).
 - **Structured Outputs DSL**: Powerful `SchemaBuilder` DSL (`|+`, `|++`, `|!`, `|!!`) for type-safe JSON Schema structured responses.
 - **Function / Tool Calling**: Full support for tool definitions (`Tool`), tool calls (`ToolCall`), and execution results (`toolResultMessage`).
-- **Thinking Models Support**: Native support for reasoning models (`qwen3.5`, `deepseek-r1`) with `Think` / `ThinkingLevel` types.
+- **Thinking Models & Logprobs**: Native support for reasoning models (`Think` / `ThinkingLevel` with custom model-defined levels) and token log probabilities (`Logprob` / `TokenLogprob`).
 - **Environment & Auth Integration**: Robust URL normalization for `OLLAMA_HOST` and bearer token support for `OLLAMA_API_KEY`.
 - **Configurable Resilience**: Flexible retry policies (`NoRetry`, `ConstantRetry`, `ExponentialRetry`), custom timeouts, lifecycle callbacks, and structured logging.
 - **Conversation Store**: Transactional STM-backed `InMemoryStore` and `ConversationStore` typeclass for managing multi-turn chat sessions.
@@ -29,14 +30,14 @@ Add `ollama-haskell` to your `.cabal` file:
 ```cabal
 build-depends:
     base >= 4.17 && < 5
-  , ollama-haskell >= 0.4.1.0
+  , ollama-haskell >= 0.4.2.0
 ```
 
 Or using Stack in `package.yaml`:
 
 ```yaml
 dependencies:
-  - ollama-haskell >= 0.4.1.0
+  - ollama-haskell >= 0.4.2.0
 ```
 
 ---
@@ -193,6 +194,8 @@ main = withClient customConfig $ \client -> do
 | **Response Streaming** | ✅ `conduit` ($O(1)$ constant memory) | ⚠️ Python Generator | ⚠️ Async Iterator | ⚠️ Go Channels |
 | **Structured Output Derivation** | ✅ `GHC.Generics` (`ToSchema`) | ⚠️ Pydantic BaseModel | ⚠️ Zod / JSON Schema | ⚠️ Manual JSON Schema |
 | **Model Context Protocol (MCP)** | ✅ Native `mcp-server` Bridge | ❌ Manual | ❌ Manual | ❌ Manual |
+| **System One Decision Models** | ✅ Full ADT (`/v1/systemone`) | ✅ Supported | ❌ None | ❌ None |
+| **Token Logprobs Support** | ✅ `Logprob` / `TokenLogprob` | ✅ Supported | ❌ None | ❌ None |
 | **Thinking / Reasoning Models** | ✅ Dedicated `Think` ADT | ⚠️ Dict parameters | ⚠️ Object properties | ⚠️ Raw parameters |
 | **Transactional Chat Store** | ✅ STM `InMemoryStore` | ❌ None | ❌ None | ❌ None |
 | **Built-in Mock Testing** | ✅ `Ollama.Testing` (Pure) | ❌ None | ❌ None | ❌ None |
