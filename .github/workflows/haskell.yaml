@@ -132,5 +132,6 @@ jobs:
     - name: install dependancies and build examples
       uses: freckle/stack-action@v5
       with:
+        working-directory: examples
         test: false
 
