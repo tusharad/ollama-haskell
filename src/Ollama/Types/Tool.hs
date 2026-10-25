@@ -1,4 +1,5 @@
 {-# LANGUAGE PatternSynonyms #-}
+
 {- |
 Module      : Ollama.Types.Tool
 Copyright   : (c) 2024-2026 Tushar Adhatrao
@@ -31,8 +32,8 @@ module Ollama.Types.Tool (
 ) where
 
 import Data.Aeson
-import qualified Data.Map.Strict as Map
 import Data.Map.Strict (Map)
+import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import GHC.Generics (Generic)
 
@@ -132,25 +133,29 @@ data ToolCall = ToolCall'
   }
   deriving stock (Eq, Show, Generic)
 
--- | Pattern synonym providing backwards compatibility with 1-argument construction
--- and pattern matching.
---
--- @since 0.4.2.0
+{- | Pattern synonym providing backwards compatibility with 1-argument construction
+and pattern matching.
+
+@since 0.4.2.0
+-}
 pattern ToolCall :: ToolCallFunction -> ToolCall
 pattern ToolCall fn <- ToolCall' fn _ _
   where
     ToolCall fn = ToolCall' fn Nothing Nothing
+
 {-# COMPLETE ToolCall #-}
 
--- | Construct a 'ToolCall' with only the function payload.
---
--- @since 0.4.2.0
+{- | Construct a 'ToolCall' with only the function payload.
+
+@since 0.4.2.0
+-}
 mkToolCall :: ToolCallFunction -> ToolCall
 mkToolCall fn = ToolCall' fn Nothing Nothing
 
--- | Construct a 'ToolCall' with an identifier, type, and function payload.
---
--- @since 0.4.2.0
+{- | Construct a 'ToolCall' with an identifier, type, and function payload.
+
+@since 0.4.2.0
+-}
 toolCallWithId :: Text -> ToolCallFunction -> ToolCall
 toolCallWithId callId fn = ToolCall' fn (Just callId) (Just "function")
 
@@ -179,19 +184,22 @@ data ToolCallFunction = ToolCallFunction'
   }
   deriving stock (Eq, Show, Generic)
 
--- | Pattern synonym providing backwards compatibility with 2-argument construction
--- and pattern matching.
---
--- @since 0.4.2.0
+{- | Pattern synonym providing backwards compatibility with 2-argument construction
+and pattern matching.
+
+@since 0.4.2.0
+-}
 pattern ToolCallFunction :: Text -> Map Text Value -> ToolCallFunction
 pattern ToolCallFunction name args <- ToolCallFunction' name args _
   where
     ToolCallFunction name args = ToolCallFunction' name args Nothing
+
 {-# COMPLETE ToolCallFunction #-}
 
--- | Construct a 'ToolCallFunction' with name and arguments map.
---
--- @since 0.4.2.0
+{- | Construct a 'ToolCallFunction' with name and arguments map.
+
+@since 0.4.2.0
+-}
 mkToolCallFunction :: Text -> Map Text Value -> ToolCallFunction
 mkToolCallFunction name args = ToolCallFunction' name args Nothing
 
@@ -210,9 +218,10 @@ instance FromJSON ToolCallFunction where
       <*> v .:? "arguments" .!= mempty
       <*> v .:? "index"
 
--- | Smart constructor for a function parameter representing an object with properties.
---
--- @since 0.4.2.0
+{- | Smart constructor for a function parameter representing an object with properties.
+
+@since 0.4.2.0
+-}
 objectParams :: [(Text, FunctionParameters)] -> [Text] -> FunctionParameters
 objectParams props req =
   FunctionParameters
@@ -224,9 +233,10 @@ objectParams props req =
     , fpEnum = Nothing
     }
 
--- | Smart constructor for a string parameter.
---
--- @since 0.4.2.0
+{- | Smart constructor for a string parameter.
+
+@since 0.4.2.0
+-}
 stringParam :: Maybe Text -> FunctionParameters
 stringParam mdesc =
   FunctionParameters
@@ -238,9 +248,10 @@ stringParam mdesc =
     , fpEnum = Nothing
     }
 
--- | Smart constructor for a number (floating point) parameter.
---
--- @since 0.4.2.0
+{- | Smart constructor for a number (floating point) parameter.
+
+@since 0.4.2.0
+-}
 numberParam :: Maybe Text -> FunctionParameters
 numberParam mdesc =
   FunctionParameters
@@ -252,9 +263,10 @@ numberParam mdesc =
     , fpEnum = Nothing
     }
 
--- | Smart constructor for an integer parameter.
---
--- @since 0.4.2.0
+{- | Smart constructor for an integer parameter.
+
+@since 0.4.2.0
+-}
 intParam :: Maybe Text -> FunctionParameters
 intParam mdesc =
   FunctionParameters
@@ -266,9 +278,10 @@ intParam mdesc =
     , fpEnum = Nothing
     }
 
--- | Smart constructor for a boolean parameter.
---
--- @since 0.4.2.0
+{- | Smart constructor for a boolean parameter.
+
+@since 0.4.2.0
+-}
 boolParam :: Maybe Text -> FunctionParameters
 boolParam mdesc =
   FunctionParameters
@@ -280,9 +293,10 @@ boolParam mdesc =
     , fpEnum = Nothing
     }
 
--- | Smart constructor for an enum parameter with predefined string choices.
---
--- @since 0.4.2.0
+{- | Smart constructor for an enum parameter with predefined string choices.
+
+@since 0.4.2.0
+-}
 enumParam :: [Text] -> Maybe Text -> FunctionParameters
 enumParam choices mdesc =
   FunctionParameters
@@ -294,9 +308,10 @@ enumParam choices mdesc =
     , fpEnum = Just choices
     }
 
--- | Smart constructor for a 'FunctionDef'.
---
--- @since 0.4.2.0
+{- | Smart constructor for a 'FunctionDef'.
+
+@since 0.4.2.0
+-}
 functionDef :: Text -> Text -> FunctionParameters -> FunctionDef
 functionDef name desc params =
   FunctionDef
@@ -306,9 +321,10 @@ functionDef name desc params =
     , fnStrict = Just True
     }
 
--- | Smart constructor for a 'Tool'.
---
--- @since 0.4.2.0
+{- | Smart constructor for a 'Tool'.
+
+@since 0.4.2.0
+-}
 toolDef :: Text -> Text -> FunctionParameters -> Tool
 toolDef name desc params =
   Tool

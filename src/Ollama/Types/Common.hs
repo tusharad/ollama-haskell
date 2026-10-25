@@ -40,16 +40,16 @@ import Data.Aeson (
   (.=),
  )
 import Data.Aeson.Types (typeMismatch)
-import qualified Data.ByteString as BS
 import Data.ByteString (ByteString)
-import qualified Data.ByteString.Base64 as B64
+import Data.ByteString qualified as BS
+import Data.ByteString.Base64 qualified as B64
 import Data.Hashable (Hashable)
 import Data.Int (Int64)
 import Data.Maybe (catMaybes)
 import Data.String (IsString)
 import Data.Text (Text)
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
+import Data.Text qualified as T
+import Data.Text.Encoding qualified as TE
 import GHC.Generics (Generic)
 
 {- | Model name following the @model:tag@ format.
