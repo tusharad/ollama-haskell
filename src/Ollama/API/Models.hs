@@ -29,18 +29,25 @@ module Ollama.API.Models (
   -- * Delete
   deleteModel,
   DeleteRequest (..),
+
+  -- * Preload & Unload (GPU VRAM Management)
+  unloadModel,
+  preloadModel,
+  preloadModelWith,
 ) where
 
 import Control.Monad.IO.Class (MonadIO)
 import Data.Aeson
 import Data.Map.Strict (Map)
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, fromMaybe)
 import Data.Text (Text)
+import Data.Text qualified as T
 import GHC.Generics (Generic)
+import Ollama.API.Generate (GenerateRequest (..), generateRequest)
 import Ollama.Client (OllamaClient)
 import Ollama.Client.Internal (request)
 import Ollama.Error (OllamaError)
-import Ollama.Types.Common (ModelName)
+import Ollama.Types.Common (Duration (..), ModelName)
 import Ollama.Types.Model (ListResponse (..), ModelDetails (..))
 
 {- | Show model info request payload.
@@ -177,3 +184,56 @@ copyModel client src dst = request client "POST" "/api/copy" (Just $ CopyRequest
 -}
 deleteModel :: (MonadIO m) => OllamaClient -> ModelName -> m (Either OllamaError ())
 deleteModel client model = request client "DELETE" "/api/delete" (Just $ DeleteRequest model)
+
+{- | Unload a model from memory immediately by setting @keep_alive = 0@.
+Sends an empty prompt generation request with @keep_alive = Just "0"@.
+
+@since 0.4.3.0
+-}
+unloadModel ::
+  (MonadIO m) =>
+  OllamaClient ->
+  ModelName ->
+  m (Either OllamaError ())
+unloadModel client model =
+  preloadModelWith client model (Just "0")
+
+{- | Preload a model into memory with an optional keep_alive 'Duration'.
+Defaults to 5 minutes (@"5m"@) if 'Nothing' is provided.
+
+@since 0.4.3.0
+-}
+preloadModel ::
+  (MonadIO m) =>
+  OllamaClient ->
+  ModelName ->
+  Maybe Duration ->
+  m (Either OllamaError ())
+preloadModel client model mbDur =
+  preloadModelWith client model (formatDuration <$> mbDur)
+  where
+    formatDuration (Duration ns) =
+      let secs = max 0 (ns `div` 1000000000)
+       in T.pack (show secs) <> "s"
+
+{- | Preload a model into memory with an optional keep_alive duration string
+(e.g. @"5m"@, @"10m"@, @"-1"@). Defaults to @"5m"@ if 'Nothing' is provided.
+
+@since 0.4.3.0
+-}
+preloadModelWith ::
+  (MonadIO m) =>
+  OllamaClient ->
+  ModelName ->
+  Maybe Text ->
+  m (Either OllamaError ())
+preloadModelWith client model mbKeepAlive = do
+  let keepAliveText = fromMaybe "5m" mbKeepAlive
+      req =
+        (generateRequest model "")
+          { genKeepAlive = Just keepAliveText
+          }
+  res <- request client "POST" "/api/generate" (Just req)
+  pure $ case res of
+    Left err -> Left err
+    Right (_ :: Value) -> Right ()

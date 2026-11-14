@@ -129,6 +129,7 @@ test-suite ollama-haskell-test
     Test.Ollama.Unit.Config
     Test.Ollama.Unit.Streaming
     Test.Ollama.Unit.WebSearch
+    Test.Ollama.Unit.ModelLifecycle
     Test.Ollama.Unit.SchemaBuilder
     Test.Ollama.Unit.SchemaDerive
     Test.Ollama.Unit.Testing
@@ -136,6 +137,7 @@ test-suite ollama-haskell-test
     Test.Ollama.Property.Roundtrip
     Test.Ollama.Property.Streaming
     Test.Ollama.Property.WebSearch
+    Test.Ollama.Property.ModelLifecycle
     Test.Ollama.Golden.Chat
     Test.Ollama.Golden.Generate
     Test.Ollama.Golden.Embed

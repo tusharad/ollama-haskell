@@ -85,6 +85,9 @@ module Ollama (
   ShowRequest (..),
   copyModel,
   deleteModel,
+  unloadModel,
+  preloadModel,
+  preloadModelWith,
   ListResponse (..),
   ModelInfo (..),
   ModelDetails (..),
@@ -118,6 +121,10 @@ module Ollama (
   -- ** System & Diagnostics
   getVersion,
   listRunning,
+  isModelRunning,
+  getModelVramUsage,
+  matchesRunningModel,
+  findRunningModel,
   RunningModelsResponse (..),
 
   -- ** System One Decision API
