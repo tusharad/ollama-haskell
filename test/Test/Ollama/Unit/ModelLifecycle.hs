@@ -90,4 +90,3 @@ tests =
         resVram <- getModelVramUsage client2 (ModelName "llama3.2")
         assertEqual "getModelVramUsage propagates 500" (Left (ApiError 500 "server ps failure")) resVram
     ]
-
