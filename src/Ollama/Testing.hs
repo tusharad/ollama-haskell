@@ -13,18 +13,23 @@ Mock client and test helpers for unit testing code without a live Ollama server.
 module Ollama.Testing (
   newMockClient,
   newMockClientWithConfig,
+  newMockClientRecording,
+  newMockClientWithStatus,
   withMockClient,
   mockGenerateResponse,
   mockChatResponse,
   mockEmbedResponse,
   mockListModelsResponse,
+  mockRunningModelsResponse,
 ) where
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.ByteString (ByteString)
+import Data.ByteString qualified as BS
 import Data.ByteString.Char8 qualified as BS8
-import Data.IORef (atomicModifyIORef, newIORef)
+import Data.IORef (atomicModifyIORef, newIORef, readIORef)
+import Data.Int (Int64)
 import Data.Text (Text)
 import Data.Time (Day (..), UTCTime (..))
 import Network.HTTP.Client (
@@ -40,7 +45,13 @@ import Ollama.Client (OllamaClient (..), closeClient)
 import Ollama.Client.Config (OllamaClientConfig, defaultConfig)
 import Ollama.Types.Common (Digest (..), Duration (..), ModelName (..))
 import Ollama.Types.Message (assistantMessage)
-import Ollama.Types.Model (ListResponse (..), ModelDetails (..), ModelInfo (..))
+import Ollama.Types.Model (
+  ListResponse (..),
+  ModelDetails (..),
+  ModelInfo (..),
+  RunningModel (..),
+  RunningModelsResponse (..),
+ )
 
 {- | Construct an 'OllamaClient' that returns mock HTTP response bytes for any request.
 
@@ -88,6 +99,59 @@ withMockClient body action = do
   res <- action client
   closeClient client
   pure res
+
+{- | Construct an 'OllamaClient' that records all outbound request bytes written to it.
+Returns the client and an action to read the captured request bytes.
+
+@since 0.4.3.0
+-}
+newMockClientRecording :: (MonadIO m) => ByteString -> m (OllamaClient, IO ByteString)
+newMockClientRecording bodyBytes = liftIO $ do
+  reqRef <- newIORef BS.empty
+  let httpResponse =
+        "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: "
+          <> BS8.pack (show (BS8.length bodyBytes))
+          <> "\r\n\r\n"
+          <> bodyBytes
+  respRef <- newIORef [httpResponse]
+  let mockConn =
+        makeConnection
+          ( atomicModifyIORef respRef $ \case
+              [] -> ([], "")
+              (x : xs) -> (xs, x)
+          )
+          (\written -> atomicModifyIORef reqRef (\acc -> (acc <> written, ())))
+          (pure ())
+      settings = defaultManagerSettings {managerRawConnection = pure (\_ _ _ -> mockConn)}
+  mgr <- newManager settings
+  let client = OllamaClient mgr defaultConfig True
+  pure (client, readIORef reqRef)
+
+{- | Construct an 'OllamaClient' returning an arbitrary HTTP status code and response body.
+
+@since 0.4.3.0
+-}
+newMockClientWithStatus :: (MonadIO m) => Int -> ByteString -> m OllamaClient
+newMockClientWithStatus code bodyBytes = liftIO $ do
+  let httpResponse =
+        "HTTP/1.1 "
+          <> BS8.pack (show code)
+          <> " Error\r\nContent-Type: application/json\r\nContent-Length: "
+          <> BS8.pack (show (BS8.length bodyBytes))
+          <> "\r\n\r\n"
+          <> bodyBytes
+  ref <- newIORef [httpResponse]
+  let mockConn =
+        makeConnection
+          ( atomicModifyIORef ref $ \case
+              [] -> ([], "")
+              (x : xs) -> (xs, x)
+          )
+          (\_ -> pure ())
+          (pure ())
+      settings = defaultManagerSettings {managerRawConnection = pure (\_ _ _ -> mockConn)}
+  mgr <- newManager settings
+  pure $ OllamaClient mgr defaultConfig True
 
 {- | Construct a mock 'GenerateResponse'.
 
@@ -177,4 +241,33 @@ mockListModelsResponse names =
               , quantizationLevel = "Q4_K_M"
               }
         , miCapabilities = Just ["completion"]
+        }
+
+{- | Construct a mock 'RunningModelsResponse'.
+
+@since 0.4.3.0
+-}
+mockRunningModelsResponse :: [(ModelName, Int64)] -> RunningModelsResponse
+mockRunningModelsResponse pairs =
+  RunningModelsResponse
+    { runningModels = map mkRunning pairs
+    }
+  where
+    mkRunning (name, vram) =
+      RunningModel
+        { rmName = name
+        , rmModel = name
+        , rmSize = vram
+        , rmDigest = Digest "sha256:1234567890abcdef"
+        , rmDetails =
+            ModelDetails
+              { parentModel = Nothing
+              , format = "gguf"
+              , family = "llama"
+              , families = ["llama"]
+              , parameterSize = "7B"
+              , quantizationLevel = "Q4_K_M"
+              }
+        , rmExpiresAt = UTCTime (ModifiedJulianDay 60000) 0
+        , rmSizeVram = vram
         }

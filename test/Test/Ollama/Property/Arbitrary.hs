@@ -150,3 +150,25 @@ instance Arbitrary WebFetchRequest where
 
 instance Arbitrary WebFetchResponse where
   arbitrary = WebFetchResponse <$> genNonEmptyText <*> genNonEmptyText
+
+instance Arbitrary ModelDetails where
+  arbitrary = do
+    parent <- oneof [pure Nothing, Just <$> genNonEmptyText]
+    fmt <- genNonEmptyText
+    fam <- genNonEmptyText
+    fams <- listOf genNonEmptyText
+    paramSize <- genNonEmptyText
+    ModelDetails parent fmt fam fams paramSize <$> genNonEmptyText
+
+instance Arbitrary RunningModel where
+  arbitrary = do
+    name <- arbitrary
+    model <- arbitrary
+    size <- arbitrary
+    digest <- arbitrary
+    details <- arbitrary
+    expiresAt <- arbitrary
+    RunningModel name model size digest details expiresAt <$> arbitrary
+
+instance Arbitrary RunningModelsResponse where
+  arbitrary = RunningModelsResponse <$> arbitrary
