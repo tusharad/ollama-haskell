@@ -277,7 +277,12 @@ Returns 'InvalidRequest' if the input list is empty.
 -}
 accumulateGenerateChunks :: [GenerateResponse] -> Either OllamaError GenerateResponse
 accumulateGenerateChunks [] = Left (InvalidRequest "Cannot accumulate empty stream of GenerateResponse")
-accumulateGenerateChunks (g : gs) = Right (foldl' accumulateGenerate g gs)
+accumulateGenerateChunks (g : gs) = Right (go g gs)
+  where
+    go acc [] = acc
+    go acc (x : xs) =
+      let acc' = accumulateGenerate acc x
+       in acc' `seq` go acc' xs
 
 {- | Fold over a streaming text generation conduit and accumulate all emitted chunks into
 a single final 'GenerateResponse'.

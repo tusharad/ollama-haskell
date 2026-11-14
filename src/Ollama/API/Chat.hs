@@ -239,7 +239,12 @@ Returns 'InvalidRequest' if the input list is empty.
 -}
 accumulateChatChunks :: [ChatResponse] -> Either OllamaError ChatResponse
 accumulateChatChunks [] = Left (InvalidRequest "Cannot accumulate empty stream of ChatResponse")
-accumulateChatChunks (c : cs) = Right (foldl' accumulateChat c cs)
+accumulateChatChunks (c : cs) = Right (go c cs)
+  where
+    go acc [] = acc
+    go acc (x : xs) =
+      let acc' = accumulateChat acc x
+       in acc' `seq` go acc' xs
 
 {- | Fold over a streaming chat conduit and accumulate all emitted chunks into a single
 final 'ChatResponse'.
