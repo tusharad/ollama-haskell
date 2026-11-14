@@ -47,6 +47,9 @@ module Ollama (
   -- ** Chat
   chat,
   chatStream,
+  accumulateChat,
+  accumulateChatChunks,
+  accumulateChatStream,
   ChatRequest (..),
   ChatResponse (..),
   chatRequest,
@@ -56,6 +59,9 @@ module Ollama (
   -- ** Generate
   generate,
   generateStream,
+  accumulateGenerate,
+  accumulateGenerateChunks,
+  accumulateGenerateStream,
   GenerateRequest (..),
   GenerateResponse (..),
   generateRequest,
@@ -116,6 +122,9 @@ module Ollama (
 
   -- ** System One Decision API
   module Ollama.API.SystemOne,
+
+  -- ** Ollama Cloud Web Grounding
+  module Ollama.API.WebSearch,
 
   -- * Types & Primitives
   ModelName (..),
@@ -201,9 +210,12 @@ module Ollama (
   HasDone (..),
   collectStream,
   foldStream,
+  accumulateStream,
+  decodeStreamLine,
 
   -- * Testing Infrastructure
   newMockClient,
+  newMockClientWithConfig,
   withMockClient,
   mockGenerateResponse,
   mockChatResponse,
@@ -235,6 +247,7 @@ import Ollama.API.Models.Push
 import Ollama.API.Ps
 import Ollama.API.SystemOne
 import Ollama.API.Version
+import Ollama.API.WebSearch
 import Ollama.Client
 import Ollama.Client.Config
 import Ollama.Conversation

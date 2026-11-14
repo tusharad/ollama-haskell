@@ -16,26 +16,31 @@ module Ollama.API.Chat (
   chatRequest,
   chat,
   chatStream,
+  accumulateChat,
+  accumulateChatChunks,
+  accumulateChatStream,
   chatEvalTokensPerSecond,
   chatPromptEvalTokensPerSecond,
 ) where
 
 import Conduit (ConduitT)
+import Control.Applicative ((<|>))
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Aeson
 import Data.List.NonEmpty (NonEmpty)
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
+import Data.Text qualified as T
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import Ollama.Client (OllamaClient)
 import Ollama.Client.Internal (request, requestStreaming)
-import Ollama.Error (OllamaError)
-import Ollama.Streaming (HasDone (..))
-import Ollama.Types.Common (Duration, Logprob, ModelName, Think, tokensPerSecond)
+import Ollama.Error (OllamaError (..))
+import Ollama.Streaming (HasDone (..), accumulateStream)
+import Ollama.Types.Common (Duration, Logprob, ModelName (..), Think, tokensPerSecond)
 import Ollama.Types.Format (Format)
-import Ollama.Types.Message (Message)
+import Ollama.Types.Message (Message (..))
 import Ollama.Types.Options (ModelOptions)
 import Ollama.Types.Tool (Tool)
 
@@ -177,3 +182,77 @@ chatEvalTokensPerSecond ChatResponse {..} =
 chatPromptEvalTokensPerSecond :: ChatResponse -> Maybe Double
 chatPromptEvalTokensPerSecond ChatResponse {..} =
   tokensPerSecond <$> crPromptEvalCount <*> crPromptEvalDuration
+
+{- | Combine two consecutive 'ChatResponse' chunks into an accumulated response.
+Sequential text and thinking tokens are concatenated, tool calls are preserved in order,
+and durations and completion flags from the latest chunk are maintained.
+
+@since 0.4.3.0
+-}
+accumulateChat :: ChatResponse -> ChatResponse -> ChatResponse
+accumulateChat r1 r2 =
+  r2
+    { crModel = if T.null (unModelName (crModel r1)) then crModel r2 else crModel r1
+    , crCreatedAt = crCreatedAt r1
+    , crMessage = combineMessages (crMessage r1) (crMessage r2)
+    , crDone = crDone r1 || crDone r2
+    , crDoneReason = crDoneReason r2 <|> crDoneReason r1
+    , crTotalDuration = crTotalDuration r2 <|> crTotalDuration r1
+    , crLoadDuration = crLoadDuration r2 <|> crLoadDuration r1
+    , crPromptEvalCount = crPromptEvalCount r2 <|> crPromptEvalCount r1
+    , crPromptEvalDuration = crPromptEvalDuration r2 <|> crPromptEvalDuration r1
+    , crEvalCount = crEvalCount r2 <|> crEvalCount r1
+    , crEvalDuration = crEvalDuration r2 <|> crEvalDuration r1
+    , crLogprobs = combineLogprobs (crLogprobs r1) (crLogprobs r2)
+    }
+  where
+    combineMessages Nothing m2 = m2
+    combineMessages m1 Nothing = m1
+    combineMessages (Just m1) (Just m2) =
+      Just $
+        m2
+          { messageRole = messageRole m1
+          , messageContent = messageContent m1 <> messageContent m2
+          , messageImages = combineLists (messageImages m1) (messageImages m2)
+          , messageToolCalls = combineLists (messageToolCalls m1) (messageToolCalls m2)
+          , messageToolName = messageToolName m2 <|> messageToolName m1
+          , messageThinking = combineText (messageThinking m1) (messageThinking m2)
+          , messageToolCallId = messageToolCallId m2 <|> messageToolCallId m1
+          }
+
+    combineText Nothing t2 = t2
+    combineText t1 Nothing = t1
+    combineText (Just t1) (Just t2) = Just (t1 <> t2)
+
+    combineLists Nothing l2 = l2
+    combineLists l1 Nothing = l1
+    combineLists (Just l1) (Just l2) = Just (l1 ++ l2)
+
+    combineLogprobs Nothing lp2 = lp2
+    combineLogprobs lp1 Nothing = lp1
+    combineLogprobs (Just lp1) (Just lp2) = Just (lp1 ++ lp2)
+
+{- | Accumulate a list of 'ChatResponse' chunks into a single unified 'ChatResponse'.
+Returns 'InvalidRequest' if the input list is empty.
+
+@since 0.4.3.0
+-}
+accumulateChatChunks :: [ChatResponse] -> Either OllamaError ChatResponse
+accumulateChatChunks [] = Left (InvalidRequest "Cannot accumulate empty stream of ChatResponse")
+accumulateChatChunks (c : cs) = Right (go c cs)
+  where
+    go acc [] = acc
+    go acc (x : xs) =
+      let acc' = accumulateChat acc x
+       in acc' `seq` go acc' xs
+
+{- | Fold over a streaming chat conduit and accumulate all emitted chunks into a single
+final 'ChatResponse'.
+
+@since 0.4.3.0
+-}
+accumulateChatStream ::
+  (MonadUnliftIO m) =>
+  ConduitT () ChatResponse m () ->
+  m (Either OllamaError ChatResponse)
+accumulateChatStream = accumulateStream accumulateChatChunks
