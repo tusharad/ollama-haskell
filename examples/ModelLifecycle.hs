@@ -10,7 +10,8 @@ main = do
       customModel = ModelName "haskell-expert:latest"
 
   putStrLn "=== 1. Copying Model (copyModel) ==="
-  putStrLn $ "Copying " <> show (unModelName sourceModel) <> " to " <> show (unModelName destModel) <> "..."
+  putStrLn $
+    "Copying " <> show (unModelName sourceModel) <> " to " <> show (unModelName destModel) <> "..."
   copyRes <- copyModel client sourceModel destModel
   case copyRes of
     Left err -> putStrLn $ "Copy failed: " <> show err

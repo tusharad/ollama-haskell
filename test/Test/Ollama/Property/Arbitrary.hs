@@ -172,3 +172,6 @@ instance Arbitrary RunningModel where
 
 instance Arbitrary RunningModelsResponse where
   arbitrary = RunningModelsResponse <$> arbitrary
+
+instance (Arbitrary a) => Arbitrary (StructuredResponse a) where
+  arbitrary = StructuredResponse <$> arbitrary <*> arbitrary

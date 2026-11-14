@@ -1,6 +1,6 @@
 module Main (main) where
 
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Ollama
 
 main :: IO ()
@@ -19,11 +19,19 @@ main = do
     Left err -> putStrLn $ "Error listing models: " <> show err
     Right (ListResponse ms) -> do
       putStrLn $ "Found " <> show (length ms) <> " installed models:"
-      mapM_ (\m -> putStrLn $ "  - " <> show (unModelName (miName m)) <> " (" <> show (miSize m `div` 1000000) <> " MB)") ms
+      mapM_
+        ( \m ->
+            putStrLn $
+              "  - " <> show (unModelName (miName m)) <> " (" <> show (miSize m `div` 1000000) <> " MB)"
+        )
+        ms
 
       case ms of
         (firstModel : _) -> do
-          putStrLn $ "\n=== 3. Inspecting Model Details (showModel for " <> show (unModelName (miName firstModel)) <> ") ==="
+          putStrLn $
+            "\n=== 3. Inspecting Model Details (showModel for "
+              <> show (unModelName (miName firstModel))
+              <> ") ==="
           showRes <- showModel client (miName firstModel)
           case showRes of
             Left err -> putStrLn $ "Error showing model: " <> show err
@@ -38,4 +46,13 @@ main = do
     Left err -> putStrLn $ "Error listing running models: " <> show err
     Right (RunningModelsResponse rms) -> do
       putStrLn $ "Currently active models in VRAM: " <> show (length rms)
-      mapM_ (\rm -> putStrLn $ "  - " <> show (unModelName (rmName rm)) <> " (VRAM: " <> show (rmSizeVram rm `div` 1000000) <> " MB)") rms
+      mapM_
+        ( \rm ->
+            putStrLn $
+              "  - "
+                <> show (unModelName (rmName rm))
+                <> " (VRAM: "
+                <> show (rmSizeVram rm `div` 1000000)
+                <> " MB)"
+        )
+        rms

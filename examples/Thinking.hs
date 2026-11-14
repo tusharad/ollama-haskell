@@ -2,7 +2,7 @@ module Main (main) where
 
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.Maybe (isJust)
-import qualified Data.Text.IO as TIO
+import Data.Text.IO qualified as TIO
 import Ollama
 
 main :: IO ()

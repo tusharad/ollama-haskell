@@ -7,6 +7,7 @@ import Test.Ollama.Golden.Models qualified as GoldenModels
 import Test.Ollama.Property.ModelLifecycle qualified as PropertyModelLifecycle
 import Test.Ollama.Property.Roundtrip qualified as PropertyRoundtrip
 import Test.Ollama.Property.Streaming qualified as PropertyStreaming
+import Test.Ollama.Property.StructuredAndTools qualified as PropertyStructuredAndTools
 import Test.Ollama.Property.WebSearch qualified as PropertyWebSearch
 import Test.Ollama.Unit.Config qualified as UnitConfig
 import Test.Ollama.Unit.Error qualified as UnitError
@@ -15,6 +16,7 @@ import Test.Ollama.Unit.ModelLifecycle qualified as UnitModelLifecycle
 import Test.Ollama.Unit.SchemaBuilder qualified as UnitSchemaBuilder
 import Test.Ollama.Unit.SchemaDerive qualified as UnitSchemaDerive
 import Test.Ollama.Unit.Streaming qualified as UnitStreaming
+import Test.Ollama.Unit.StructuredAndTools qualified as UnitStructuredAndTools
 import Test.Ollama.Unit.Testing qualified as UnitTesting
 import Test.Ollama.Unit.Types qualified as UnitTypes
 import Test.Ollama.Unit.WebSearch qualified as UnitWebSearch
@@ -30,6 +32,7 @@ tests =
     , UnitStreaming.tests
     , UnitWebSearch.tests
     , UnitModelLifecycle.tests
+    , UnitStructuredAndTools.tests
     , UnitSchemaBuilder.tests
     , UnitSchemaDerive.tests
     , UnitTesting.testingTests
@@ -38,6 +41,7 @@ tests =
     , PropertyStreaming.tests
     , PropertyWebSearch.tests
     , PropertyModelLifecycle.tests
+    , PropertyStructuredAndTools.tests
     , GoldenChat.tests
     , GoldenGenerate.tests
     , GoldenEmbed.tests

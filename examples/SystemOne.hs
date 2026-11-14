@@ -1,7 +1,7 @@
 module Main (main) where
 
-import qualified Data.Map.Strict as Map
-import qualified Data.Text as T
+import Data.Map.Strict qualified as Map
+import Data.Text qualified as T
 import Ollama
 
 main :: IO ()

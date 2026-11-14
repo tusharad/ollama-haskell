@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wno-deprecations #-}
+
 module Main (main) where
 
 import Ollama
@@ -19,7 +20,8 @@ main = do
         [] -> putStrLn "No vector generated"
 
   putStrLn "\n=== Ollama Legacy Embeddings API (/api/embeddings) ==="
-  let legacyReq = EmbeddingsRequest (ModelName "nomic-embed-text") "Functional programming in Haskell" Nothing Nothing
+  let legacyReq =
+        EmbeddingsRequest (ModelName "nomic-embed-text") "Functional programming in Haskell" Nothing Nothing
   legacyRes <- embeddings client legacyReq
   case legacyRes of
     Left err -> putStrLn $ "Legacy Error: " <> show err
