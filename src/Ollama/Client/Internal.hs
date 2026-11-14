@@ -71,9 +71,7 @@ request ::
   Maybe req ->
   m (Either OllamaError resp)
 request client reqMethod endpoint mbPayload =
-  liftIO
-    $ withRetry client endpoint
-    $ executeJsonRequest client reqMethod endpoint mbPayload
+  liftIO (withRetry client endpoint (executeJsonRequest client reqMethod endpoint mbPayload))
 
 {- | Dispatch a raw (non-JSON) request returning raw bytes.
 
@@ -91,9 +89,7 @@ requestRaw ::
   Maybe ByteString ->
   m (Either OllamaError ByteString)
 requestRaw client reqMethod endpoint mbPayload =
-  liftIO
-    $ withRetry client endpoint
-    $ executeRawRequest client reqMethod endpoint mbPayload
+  liftIO (withRetry client endpoint (executeRawRequest client reqMethod endpoint mbPayload))
 
 {- | Dispatch a conduit-based streaming API request.
 
