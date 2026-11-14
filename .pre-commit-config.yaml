@@ -14,3 +14,10 @@ repos:
         entry: hlint .
         language: system
         types: [haskell]
+
+    -   id: weeder
+        name: weeder
+        description: "Dead code analysis for Haskell source code."
+        entry: weeder
+        language: system
+        pass_filenames: false

@@ -3,10 +3,17 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/topics/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: mcp-server-0.3.0.0@sha256:85d633f42bbd3110f3f55d8b02bc567a2b5fa8c11a506875a206f8ca60c0b4a3,6880
+    pantry-tree:
+      sha256: 84289c82beaa2482bde8c4094375b8713cf5fb3857a2f9ed5c97a9241ea2ad52
+      size: 8051
+  original:
+    hackage: mcp-server-0.3.0.0
 snapshots:
 - completed:
-    sha256: 86cf1940e2b98f3b68d3ff4c89c93297180d095361a4da28b8719e899a0669e3
-    size: 696393
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2025/9/24.yaml
-  original: nightly-2025-09-24
+    sha256: 74b41f766415e985473d1e27befeb0394ed62f95295da1ec630a48ba84751c1c
+    size: 732689
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/24/52.yaml
+  original: lts-24.52

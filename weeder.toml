@@ -1,0 +1,7 @@
+roots = [
+  "^Ollama$",
+  "^Ollama\\.",
+  "^Main\\.main$",
+  "^Paths_.*"
+]
+type-class-roots = true

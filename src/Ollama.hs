@@ -1,199 +1,272 @@
-{-# LANGUAGE DuplicateRecordFields #-}
-
 {- |
-Module      : Data.Ollama
-Copyright   : (c) 2025 Tushar Adhatrao
+Module      : Ollama
+Copyright   : (c) 2024-2026 Tushar Adhatrao
 License     : MIT
-Maintainer  : Tushar Adhatrao <tusharadhatrao@gmail.com>
-Stability   : experimental
+Maintainer  : tusharadhatrao@gmail.com
+Stability   : stable
 Portability : portable
 
-== Ollama Haskell
+Top-level umbrella re-export module for the Ollama Haskell client library.
 
-This module provides a high-level Haskell interface to the [Ollama](https://ollama.com) API
-    for interacting with local LLMs. It includes support for:
-
-- Text generation (sync/streaming)
-- Conversational chat (with tools and images)
-- Embeddings
-- Model management (pull, push, delete, list, show)
-- Structured outputs
-- Custom configuration and model options
-
-Inspired by @ollama-python@, this library is built to offer idiomatic Haskell bindings
-over Ollama’s HTTP API.
-
-== 🔧 Usage
-
-Import this module as a top-level interface:
+== Quick Example
 
 @
 import Ollama
+
+main :: IO ()
+main = do
+  client <- defaultClient
+  let req = chatRequest "llama3.2" (userMessage "Why is the sky blue?" :| [])
+  result <- chat client req
+  case result of
+    Left err -> print err
+    Right resp -> case crMessage resp of
+      Just msg -> putStrLn (messageContent msg)
+      Nothing  -> putStrLn "No message returned"
 @
 
-All functions return @Either OllamaError a@ or can be used in a Monad stack using
-their @\*M@ variants.
-
-== 🔑 Main APIs
-
-=== ✍️ Generate Text
-
-- 'generate', 'generateM' – Generate text from a model
-- 'defaultGenerateOps' – Default generation parameters
-- 'GenerateOps', 'GenerateResponse' – Request and response types
-
-=== 💬 Chat with LLMs
-
-- 'chat', 'chatM' – Send chat messages to a model
-- 'ChatOps', 'ChatResponse', 'Role', 'Message' – Chat input/output types
-- Supports tools via 'InputTool', 'FunctionDef', 'OutputFunction', etc.
-
-=== 🧠 Embeddings
-
-- 'embedding', 'embeddingM' – Generate vector embeddings
-- 'EmbeddingOps', 'EmbeddingResp' – Request/response types
-
-=== 📦 Model Management
-
-- 'copyModel', 'createModel', 'deleteModel'
-- 'list' – List all installed models
-- 'ps', 'psM' – Show running models
-- 'showModel', 'showModelM' – Show model info
-- 'pull', 'push' – Pull/push models (with progress support)
-
-=== ⚙️ Configuration
-
-- 'defaultOllamaConfig' – Modify host, retries, streaming, etc.
-- 'withOnModelStart', 'withOnModelFinish', 'withOnModelError' – Hook support
-
-=== 🧰 Utilities
-
-- 'defaultModelOptions', 'encodeImage', 'withOllamaRequest'
-- 'loadGenModel', 'unloadGenModel' – Load/unload generation models
-- 'getVersion' – Ollama server version
-
-== 🧾 Types
-
-All request/response payloads and enums are exposed, including:
-
-- 'ModelOptions', 'OllamaConfig', 'OllamaError', 'Format'
-- 'Models', 'ModelInfo', 'ModelDetails', 'ShowModelResponse'
-- 'RunningModels', 'RunningModel', 'Version'
+@since 1.0.0.0
 -}
-module Ollama
-  ( -- * Main APIs
+module Ollama (
+  -- * Client
+  OllamaClient,
+  newClient,
+  defaultClient,
+  clientFromEnv,
+  closeClient,
+  withClient,
 
-    -- ** Generate Texts
-    generate
-  , generateM
-  , defaultGenerateOps
-  , GenerateOps (..)
-  , GenerateResponse (..)
+  -- * Config & Retry
+  OllamaClientConfig (..),
+  defaultConfig,
+  RetryPolicy (..),
+  LogLevel (..),
 
-    -- ** Chat with LLMs
-  , chat
-  , chatM
-  , Role (..)
-  , defaultChatOps
-  , ChatResponse (..)
-  , ChatOps (..)
-  , InputTool (..)
-  , FunctionDef (..)
-  , FunctionParameters (..)
-  , ToolCall (..)
-  , OutputFunction (..)
+  -- * API Endpoints
 
-    -- ** Embeddings
-  , embedding
-  , embeddingOps
-  , embeddingM
-  , embeddingOpsM
-  , EmbeddingOps (..)
-  , EmbeddingResp (..)
+  -- ** Chat
+  chat,
+  chatStructured,
+  StructuredResponse (..),
+  chatWithTools,
+  RegisteredTool (..),
+  ToolLoopConfig (..),
+  defaultToolLoopConfig,
+  chatStream,
+  accumulateChat,
+  accumulateChatChunks,
+  accumulateChatStream,
+  ChatRequest (..),
+  ChatResponse (..),
+  chatRequest,
+  chatEvalTokensPerSecond,
+  chatPromptEvalTokensPerSecond,
 
-    -- ** Copy Models
-  , copyModel
-  , copyModelM
+  -- ** Generate
+  generate,
+  generateStructured,
+  generateStream,
+  accumulateGenerate,
+  accumulateGenerateChunks,
+  accumulateGenerateStream,
+  GenerateRequest (..),
+  GenerateResponse (..),
+  generateRequest,
+  evalTokensPerSecond,
+  promptEvalTokensPerSecond,
+  generateFullText,
 
-    -- ** Create Models
-  , createModel
-  , createModelM
+  -- ** Embeddings
+  embed,
+  EmbedRequest (..),
+  EmbedResponse (..),
+  embedRequest,
+  embeddings,
+  EmbeddingsRequest (..),
+  EmbeddingsResponse (..),
 
-    -- ** Delete Models
-  , deleteModel
-  , deleteModelM
+  -- ** Model Management
+  listModels,
+  showModel,
+  showModelWith,
+  ShowRequest (..),
+  copyModel,
+  deleteModel,
+  unloadModel,
+  preloadModel,
+  preloadModelWith,
+  ListResponse (..),
+  ModelInfo (..),
+  ModelDetails (..),
+  RunningModel (..),
+  ShowResponse (..),
 
-    -- ** List Models
-  , list
+  -- ** Create
+  createModel,
+  createModelStream,
+  defaultCreateRequest,
+  CreateRequest (..),
+  CreateResponse (..),
+  QuantizationType (..),
 
-    -- ** List currently running models
-  , ps
-  , psM
+  -- ** Pull & Push
+  pull,
+  pullWith,
+  pullStream,
+  pullStreamWith,
+  push,
+  pushWith,
+  pushStream,
+  pushStreamWith,
+  PullResponse (..),
+  PushResponse (..),
 
-    -- ** Push and Pull
-  , push
-  , pushM
-  , pull
-  , pullM
-  , pullOps
-  , pullOpsM
+  -- ** Blobs
+  checkBlob,
+  pushBlob,
 
-    -- ** Show Model Info
-  , showModel
-  , showModelOps
-  , showModelM
-  , showModelOpsM
+  -- ** System & Diagnostics
+  getVersion,
+  listRunning,
+  isModelRunning,
+  getModelVramUsage,
+  matchesRunningModel,
+  findRunningModel,
+  RunningModelsResponse (..),
 
-    -- ** Blob Operations
-  , checkBlobExists
-  , createBlob
+  -- ** System One Decision API
+  module Ollama.API.SystemOne,
 
-    -- * Ollama config
-  , defaultOllamaConfig
-  , withOnModelStart
-  , withOnModelFinish
-  , withOnModelError
+  -- ** Ollama Cloud Web Grounding
+  module Ollama.API.WebSearch,
 
-    -- * Utils
-  , defaultModelOptions
-  , ModelOptions (..)
-  , encodeImage
-  , withOllamaRequest
-  , getVersion
-  , loadGenModel
-  , unloadGenModel
-  , loadGenModelM
-  , unloadGenModelM
+  -- * Types & Primitives
+  ModelName (..),
+  mkModelName,
+  Digest (..),
+  Base64Image (..),
+  encodeBase64Image,
+  readImageBase64,
+  Duration (..),
+  durationToSeconds,
+  durationToMillis,
+  tokensPerSecond,
+  Version (..),
+  Think (..),
+  ThinkingLevel (..),
+  TokenLogprob (..),
+  Logprob (..),
 
-    -- * Types
-  , ShowModelResponse (..)
-  , Models (..)
-  , ModelInfo (..)
-  , ModelDetails (..)
-  , ShowModelInfo (..)
-  , RunningModels (..)
-  , RunningModel (..)
-  , Message (..)
-  , Format (..)
-  , OllamaError (..)
-  , OllamaConfig (..)
-  , Version (..)
-  )
-where
+  -- ** Messages
+  Role (..),
+  Message (..),
+  userMessage,
+  systemMessage,
+  assistantMessage,
+  toolMessage,
+  toolResultMessage,
+  toolResultMessageWithId,
+  imageMessage,
+  messageFullText,
 
-import Data.Ollama.Blob
-import Data.Ollama.Chat
-import Data.Ollama.Common.Config
-import Data.Ollama.Common.Types
-import Data.Ollama.Common.Utils
-import Data.Ollama.Copy
-import Data.Ollama.Create
-import Data.Ollama.Delete
-import Data.Ollama.Embeddings hiding (keepAlive, modelName)
-import Data.Ollama.Generate
-import Data.Ollama.List
-import Data.Ollama.Load
-import Data.Ollama.Ps hiding (modelName)
-import Data.Ollama.Pull
-import Data.Ollama.Push
-import Data.Ollama.Show
+  -- ** Tools & Functions
+  Tool (..),
+  FunctionDef (..),
+  FunctionParameters (..),
+  ToolCall (..),
+  ToolCallFunction (..),
+  mkToolCall,
+  toolCallWithId,
+  mkToolCallFunction,
+  objectParams,
+  stringParam,
+  numberParam,
+  intParam,
+  boolParam,
+  enumParam,
+  functionDef,
+  toolDef,
+
+  -- ** Options & Format
+  ModelOptions (..),
+  defaultOptions,
+  Format (..),
+  ToSchema (..),
+  ToJsonType (..),
+  schemaFor,
+  formatFor,
+
+  -- ** Schema Builder DSL
+  JsonType (..),
+  Property (..),
+  Schema (..),
+  SchemaBuilder,
+  emptyObject,
+  addProperty,
+  addObjectProperty,
+  requireField,
+  requireFields,
+  buildSchema,
+  objectOf,
+  arrayOf,
+  printSchema,
+  (|+),
+  (|++),
+  (|!),
+  (|!!),
+
+  -- * Error Handling
+  OllamaError (..),
+  isRetryable,
+  throwOllama,
+
+  -- * Streaming
+  HasDone (..),
+  collectStream,
+  foldStream,
+  accumulateStream,
+  decodeStreamLine,
+
+  -- * Testing Infrastructure
+  newMockClient,
+  newMockClientWithConfig,
+  withMockClient,
+  mockGenerateResponse,
+  mockChatResponse,
+  mockEmbedResponse,
+  mockListModelsResponse,
+
+  -- * Conversation Store
+  Conversation (..),
+  ConversationStore (..),
+  InMemoryStore (..),
+  initInMemoryStore,
+  saveConversationInMemory,
+  loadConversationInMemory,
+  listConversationsInMemory,
+  deleteConversationInMemory,
+
+  -- * Model Context Protocol (MCP) Integration
+  module Ollama.MCP,
+) where
+
+import Ollama.API.Blobs
+import Ollama.API.Chat
+import Ollama.API.Embed
+import Ollama.API.Generate
+import Ollama.API.Models
+import Ollama.API.Models.Create
+import Ollama.API.Models.Pull
+import Ollama.API.Models.Push
+import Ollama.API.Ps
+import Ollama.API.SystemOne
+import Ollama.API.Version
+import Ollama.API.WebSearch
+import Ollama.Client
+import Ollama.Client.Config
+import Ollama.Conversation
+import Ollama.Error
+import Ollama.MCP
+import Ollama.Streaming
+import Ollama.Testing
+import Ollama.Types

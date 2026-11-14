@@ -1,0 +1,7 @@
+resolver: lts-24.52
+
+packages:
+  - ..
+
+extra-deps:
+  - mcp-server-0.3.0.0

@@ -1,115 +1,395 @@
-cabal-version: 1.12
-
--- This file has been generated from package.yaml by hpack version 0.38.1.
---
--- see: https://github.com/sol/hpack
-
-name:           ollama-haskell
-version:        0.2.1.0
-synopsis:       Haskell client for ollama.
-description:    Ollama client for Haskell
-category:       Web
-homepage:       https://github.com/tusharad/ollama-haskell#readme
-bug-reports:    https://github.com/tusharad/ollama-haskell/issues
-author:         tushar
-maintainer:     tusharadhatrao@gmail.com
-copyright:      2024 tushar
-license:        MIT
-license-file:   LICENSE
-build-type:     Simple
-extra-source-files:
-    README.md
-    CHANGELOG.md
+cabal-version: 3.0
+name:          ollama-haskell
+version:       0.4.3.0
+synopsis:      Industry-grade Haskell client for Ollama local LLMs
+description:
+  A type-safe Haskell client for interacting with
+  locally-running LLMs via the Ollama HTTP API. Supports chat,
+  text generation, embeddings, model management, streaming via
+  conduit, structured outputs, tool calling, Model Context Protocol (MCP),
+  and generic JSON schema derivation.
+category:      Web, AI, Network
+license:       MIT
+license-file:  LICENSE
+author:        Tushar Adhatrao
+maintainer:    tusharadhatrao@gmail.com
+copyright:     2024-2026 Tushar Adhatrao
+homepage:      https://github.com/tusharad/ollama-haskell
+bug-reports:   https://github.com/tusharad/ollama-haskell/issues
+tested-with:   GHC == 9.4.8, GHC == 9.6.7, GHC == 9.8.4, GHC == 9.10.3, GHC == 9.12.4
+stability:     stable
+extra-doc-files:
+  README.md
+  CHANGELOG.md
 
 source-repository head
   type: git
   location: https://github.com/tusharad/ollama-haskell
 
-library
-  exposed-modules:
-      Data.Ollama.Blob
-      Data.Ollama.Chat
-      Data.Ollama.Common.Config
-      Data.Ollama.Common.Error
-      Data.Ollama.Common.SchemaBuilder
-      Data.Ollama.Common.Types
-      Data.Ollama.Common.Utils
-      Data.Ollama.Conversation
-      Data.Ollama.Copy
-      Data.Ollama.Create
-      Data.Ollama.Delete
-      Data.Ollama.Embeddings
-      Data.Ollama.Generate
-      Data.Ollama.List
-      Data.Ollama.Load
-      Data.Ollama.Ps
-      Data.Ollama.Pull
-      Data.Ollama.Push
-      Data.Ollama.Show
-      Ollama
-  other-modules:
-      Paths_ollama_haskell
-  hs-source-dirs:
-      src
+flag integration-tests
+  description: Build and run integration tests (requires running Ollama server)
+  default: False
+  manual: True
+
+common warnings
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wmissing-export-lists
+    -Wmissing-home-modules
+    -Wpartial-fields
+    -Wredundant-constraints
+    -Wunused-packages
+
+common lang
+  default-language: GHC2021
   default-extensions:
-      ImportQualifiedPost
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+    StrictData
+    DerivingStrategies
+    DeriveGeneric
+    DeriveAnyClass
+    GeneralizedNewtypeDeriving
+    OverloadedStrings
+    ImportQualifiedPost
+    TypeApplications
+    RecordWildCards
+    NamedFieldPuns
+    LambdaCase
+    MultiWayIf
+    ScopedTypeVariables
+    BangPatterns
+
+library
+  import: warnings, lang
+  hs-source-dirs: src
+  exposed-modules:
+    Ollama
+    Ollama.Client
+    Ollama.Client.Config
+    Ollama.API.Generate
+    Ollama.API.Chat
+    Ollama.API.Embed
+    Ollama.API.Models
+    Ollama.API.Models.Create
+    Ollama.API.Models.Pull
+    Ollama.API.Models.Push
+    Ollama.API.Blobs
+    Ollama.API.Ps
+    Ollama.API.Version
+    Ollama.API.SystemOne
+    Ollama.API.WebSearch
+    Ollama.Types
+    Ollama.Types.Message
+    Ollama.Types.Tool
+    Ollama.Types.Model
+    Ollama.Types.Options
+    Ollama.Types.Format
+    Ollama.Types.Format.SchemaBuilder
+    Ollama.Types.Format.SchemaDerive
+    Ollama.Types.Common
+    Ollama.Error
+    Ollama.Streaming
+    Ollama.Testing
+    Ollama.Conversation
+    Ollama.MCP
+  other-modules:
+    Ollama.Client.Internal
   build-depends:
-      aeson ==2.*
-    , base >=4.7 && <5
-    , base64-bytestring ==1.*
-    , bytestring >=0.10 && <0.13
-    , containers >=0.6 && <0.9
-    , directory >=1 && <1.4
-    , filepath >=1 && <1.6
-    , http-client >=0.6 && <0.8
-    , http-client-tls >=0.2 && <0.4
-    , http-types >=0.7 && <0.13
-    , mtl ==2.*
-    , stm ==2.*
-    , text >=1 && <3
-    , time ==1.*
-  default-language: Haskell2010
+      aeson            >= 2.0 && < 3
+    , base             >= 4.17 && < 5
+    , base64-bytestring >= 1.0 && < 1.3
+    , bytestring       >= 0.10 && < 0.13
+    , case-insensitive >= 1.2 && < 1.3
+    , conduit          >= 1.3 && < 1.4
+    , conduit-extra    >= 1.3 && < 1.4
+    , containers       >= 0.6 && < 0.9
+    , hashable         >= 1.4 && < 1.6
+    , http-client      >= 0.6 && < 0.8
+    , http-client-tls  >= 0.2 && < 0.5
+    , http-types       >= 0.7 && < 0.13
+    , mtl              >= 2.2 && < 3
+    , retry            >= 0.9 && < 0.10
+    , stm              >= 2.5 && < 3
+    , text             >= 2.0 && < 3
+    , time             >= 1.11 && < 2
+    , unliftio-core    >= 0.2 && < 0.3
+    , mcp-server       >= 0.3 && < 0.4
 
 test-suite ollama-haskell-test
+  import: warnings, lang
   type: exitcode-stdio-1.0
+  hs-source-dirs: test
   main-is: Main.hs
   other-modules:
-      Test.Ollama.Blob
-      Test.Ollama.Chat
-      Test.Ollama.Common
-      Test.Ollama.Copy
-      Test.Ollama.Create
-      Test.Ollama.Delete
-      Test.Ollama.Embedding
-      Test.Ollama.Generate
-      Test.Ollama.List
-      Test.Ollama.Load
-      Test.Ollama.Show
-      Paths_ollama_haskell
-  hs-source-dirs:
-      test
-  default-extensions:
-      ImportQualifiedPost
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+    Test.Ollama.Unit.Types
+    Test.Ollama.Unit.Error
+    Test.Ollama.Unit.Config
+    Test.Ollama.Unit.Streaming
+    Test.Ollama.Unit.WebSearch
+    Test.Ollama.Unit.ModelLifecycle
+    Test.Ollama.Unit.StructuredAndTools
+    Test.Ollama.Unit.SchemaBuilder
+    Test.Ollama.Unit.SchemaDerive
+    Test.Ollama.Unit.Testing
+    Test.Ollama.Property.Arbitrary
+    Test.Ollama.Property.Roundtrip
+    Test.Ollama.Property.Streaming
+    Test.Ollama.Property.WebSearch
+    Test.Ollama.Property.ModelLifecycle
+    Test.Ollama.Property.StructuredAndTools
+    Test.Ollama.Golden.Chat
+    Test.Ollama.Golden.Generate
+    Test.Ollama.Golden.Embed
+    Test.Ollama.Golden.Models
+    Test.Ollama.Unit.MCP
   build-depends:
-      aeson
-    , base >=4.7 && <5
-    , base64-bytestring ==1.*
-    , bytestring >=0.10 && <0.13
-    , containers >=0.6 && <0.9
-    , directory >=1 && <1.4
-    , filepath >=1 && <1.6
-    , http-client >=0.6 && <0.8
-    , http-client-tls >=0.2 && <0.4
-    , http-types >=0.7 && <0.13
-    , mtl ==2.*
+      base
     , ollama-haskell
-    , scientific
-    , silently
-    , stm ==2.*
-    , tasty >=1.5
+    , aeson
+    , bytestring
+    , containers
+    , mcp-server
+    , QuickCheck       >= 2.14
+    , tasty          >= 1.5
+    , tasty-golden   >= 2.3
+    , tasty-hunit
+    , tasty-quickcheck >= 0.10
+    , text
+    , time
+    , conduit
+
+test-suite ollama-haskell-integration
+  import: warnings, lang
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test-integration
+  main-is: Main.hs
+  if !flag(integration-tests)
+    buildable: False
+  build-depends:
+      base
+    , ollama-haskell
+    , aeson
+    , bytestring
+    , containers
+    , tasty
     , tasty-hunit
     , text
-    , time ==1.*
-  default-language: Haskell2010
+    , time
+
+benchmark ollama-haskell-bench
+  import: warnings, lang
+  type: exitcode-stdio-1.0
+  hs-source-dirs: bench
+  main-is: Main.hs
+  build-depends:
+      base
+    , ollama-haskell
+    , aeson
+    , bytestring
+    , tasty          >= 1.5
+    , tasty-bench    >= 0.3
+    , text
+
+executable ollama-example-basic-chat
+  import: warnings, lang
+  main-is: BasicChat.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-streaming-chat
+  import: warnings, lang
+  main-is: StreamingChat.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-tool-calling
+  import: warnings, lang
+  main-is: ToolCalling.hs
+  hs-source-dirs: examples
+  build-depends:
+      aeson
+    , base
+    , containers
+    , ollama-haskell
+    , scientific >= 0.3 && < 0.4
+    , text
+
+executable ollama-example-autonomous-agent
+  import: warnings, lang
+  main-is: AutonomousAgent.hs
+  hs-source-dirs: examples
+  build-depends:
+      aeson
+    , base
+    , containers
+    , ollama-haskell
+    , text
+
+executable ollama-example-structured-output
+  import: warnings, lang
+  main-is: StructuredOutput.hs
+  hs-source-dirs: examples
+  build-depends:
+      aeson
+    , base
+    , ollama-haskell
+    , text
+
+executable ollama-example-structured-derive
+  import: warnings, lang
+  main-is: StructuredDerive.hs
+  hs-source-dirs: examples
+  build-depends:
+      aeson
+    , base
+    , ollama-haskell
+    , text
+
+executable ollama-example-web-search
+  import: warnings, lang
+  main-is: WebSearch.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-vram-lifecycle
+  import: warnings, lang
+  main-is: VramLifecycle.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-embeddings
+  import: warnings, lang
+  main-is: Embeddings.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+
+executable ollama-example-model-management
+  import: warnings, lang
+  main-is: ModelManagement.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-all-features
+  import: warnings, lang
+  main-is: AllFeatures.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+    , time
+
+executable ollama-example-generate
+  import: warnings, lang
+  main-is: GenerateText.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-vision
+  import: warnings, lang
+  main-is: Vision.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-logprobs
+  import: warnings, lang
+  main-is: Logprobs.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-thinking
+  import: warnings, lang
+  main-is: Thinking.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-model-lifecycle
+  import: warnings, lang
+  main-is: ModelLifecycle.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+
+executable ollama-example-conversation-store
+  import: warnings, lang
+  main-is: ConversationStore.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+    , time
+
+executable ollama-example-client-lifecycle
+  import: warnings, lang
+  main-is: ClientLifecycle.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+
+executable ollama-example-mcp-bridge
+  import: warnings, lang
+  main-is: MCPBridge.hs
+  hs-source-dirs: examples
+  build-depends:
+      aeson
+    , base
+    , containers
+    , ollama-haskell
+    , text
+
+executable ollama-example-system-one
+  import: warnings, lang
+  main-is: SystemOne.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , containers
+    , ollama-haskell
+    , text
+
+executable ollama-example-mock-testing
+  import: warnings, lang
+  main-is: MockTesting.hs
+  hs-source-dirs: examples
+  build-depends:
+      aeson
+    , base
+    , bytestring
+    , ollama-haskell
+    , text
+

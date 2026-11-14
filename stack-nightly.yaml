@@ -1,0 +1,6 @@
+resolver: nightly-2026-08-03
+packages:
+- .
+
+extra-deps:
+  - mcp-server-0.3.0.0

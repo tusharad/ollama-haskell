@@ -1,0 +1,14 @@
+# HLint configuration for ollama-haskell
+- warn: {name: "Use head safely", within: []}
+
+- functions:
+  - {name: head, within: []}
+  - {name: tail, within: []}
+  - {name: init, within: []}
+  - {name: last, within: []}
+  - {name: fromJust, within: []}
+  - {name: read, within: []}
+  - {name: error, within: []}
+  - {name: undefined, within: []}
+
+- error: {name: "Avoid partial functions"}

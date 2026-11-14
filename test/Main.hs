@@ -1,47 +1,52 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Main (main) where
 
-import Data.Text (unpack)
-import Ollama (Version (..), getVersion)
-import Test.Ollama.Blob qualified as Blob
-import Test.Ollama.Chat qualified as Chat
-import Test.Ollama.Common qualified as Common
-import Test.Ollama.Copy qualified as Copy
-import Test.Ollama.Create qualified as Create
-import Test.Ollama.Delete qualified as Delete
-import Test.Ollama.Embedding qualified as Embeddings
-import Test.Ollama.Generate qualified as Generate
-import Test.Ollama.List qualified as List
-import Test.Ollama.Load qualified as Load
-import Test.Ollama.Show qualified as Show
+import Test.Ollama.Golden.Chat qualified as GoldenChat
+import Test.Ollama.Golden.Embed qualified as GoldenEmbed
+import Test.Ollama.Golden.Generate qualified as GoldenGenerate
+import Test.Ollama.Golden.Models qualified as GoldenModels
+import Test.Ollama.Property.ModelLifecycle qualified as PropertyModelLifecycle
+import Test.Ollama.Property.Roundtrip qualified as PropertyRoundtrip
+import Test.Ollama.Property.Streaming qualified as PropertyStreaming
+import Test.Ollama.Property.StructuredAndTools qualified as PropertyStructuredAndTools
+import Test.Ollama.Property.WebSearch qualified as PropertyWebSearch
+import Test.Ollama.Unit.Config qualified as UnitConfig
+import Test.Ollama.Unit.Error qualified as UnitError
+import Test.Ollama.Unit.MCP qualified as UnitMCP
+import Test.Ollama.Unit.ModelLifecycle qualified as UnitModelLifecycle
+import Test.Ollama.Unit.SchemaBuilder qualified as UnitSchemaBuilder
+import Test.Ollama.Unit.SchemaDerive qualified as UnitSchemaDerive
+import Test.Ollama.Unit.Streaming qualified as UnitStreaming
+import Test.Ollama.Unit.StructuredAndTools qualified as UnitStructuredAndTools
+import Test.Ollama.Unit.Testing qualified as UnitTesting
+import Test.Ollama.Unit.Types qualified as UnitTypes
+import Test.Ollama.Unit.WebSearch qualified as UnitWebSearch
 import Test.Tasty
 
 tests :: TestTree
 tests =
   testGroup
-    "Tests"
-    [ -- Core functionality tests
-      Generate.tests
-    , Chat.tests
-    , Embeddings.tests
-    , -- Model management tests
-      Show.tests
-    , List.tests
-    , Copy.tests
-    , Create.tests
-    , Delete.tests
-    , Load.tests
-    , -- Utility and blob tests
-      Blob.tests
-    , Common.tests
+    "ollama-haskell Pure Test Suite"
+    [ UnitTypes.tests
+    , UnitError.tests
+    , UnitConfig.tests
+    , UnitStreaming.tests
+    , UnitWebSearch.tests
+    , UnitModelLifecycle.tests
+    , UnitStructuredAndTools.tests
+    , UnitSchemaBuilder.tests
+    , UnitSchemaDerive.tests
+    , UnitTesting.testingTests
+    , UnitMCP.tests
+    , PropertyRoundtrip.tests
+    , PropertyStreaming.tests
+    , PropertyWebSearch.tests
+    , PropertyModelLifecycle.tests
+    , PropertyStructuredAndTools.tests
+    , GoldenChat.tests
+    , GoldenGenerate.tests
+    , GoldenEmbed.tests
+    , GoldenModels.tests
     ]
 
 main :: IO ()
-main = do
-  eRes <- getVersion
-  case eRes of
-    Left err -> print err
-    Right (Version r) -> do
-      putStrLn $ "Ollama client version: " <> unpack r
-      defaultMain tests
+main = defaultMain tests
