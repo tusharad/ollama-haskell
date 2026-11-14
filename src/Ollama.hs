@@ -46,6 +46,12 @@ module Ollama (
 
   -- ** Chat
   chat,
+  chatStructured,
+  StructuredResponse (..),
+  chatWithTools,
+  RegisteredTool (..),
+  ToolLoopConfig (..),
+  defaultToolLoopConfig,
   chatStream,
   accumulateChat,
   accumulateChatChunks,
@@ -58,6 +64,7 @@ module Ollama (
 
   -- ** Generate
   generate,
+  generateStructured,
   generateStream,
   accumulateGenerate,
   accumulateGenerateChunks,

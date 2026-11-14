@@ -15,6 +15,7 @@ module Ollama.API.Generate (
   GenerateResponse (..),
   generateRequest,
   generate,
+  generateStructured,
   generateStream,
   accumulateGenerate,
   accumulateGenerateChunks,
@@ -29,9 +30,11 @@ import Control.Applicative ((<|>))
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Aeson
+import Data.ByteString.Lazy qualified as BSL
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import Data.Text qualified as Text
+import Data.Text.Encoding qualified as TE
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import Ollama.Client (OllamaClient)
@@ -39,7 +42,7 @@ import Ollama.Client.Internal (request, requestStreaming)
 import Ollama.Error (OllamaError (..))
 import Ollama.Streaming (HasDone (..), accumulateStream)
 import Ollama.Types.Common (Base64Image, Duration, Logprob, ModelName (..), Think, tokensPerSecond)
-import Ollama.Types.Format (Format)
+import Ollama.Types.Format (Format, ToSchema, formatFor)
 import Ollama.Types.Options (ModelOptions)
 
 {- | Request payload for text generation completion.
@@ -194,6 +197,31 @@ instance HasDone GenerateResponse where
 generate ::
   (MonadIO m) => OllamaClient -> GenerateRequest -> m (Either OllamaError GenerateResponse)
 generate client req = request client "POST" "/api/generate" (Just req {genStream = Just False})
+
+{- | Perform a text completion enforcing a JSON Schema derived from the type parameter @a@ via 'ToSchema',
+and automatically decode the generated response string into @a@.
+
+If the model response fails to decode into @a@, returns 'DecodeError' containing the parse error and raw bytes.
+
+@since 0.4.3.0
+-}
+generateStructured ::
+  forall a m.
+  (MonadIO m, FromJSON a, ToSchema a) =>
+  OllamaClient ->
+  GenerateRequest ->
+  m (Either OllamaError (a, GenerateResponse))
+generateStructured client req = do
+  let structuredReq = req {genFormat = Just (formatFor @a), genStream = Just False}
+  res <- generate client structuredReq
+  pure $ case res of
+    Left err -> Left err
+    Right raw ->
+      let txt = grResponse raw
+          bs = TE.encodeUtf8 txt
+       in case eitherDecode (BSL.fromStrict bs) of
+            Left parseErr -> Left (DecodeError (Text.pack parseErr) bs)
+            Right val -> Right (val, raw)
 
 {- | Streaming text completion API yielding 'GenerateResponse' chunks.
 

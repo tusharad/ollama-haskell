@@ -1,6 +1,6 @@
 module Main (main) where
 
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Data.Time (getCurrentTime)
 import Ollama
 
@@ -42,7 +42,17 @@ main = do
   putStrLn "\n3. Listing conversations (listConversationsInMemory)..."
   allConvs <- listConversationsInMemory store
   putStrLn $ "Total active conversations: " <> show (length allConvs)
-  mapM_ (\c -> putStrLn $ "  - ID: " <> T.unpack (conversationId c) <> " | Messages: " <> show (length (messages c)) <> " | Model: " <> show (unModelName (model c))) allConvs
+  mapM_
+    ( \c ->
+        putStrLn $
+          "  - ID: "
+            <> T.unpack (conversationId c)
+            <> " | Messages: "
+            <> show (length (messages c))
+            <> " | Model: "
+            <> show (unModelName (model c))
+    )
+    allConvs
 
   putStrLn "\n4. Loading specific conversation (loadConversationInMemory)..."
   loaded <- loadConversationInMemory store "sess-alpha-1"
@@ -50,7 +60,9 @@ main = do
     Nothing -> putStrLn "Error: failed to load conversation."
     Just c -> do
       putStrLn $ "Successfully loaded " <> T.unpack (conversationId c) <> ":"
-      mapM_ (\m -> putStrLn $ "    [" <> show (messageRole m) <> "] " <> T.unpack (messageContent m)) (messages c)
+      mapM_
+        (\m -> putStrLn $ "    [" <> show (messageRole m) <> "] " <> T.unpack (messageContent m))
+        (messages c)
 
   putStrLn "\n5. Deleting conversation (deleteConversationInMemory)..."
   _ <- deleteConversationInMemory store "sess-beta-2"

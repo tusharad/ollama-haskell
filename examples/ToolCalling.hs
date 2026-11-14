@@ -2,9 +2,9 @@ module Main (main) where
 
 import Data.Aeson (Value (Number))
 import Data.List.NonEmpty (NonEmpty ((:|)))
-import qualified Data.Map.Strict as Map
-import qualified Data.Scientific as Sci
-import qualified Data.Text as T
+import Data.Map.Strict qualified as Map
+import Data.Scientific qualified as Sci
+import Data.Text qualified as T
 import Ollama
 
 -- Define a tool using the ergonomic toolDef and objectParams smart constructors
@@ -51,7 +51,7 @@ main = do
             let result = case (Map.lookup "a" args, Map.lookup "b" args) of
                   (Just (Number a), Just (Number b)) ->
                     let sumVal = a + b
-                    in T.pack (Sci.formatScientific Sci.Fixed Nothing sumVal)
+                     in T.pack (Sci.formatScientific Sci.Fixed Nothing sumVal)
                   _ -> "Error: invalid arguments"
             putStrLn $ "Calculated result: " <> T.unpack result
 

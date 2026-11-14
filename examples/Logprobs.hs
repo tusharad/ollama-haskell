@@ -1,7 +1,7 @@
 module Main (main) where
 
 import Data.List.NonEmpty (NonEmpty ((:|)))
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Ollama
 
 main :: IO ()

@@ -13,8 +13,10 @@ Chat completion API endpoint (@/api/chat@).
 module Ollama.API.Chat (
   ChatRequest (..),
   ChatResponse (..),
+  StructuredResponse (..),
   chatRequest,
   chat,
+  chatStructured,
   chatStream,
   accumulateChat,
   accumulateChatChunks,
@@ -28,10 +30,12 @@ import Control.Applicative ((<|>))
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Aeson
+import Data.ByteString.Lazy qualified as BSL
 import Data.List.NonEmpty (NonEmpty)
 import Data.Maybe (catMaybes)
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Text.Encoding qualified as TE
 import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import Ollama.Client (OllamaClient)
@@ -39,7 +43,7 @@ import Ollama.Client.Internal (request, requestStreaming)
 import Ollama.Error (OllamaError (..))
 import Ollama.Streaming (HasDone (..), accumulateStream)
 import Ollama.Types.Common (Duration, Logprob, ModelName (..), Think, tokensPerSecond)
-import Ollama.Types.Format (Format)
+import Ollama.Types.Format (Format, ToSchema, formatFor)
 import Ollama.Types.Message (Message (..))
 import Ollama.Types.Options (ModelOptions)
 import Ollama.Types.Tool (Tool)
@@ -159,6 +163,45 @@ instance HasDone ChatResponse where
 -}
 chat :: (MonadIO m) => OllamaClient -> ChatRequest -> m (Either OllamaError ChatResponse)
 chat client req = request client "POST" "/api/chat" (Just req {chStream = Just False})
+
+{- | A structured response containing both the typed decoded payload and the raw 'ChatResponse'.
+
+@since 0.4.3.0
+-}
+data StructuredResponse a = StructuredResponse
+  { srValue :: !a
+  , srRawResponse :: !ChatResponse
+  }
+  deriving stock (Eq, Show, Generic)
+  deriving anyclass (ToJSON, FromJSON)
+
+{- | Perform a chat completion enforcing a JSON Schema derived from the type parameter @a@ via 'ToSchema',
+and automatically decode the assistant message content into @a@.
+
+If the model response fails to decode into @a@, returns 'DecodeError' containing the parse error and raw bytes.
+
+@since 0.4.3.0
+-}
+chatStructured ::
+  forall a m.
+  (MonadIO m, FromJSON a, ToSchema a) =>
+  OllamaClient ->
+  ChatRequest ->
+  m (Either OllamaError (StructuredResponse a))
+chatStructured client req = do
+  let structuredReq = req {chatFormat = Just (formatFor @a), chStream = Just False}
+  res <- chat client structuredReq
+  pure $ case res of
+    Left err -> Left err
+    Right raw ->
+      case crMessage raw of
+        Nothing -> Left (DecodeError "No message returned in chat response" "")
+        Just msg ->
+          let txt = messageContent msg
+              bs = TE.encodeUtf8 txt
+           in case eitherDecode (BSL.fromStrict bs) of
+                Left parseErr -> Left (DecodeError (T.pack parseErr) bs)
+                Right val -> Right (StructuredResponse val raw)
 
 {- | Streaming chat completion API yielding 'ChatResponse' chunks.
 

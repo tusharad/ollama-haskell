@@ -130,6 +130,7 @@ test-suite ollama-haskell-test
     Test.Ollama.Unit.Streaming
     Test.Ollama.Unit.WebSearch
     Test.Ollama.Unit.ModelLifecycle
+    Test.Ollama.Unit.StructuredAndTools
     Test.Ollama.Unit.SchemaBuilder
     Test.Ollama.Unit.SchemaDerive
     Test.Ollama.Unit.Testing
@@ -138,6 +139,7 @@ test-suite ollama-haskell-test
     Test.Ollama.Property.Streaming
     Test.Ollama.Property.WebSearch
     Test.Ollama.Property.ModelLifecycle
+    Test.Ollama.Property.StructuredAndTools
     Test.Ollama.Golden.Chat
     Test.Ollama.Golden.Generate
     Test.Ollama.Golden.Embed
@@ -219,6 +221,17 @@ executable ollama-example-tool-calling
     , containers
     , ollama-haskell
     , scientific >= 0.3 && < 0.4
+    , text
+
+executable ollama-example-autonomous-agent
+  import: warnings, lang
+  main-is: AutonomousAgent.hs
+  hs-source-dirs: examples
+  build-depends:
+      aeson
+    , base
+    , containers
+    , ollama-haskell
     , text
 
 executable ollama-example-structured-output

@@ -1,9 +1,9 @@
 module Main (main) where
 
 import Data.Aeson (encode)
-import qualified Data.ByteString.Lazy as BSL
+import Data.ByteString.Lazy qualified as BSL
 import Data.List.NonEmpty (NonEmpty ((:|)))
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Ollama
 
 main :: IO ()

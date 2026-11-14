@@ -15,6 +15,7 @@ module Ollama.Testing (
   newMockClientWithConfig,
   newMockClientRecording,
   newMockClientWithStatus,
+  newMockClientSequence,
   withMockClient,
   mockGenerateResponse,
   mockChatResponse,
@@ -144,6 +145,32 @@ newMockClientWithStatus code bodyBytes = liftIO $ do
   let mockConn =
         makeConnection
           ( atomicModifyIORef ref $ \case
+              [] -> ([], "")
+              (x : xs) -> (xs, x)
+          )
+          (\_ -> pure ())
+          (pure ())
+      settings = defaultManagerSettings {managerRawConnection = pure (\_ _ _ -> mockConn)}
+  mgr <- newManager settings
+  pure $ OllamaClient mgr defaultConfig True
+
+{- | Construct an 'OllamaClient' that returns a sequence of mock HTTP responses in order.
+Each inbound request consumes the next response in the sequence.
+
+@since 0.4.3.0
+-}
+newMockClientSequence :: (MonadIO m) => [ByteString] -> m OllamaClient
+newMockClientSequence bodyList = liftIO $ do
+  let formatResp b =
+        "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: "
+          <> BS8.pack (show (BS8.length b))
+          <> "\r\n\r\n"
+          <> b
+      httpResponses = map formatResp bodyList
+  respRef <- newIORef httpResponses
+  let mockConn =
+        makeConnection
+          ( atomicModifyIORef respRef $ \case
               [] -> ([], "")
               (x : xs) -> (xs, x)
           )
