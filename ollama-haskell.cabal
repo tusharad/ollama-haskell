@@ -1,6 +1,6 @@
 cabal-version: 3.0
 name:          ollama-haskell
-version:       0.4.2.0
+version:       0.4.3.0
 synopsis:      Industry-grade Haskell client for Ollama local LLMs
 description:
   A type-safe Haskell client for interacting with
@@ -241,6 +241,34 @@ executable ollama-example-structured-output
   build-depends:
       aeson
     , base
+    , ollama-haskell
+    , text
+
+executable ollama-example-structured-derive
+  import: warnings, lang
+  main-is: StructuredDerive.hs
+  hs-source-dirs: examples
+  build-depends:
+      aeson
+    , base
+    , ollama-haskell
+    , text
+
+executable ollama-example-web-search
+  import: warnings, lang
+  main-is: WebSearch.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
+    , ollama-haskell
+    , text
+
+executable ollama-example-vram-lifecycle
+  import: warnings, lang
+  main-is: VramLifecycle.hs
+  hs-source-dirs: examples
+  build-depends:
+      base
     , ollama-haskell
     , text
 

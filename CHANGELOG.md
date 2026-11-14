@@ -4,6 +4,50 @@ All notable changes to `ollama-haskell` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [PVP (Haskell Package Versioning Policy)](https://pvp.haskell.org/).
 
+## [0.4.3.0] - 2026-11-14
+
+### Added
+- **Ollama Cloud Web Grounding (`Ollama.API.WebSearch`)**:
+  - Native client support for Ollama Cloud's live internet search (`POST /api/web_search`) and web extraction (`POST /api/web_fetch`) APIs, enabling real-time grounding for local reasoning models.
+  - Domain types: `WebSearchRequest`, `SearchResult`, `WebSearchResponse`, `WebFetchRequest`, and `WebFetchResponse`.
+  - Ergonomic functions: `webSearch`, `webSearchSimple`, `webFetch`, and `webFetchSimple`.
+  - Pre-packaged tool definitions: `webSearchTool` and `webFetchTool` ready for autonomous tool-calling agents.
+  - Re-exported all web search types and functions from `Ollama`.
+- **Model Lifecycle & GPU VRAM Management (`Ollama.API.Models`, `Ollama.API.Ps`)**:
+  - Added `unloadModel :: (MonadIO m) => OllamaClient -> ModelName -> m (Either OllamaError ())` to evict models and immediately reclaim GPU memory (`keep_alive = "0"`).
+  - Added `preloadModel :: (MonadIO m) => OllamaClient -> ModelName -> Maybe Duration -> m (Either OllamaError ())` to warm up models before time-sensitive inference without generating response tokens.
+  - Added `isModelRunning :: (MonadIO m) => OllamaClient -> ModelName -> m (Either OllamaError Bool)` in `Ollama.API.Ps` to inspect active VRAM residency.
+  - Added `getModelVramUsage :: (MonadIO m) => OllamaClient -> ModelName -> m (Either OllamaError (Maybe Int64))` in `Ollama.API.Ps` to query exact active GPU VRAM footprint in bytes.
+  - Re-exported all lifecycle helpers from `Ollama`.
+- **Type-Safe Structured Output Samplers (`Ollama.API.Chat`, `Ollama.API.Generate`)**:
+  - Added `chatStructured :: (MonadIO m, FromJSON a, ToSchema a) => OllamaClient -> ChatRequest -> m (Either OllamaError (StructuredResponse a))` to enforce compile-time JSON Schema derivation (`formatFor @a`) and automatically parse model responses into typed Haskell data types.
+  - Added `generateStructured :: (MonadIO m, FromJSON a, ToSchema a) => OllamaClient -> GenerateRequest -> m (Either OllamaError (a, GenerateResponse))` for completion endpoints.
+  - Added `data StructuredResponse a = StructuredResponse { srValue :: !a, srRawResponse :: !ChatResponse }` preserving both parsed output and full response metadata.
+  - Re-exported structured output types and functions from `Ollama`.
+- **Autonomous Multi-Turn Tool Execution Loop (`Ollama.Conversation`)**:
+  - Added `chatWithTools :: (MonadIO m) => OllamaClient -> ChatRequest -> [RegisteredTool m] -> ToolLoopConfig -> m (Either OllamaError (Message, [Message]))` to orchestrate multi-turn tool calling workflows autonomously.
+  - Added `RegisteredTool m` bundling a `Tool` definition with its execution handler `Map Text Value -> m (Either Text Value)`.
+  - Added `ToolLoopConfig` and `defaultToolLoopConfig` with configurable recursion limits (`tlcMaxTurns`) and per-turn callbacks (`tlcOnTurn`).
+  - Supports parallel tool execution in a single assistant turn and correlation with `toolResultMessageWithId`.
+  - Re-exported all tool loop types and functions from `Ollama`.
+- **Stream Accumulators (`Ollama.API.Chat`, `Ollama.API.Generate`)**:
+  - Added pure chunk stream accumulators `accumulateChat` and `accumulateChatChunks` to combine partial streaming `ChatResponse` chunks into a single aggregated `ChatResponse`.
+  - Added pure chunk stream accumulators `accumulateGenerate` and `accumulateGenerateChunks` to combine partial `GenerateResponse` chunks.
+  - Re-exported stream accumulators from `Ollama`.
+- **Testing Infrastructure (`Ollama.Testing`)**:
+  - Added `newMockClientSequence :: (MonadIO m) => [ByteString] -> m OllamaClient` for deterministic unit testing of sequential multi-turn conversational agents.
+- **Runnable Examples**:
+  - Added `examples/AutonomousAgent.hs` (`ollama-example-autonomous-agent`).
+  - Added `examples/StructuredDerive.hs` (`ollama-example-structured-derive`).
+  - Added `examples/WebSearch.hs` (`ollama-example-web-search`).
+  - Added `examples/VramLifecycle.hs` (`ollama-example-vram-lifecycle`).
+
+### Fixed
+- **NDJSON Stream Error Detection & Exception Propagation (`Ollama.Client.Internal`)**:
+  - Fixed silent drop of malformed chunks or server error payloads (`{"error": "..."}`) in streaming conduit pipeline. Stream errors and mid-stream decode failures now immediately produce typed `StreamError` or `DecodeError` rather than silently ending the stream.
+
+---
+
 ## [0.4.2.0] - 2026-10-25
 
 ### Added

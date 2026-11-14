@@ -17,6 +17,11 @@ Modern Haskell client library for the [Ollama](https://ollama.com) local LLM eng
 - **Function / Tool Calling**: Full support for tool definitions (`Tool`), tool calls (`ToolCall`), and execution results (`toolResultMessage`).
 - **Thinking Models & Logprobs**: Native support for reasoning models (`Think` / `ThinkingLevel` with custom model-defined levels) and token log probabilities (`Logprob` / `TokenLogprob`).
 - **Environment & Auth Integration**: Robust URL normalization for `OLLAMA_HOST` and bearer token support for `OLLAMA_API_KEY`.
+- **Type-Safe Structured Output Samplers**: High-level `chatStructured` and `generateStructured` enforcing JSON Schemas at the sampler level via `ToSchema` and automatically decoding responses into typed data types with typed `DecodeError` on failure.
+- **Autonomous Multi-Turn Tool Execution**: Autonomous `chatWithTools` runner executing registered Haskell tool functions, supporting parallel tool calls, tool ID correlation, recursion limits, and per-turn callbacks.
+- **Ollama Cloud Web Grounding**: Live web search (`webSearch`) and web content extraction (`webFetch`) via Ollama Cloud (`POST /api/web_search`, `POST /api/web_fetch`).
+- **GPU VRAM & Model Lifecycle**: Explicit `preloadModel`, `unloadModel`, and GPU diagnostics (`isModelRunning`, `getModelVramUsage`).
+- **First-Class Streaming & Accumulators**: `conduit`-based response streaming with robust error propagation (`StreamError`, `DecodeError`) and pure accumulators (`accumulateChat`, `accumulateGenerate`).
 - **Configurable Resilience**: Flexible retry policies (`NoRetry`, `ConstantRetry`, `ExponentialRetry`), custom timeouts, lifecycle callbacks, and structured logging.
 - **Conversation Store**: Transactional STM-backed `InMemoryStore` and `ConversationStore` typeclass for managing multi-turn chat sessions.
 - **SDK Comparison Matrix**: Detailed feature comparison against Python, JS/TS, and Go SDKs in [COMPARISON.md](docs/comparison.markdown).
@@ -30,14 +35,14 @@ Add `ollama-haskell` to your `.cabal` file:
 ```cabal
 build-depends:
     base >= 4.17 && < 5
-  , ollama-haskell >= 0.4.2.0
+  , ollama-haskell >= 0.4.3.0
 ```
 
 Or using Stack in `package.yaml`:
 
 ```yaml
 dependencies:
-  - ollama-haskell >= 0.4.2.0
+  - ollama-haskell >= 0.4.3.0
 ```
 
 ---
