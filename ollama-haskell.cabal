@@ -80,6 +80,7 @@ library
     Ollama.API.Ps
     Ollama.API.Version
     Ollama.API.SystemOne
+    Ollama.API.WebSearch
     Ollama.Types
     Ollama.Types.Message
     Ollama.Types.Tool
@@ -126,11 +127,15 @@ test-suite ollama-haskell-test
     Test.Ollama.Unit.Types
     Test.Ollama.Unit.Error
     Test.Ollama.Unit.Config
+    Test.Ollama.Unit.Streaming
+    Test.Ollama.Unit.WebSearch
     Test.Ollama.Unit.SchemaBuilder
     Test.Ollama.Unit.SchemaDerive
     Test.Ollama.Unit.Testing
     Test.Ollama.Property.Arbitrary
     Test.Ollama.Property.Roundtrip
+    Test.Ollama.Property.Streaming
+    Test.Ollama.Property.WebSearch
     Test.Ollama.Golden.Chat
     Test.Ollama.Golden.Generate
     Test.Ollama.Golden.Embed

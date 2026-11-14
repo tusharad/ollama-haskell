@@ -17,6 +17,8 @@ module Ollama.Client.Internal (
   request,
   requestRaw,
   requestStreaming,
+  decodeStreamLine,
+  resolveUrl,
 ) where
 
 import Conduit (
@@ -32,7 +34,7 @@ import Control.Exception (SomeException, catch, throwIO, try)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Retry qualified as Retry
-import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
+import Data.Aeson (FromJSON (..), ToJSON, Value, eitherDecode, encode, withObject, (.:))
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as BSL
@@ -42,6 +44,8 @@ import Data.Conduit.Combinators (repeatM)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TE
+import Data.Word (Word8)
+import GHC.Generics (Generic)
 import Network.HTTP.Client
 import Network.HTTP.Types (statusCode)
 import Ollama.Client (OllamaClient (..))
@@ -67,9 +71,9 @@ request ::
   Maybe req ->
   m (Either OllamaError resp)
 request client reqMethod endpoint mbPayload =
-  liftIO $
-    withRetry client endpoint $
-      executeJsonRequest client reqMethod endpoint mbPayload
+  liftIO
+    $ withRetry client endpoint
+    $ executeJsonRequest client reqMethod endpoint mbPayload
 
 {- | Dispatch a raw (non-JSON) request returning raw bytes.
 
@@ -87,9 +91,9 @@ requestRaw ::
   Maybe ByteString ->
   m (Either OllamaError ByteString)
 requestRaw client reqMethod endpoint mbPayload =
-  liftIO $
-    withRetry client endpoint $
-      executeRawRequest client reqMethod endpoint mbPayload
+  liftIO
+    $ withRetry client endpoint
+    $ executeRawRequest client reqMethod endpoint mbPayload
 
 {- | Dispatch a conduit-based streaming API request.
 
@@ -99,6 +103,47 @@ closes the connection.
 
 @since 1.0.0.0
 -}
+
+-- | Resolve an endpoint against a base URL, allowing absolute http(s) endpoints.
+resolveUrl :: Text -> Text -> String
+resolveUrl baseUrl endpoint
+  | "http://" `T.isPrefixOf` endpoint || "https://" `T.isPrefixOf` endpoint = T.unpack endpoint
+  | otherwise = T.unpack $ baseUrl <> endpoint
+
+-- | Internal error envelope emitted by Ollama on stream failure.
+newtype OllamaStreamError = OllamaStreamError
+  { streamErrorMessage :: Text
+  }
+  deriving stock (Eq, Show, Generic)
+
+instance FromJSON OllamaStreamError where
+  parseJSON = withObject "OllamaStreamError" $ \v ->
+    OllamaStreamError <$> v .: "error"
+
+{- | Parse an individual NDJSON streaming line.
+
+Detects empty lines, explicit server-side error objects (@{\"error\": \"...\"}@),
+and valid target responses. Raises 'DecodeError' on malformed non-empty lines.
+
+@since 0.4.3.0
+-}
+decodeStreamLine :: (FromJSON resp) => ByteString -> Either OllamaError (Maybe resp)
+decodeStreamLine bs
+  | BS.null (BS.filter (not . isSpaceWord8) bs) = Right Nothing
+  | otherwise =
+      case eitherDecode (BSL.fromStrict bs) of
+        Right val -> Right (Just val)
+        Left targetErr ->
+          case eitherDecode @OllamaStreamError (BSL.fromStrict bs) of
+            Right (OllamaStreamError msg) -> Left (ApiError 500 msg)
+            Left _ ->
+              case eitherDecode @Value (BSL.fromStrict bs) of
+                Left jsonSyntaxErr -> Left (DecodeError (T.pack jsonSyntaxErr) bs)
+                Right _ -> Left (DecodeError (T.pack targetErr) bs)
+
+isSpaceWord8 :: Word8 -> Bool
+isSpaceWord8 w = w == 32 || w == 9 || w == 10 || w == 13
+
 requestStreaming ::
   (MonadUnliftIO m, ToJSON req, FromJSON resp) =>
   OllamaClient ->
@@ -106,7 +151,7 @@ requestStreaming ::
   req ->
   ConduitT () resp m ()
 requestStreaming OllamaClient {..} endpoint payload = do
-  let fullUrl = T.unpack $ configBaseUrl clientConfig <> endpoint
+  let fullUrl = resolveUrl (configBaseUrl clientConfig) endpoint
       cfg = clientConfig
   initReq <- liftIO $ parseRequest fullUrl
   let req =
@@ -123,17 +168,25 @@ requestStreaming OllamaClient {..} endpoint payload = do
           , requestBody = RequestBodyLBS (encode payload)
           }
   resp <- liftIO $ responseOpen req clientManager
-  let bodyReader = responseBody resp
-      readChunk = liftIO $ brRead bodyReader `catch` \(_ :: HttpException) -> pure BS.empty
-      source = repeatM readChunk .| takeWhileC (not . BS.null)
-  (source .| CB.lines .| filterC (not . BS.null) .| parseAndYield)
-    `catchC` (\(e :: SomeException) -> liftIO (responseClose resp >> throwIO e))
-  liftIO $ responseClose resp
+  let status = statusCode (responseStatus resp)
+  if status < 200 || status >= 300
+    then do
+      bodyChunk <- liftIO $ brRead (responseBody resp)
+      liftIO $ responseClose resp
+      liftIO $ throwIO $ ApiError status (TE.decodeUtf8 bodyChunk)
+    else do
+      let bodyReader = responseBody resp
+          readChunk = liftIO $ brRead bodyReader `catch` \(_ :: HttpException) -> pure BS.empty
+          source = repeatM readChunk .| takeWhileC (not . BS.null)
+      (source .| CB.lines .| filterC (not . BS.null) .| parseAndYield)
+        `catchC` (\(e :: SomeException) -> liftIO (responseClose resp >> throwIO e))
+      liftIO $ responseClose resp
   where
     parseAndYield = awaitForever $ \line -> do
-      case eitherDecode (BSL.fromStrict line) of
-        Left _err -> pure ()
-        Right val -> yield val
+      case decodeStreamLine line of
+        Left err -> liftIO $ throwIO err
+        Right Nothing -> pure ()
+        Right (Just val) -> yield val
 
 -- ---------------------------------------------------------------------------
 -- Core request execution
@@ -148,7 +201,7 @@ executeJsonRequest ::
   Maybe req ->
   IO (Either OllamaError resp)
 executeJsonRequest OllamaClient {..} reqMethod endpoint mbPayload = do
-  let fullUrl = T.unpack $ configBaseUrl clientConfig <> endpoint
+  let fullUrl = resolveUrl (configBaseUrl clientConfig) endpoint
       cfg = clientConfig
   initReq <- parseRequest fullUrl
   let timeoutMicro = configTimeout cfg * 1000000
@@ -187,7 +240,7 @@ executeRawRequest ::
   Maybe ByteString ->
   IO (Either OllamaError ByteString)
 executeRawRequest OllamaClient {..} reqMethod endpoint mbPayload = do
-  let fullUrl = T.unpack $ configBaseUrl clientConfig <> endpoint
+  let fullUrl = resolveUrl (configBaseUrl clientConfig) endpoint
       cfg = clientConfig
   initReq <- parseRequest fullUrl
   let timeoutMicro = configTimeout cfg * 1000000

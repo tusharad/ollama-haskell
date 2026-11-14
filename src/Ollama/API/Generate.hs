@@ -16,12 +16,16 @@ module Ollama.API.Generate (
   generateRequest,
   generate,
   generateStream,
+  accumulateGenerate,
+  accumulateGenerateChunks,
+  accumulateGenerateStream,
   evalTokensPerSecond,
   promptEvalTokensPerSecond,
   generateFullText,
 ) where
 
 import Conduit (ConduitT)
+import Control.Applicative ((<|>))
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Data.Aeson
@@ -32,9 +36,9 @@ import Data.Time (UTCTime)
 import GHC.Generics (Generic)
 import Ollama.Client (OllamaClient)
 import Ollama.Client.Internal (request, requestStreaming)
-import Ollama.Error (OllamaError)
-import Ollama.Streaming (HasDone (..))
-import Ollama.Types.Common (Base64Image, Duration, Logprob, ModelName, Think, tokensPerSecond)
+import Ollama.Error (OllamaError (..))
+import Ollama.Streaming (HasDone (..), accumulateStream)
+import Ollama.Types.Common (Base64Image, Duration, Logprob, ModelName (..), Think, tokensPerSecond)
 import Ollama.Types.Format (Format)
 import Ollama.Types.Options (ModelOptions)
 
@@ -229,3 +233,59 @@ generateFullText resp = case (grThinking resp, grResponse resp) of
     | not (Text.null th) && not (Text.null r) -> th <> "\n\n" <> r
     | not (Text.null th) -> th
   (_, r) -> r
+
+{- | Combine two consecutive 'GenerateResponse' chunks into an accumulated response.
+Sequential text and thinking tokens are concatenated, and context, durations,
+and completion flags from the latest chunk are maintained.
+
+@since 0.4.3.0
+-}
+accumulateGenerate :: GenerateResponse -> GenerateResponse -> GenerateResponse
+accumulateGenerate r1 r2 =
+  r2
+    { grModel = if Text.null (unModelName (grModel r1)) then grModel r2 else grModel r1
+    , grCreatedAt = grCreatedAt r1
+    , grResponse = grResponse r1 <> grResponse r2
+    , grDone = grDone r1 || grDone r2
+    , grDoneReason = grDoneReason r2 <|> grDoneReason r1
+    , grContext = grContext r2 <|> grContext r1
+    , grTotalDuration = grTotalDuration r2 <|> grTotalDuration r1
+    , grLoadDuration = grLoadDuration r2 <|> grLoadDuration r1
+    , grPromptEvalCount = grPromptEvalCount r2 <|> grPromptEvalCount r1
+    , grPromptEvalDuration = grPromptEvalDuration r2 <|> grPromptEvalDuration r1
+    , grEvalCount = grEvalCount r2 <|> grEvalCount r1
+    , grEvalDuration = grEvalDuration r2 <|> grEvalDuration r1
+    , grThinking = combineText (grThinking r1) (grThinking r2)
+    , grImage = grImage r2 <|> grImage r1
+    , grLogprobs = combineLogprobs (grLogprobs r1) (grLogprobs r2)
+    , grCompleted = grCompleted r2 <|> grCompleted r1
+    , grTotal = grTotal r2 <|> grTotal r1
+    }
+  where
+    combineText Nothing t2 = t2
+    combineText t1 Nothing = t1
+    combineText (Just t1) (Just t2) = Just (t1 <> t2)
+
+    combineLogprobs Nothing lp2 = lp2
+    combineLogprobs lp1 Nothing = lp1
+    combineLogprobs (Just lp1) (Just lp2) = Just (lp1 ++ lp2)
+
+{- | Accumulate a list of 'GenerateResponse' chunks into a single unified 'GenerateResponse'.
+Returns 'InvalidRequest' if the input list is empty.
+
+@since 0.4.3.0
+-}
+accumulateGenerateChunks :: [GenerateResponse] -> Either OllamaError GenerateResponse
+accumulateGenerateChunks [] = Left (InvalidRequest "Cannot accumulate empty stream of GenerateResponse")
+accumulateGenerateChunks (g : gs) = Right (foldl' accumulateGenerate g gs)
+
+{- | Fold over a streaming text generation conduit and accumulate all emitted chunks into
+a single final 'GenerateResponse'.
+
+@since 0.4.3.0
+-}
+accumulateGenerateStream ::
+  (MonadUnliftIO m) =>
+  ConduitT () GenerateResponse m () ->
+  m (Either OllamaError GenerateResponse)
+accumulateGenerateStream = accumulateStream accumulateGenerateChunks

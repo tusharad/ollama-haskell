@@ -12,6 +12,7 @@ Mock client and test helpers for unit testing code without a live Ollama server.
 -}
 module Ollama.Testing (
   newMockClient,
+  newMockClientWithConfig,
   withMockClient,
   mockGenerateResponse,
   mockChatResponse,
@@ -36,7 +37,7 @@ import Ollama.API.Chat (ChatResponse (..))
 import Ollama.API.Embed (EmbedResponse (..))
 import Ollama.API.Generate (GenerateResponse (..))
 import Ollama.Client (OllamaClient (..), closeClient)
-import Ollama.Client.Config (defaultConfig)
+import Ollama.Client.Config (OllamaClientConfig, defaultConfig)
 import Ollama.Types.Common (Digest (..), Duration (..), ModelName (..))
 import Ollama.Types.Message (assistantMessage)
 import Ollama.Types.Model (ListResponse (..), ModelDetails (..), ModelInfo (..))
@@ -45,8 +46,13 @@ import Ollama.Types.Model (ListResponse (..), ModelDetails (..), ModelInfo (..))
 
 @since 1.0.0.0
 -}
-newMockClient :: (MonadIO m) => ByteString -> m OllamaClient
-newMockClient bodyBytes = liftIO $ do
+
+{- | Construct an 'OllamaClient' with custom configuration that returns mock HTTP response bytes.
+
+@since 0.4.3.0
+-}
+newMockClientWithConfig :: (MonadIO m) => OllamaClientConfig -> ByteString -> m OllamaClient
+newMockClientWithConfig cfg bodyBytes = liftIO $ do
   let httpResponse =
         "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: "
           <> BS8.pack (show (BS8.length bodyBytes))
@@ -63,7 +69,14 @@ newMockClient bodyBytes = liftIO $ do
           (pure ())
       settings = defaultManagerSettings {managerRawConnection = pure (\_ _ _ -> mockConn)}
   mgr <- newManager settings
-  pure $ OllamaClient mgr defaultConfig True
+  pure $ OllamaClient mgr cfg True
+
+{- | Construct an 'OllamaClient' that returns mock HTTP response bytes for any request.
+
+@since 1.0.0.0
+-}
+newMockClient :: (MonadIO m) => ByteString -> m OllamaClient
+newMockClient = newMockClientWithConfig defaultConfig
 
 {- | Resource bracket helper to create a mock client, execute an action, and close resources.
 
