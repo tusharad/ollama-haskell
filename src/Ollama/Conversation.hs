@@ -183,10 +183,8 @@ chatWithTools client initialReq tools config =
 
     go turn currentMessages
       | turn > tlcMaxTurns config =
-          pure
-            $ Left
-            $ InvalidRequest
-            $ "Maximum tool loop turns (" <> T.pack (show (tlcMaxTurns config)) <> ") exceeded"
+          let errMsg = "Maximum tool loop turns (" <> T.pack (show (tlcMaxTurns config)) <> ") exceeded"
+           in pure (Left (InvalidRequest errMsg))
       | otherwise = do
           case nonEmpty currentMessages of
             Nothing -> pure $ Left $ InvalidRequest "Cannot chat with empty message list"
